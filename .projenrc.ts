@@ -173,8 +173,6 @@ export const createPackage = (config: PackageConfig) => {
     devDeps: config.devDeps,
     bundledDeps: config.bundledDeps,
     docgen: false,
-    release: true,
-    releaseToNpm: true,
     packageName: config.name,
   });
   addTestTargets(tsProject);
@@ -194,8 +192,6 @@ const package2 = new typescript.TypeScriptProject({
   outdir: "src/packages/package2",
   parent: project,
   projenrcTs: false,
-  release: true,
-  releaseToNpm: true,
 });
 addTestTargets(package2);
 addPrettierConfig(package2);
