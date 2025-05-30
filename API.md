@@ -9,7 +9,7 @@
 #### Initializers <a name="Initializers" id="genet-test-repo.Hello.Initializer"></a>
 
 ```typescript
-import { Hello } from 'genet-test-repo'
+import { Hello } from '@example/genet-test-repo'
 
 new Hello()
 ```
@@ -23,7 +23,7 @@ new Hello()
 
 | **Name** | **Description** |
 | --- | --- |
-| <code><a href="#genet-test-repo.Hello.sayHello">sayHello</a></code> | *No description.* |
+| <code><a href="#@example/genet-test-repo.Hello.sayHello">sayHello</a></code> | *No description.* |
 
 ---
 
