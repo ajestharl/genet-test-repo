@@ -84,7 +84,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
   projenrcTs: true,
   docgen: true,
   github: true,
-  gitignore: [".idea"],
+  gitignore: [".idea", "API.md"],
   eslint: true,
   eslintOptions: {
     prettier: true,
@@ -99,7 +99,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
   cdkVersionPinning: false,
   release: true,
   autoMerge: false,
-  releaseToNpm: true,
+  releaseToNpm: false,
   constructsVersion: "10.4.2",
   packageName: "@example/genet-test-repo",
   description: "Test Package",
@@ -173,18 +173,19 @@ export const createPackage = (config: PackageConfig) => {
     devDeps: config.devDeps,
     bundledDeps: config.bundledDeps,
     docgen: false,
+    packageName: config.name,
     release: true,
     releaseToNpm: true,
-    packageName: config.name,
   });
   addTestTargets(tsProject);
   addPrettierConfig(tsProject);
   configureMarkDownLinting(tsProject);
+  tsProject.package.file.addOverride("private", false);
   return tsProject;
 };
 
 createPackage({
-  name: "@example/package1",
+  name: "package1",
   outdir: "src/packages/package1",
 });
 
@@ -200,5 +201,5 @@ const package2 = new typescript.TypeScriptProject({
 addTestTargets(package2);
 addPrettierConfig(package2);
 configureMarkDownLinting(package2);
-
+package2.package.file.addOverride("private", false);
 project.synth();
