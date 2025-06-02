@@ -97,7 +97,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
     },
   },
   cdkVersionPinning: false,
-  release: false,
+  release: true,
   autoMerge: false,
   releaseToNpm: false,
   constructsVersion: "10.4.2",

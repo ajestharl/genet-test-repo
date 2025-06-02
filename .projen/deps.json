@@ -19,6 +19,11 @@
       "type": "build"
     },
     {
+      "name": "commit-and-tag-version",
+      "version": "^12",
+      "type": "build"
+    },
+    {
       "name": "eslint-config-prettier",
       "type": "build"
     },
