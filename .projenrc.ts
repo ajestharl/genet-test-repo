@@ -188,7 +188,7 @@ createPackage({
 
 const package2 = new typescript.TypeScriptProject({
   ...projectMetadata,
-  name: "package2",
+  name: "@example/package2",
   outdir: "src/packages/package2",
   parent: project,
   projenrcTs: false,
