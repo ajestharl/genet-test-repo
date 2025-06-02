@@ -84,7 +84,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
   projenrcTs: true,
   docgen: true,
   github: true,
-  gitignore: [".idea"],
+  gitignore: [".idea", "API.md"],
   eslint: true,
   eslintOptions: {
     prettier: true,
