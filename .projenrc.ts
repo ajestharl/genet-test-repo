@@ -185,14 +185,14 @@ export const createPackage = (config: PackageConfig) => {
 };
 
 createPackage({
-  name: "package1",
-  outdir: "src/packages/package1",
+  name: "ajithapackage1",
+  outdir: "src/packages/ajithapackage1",
 });
 
 const package2 = new typescript.TypeScriptProject({
   ...projectMetadata,
-  name: "package2",
-  outdir: "src/packages/package2",
+  name: "ajithapackage2",
+  outdir: "src/packages/ajithapackage2",
   parent: project,
   projenrcTs: false,
   release: true,

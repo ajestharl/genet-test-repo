@@ -2529,6 +2529,19 @@ eslint-import-resolver-typescript@^4.4.1:
     tinyglobby "^0.2.14"
     unrs-resolver "^1.7.2"
 
+eslint-import-resolver-typescript@^4.4.2:
+  version "4.4.2"
+  resolved "https://registry.yarnpkg.com/eslint-import-resolver-typescript/-/eslint-import-resolver-typescript-4.4.2.tgz#7d29b4663e13540354fe8c094c854b1a512a8e4e"
+  integrity sha512-GdSOy0PwLYpQCrmnEQujvA+X0NKrdnVCICEbZq1zlmjjD12NHOHCN9MYyrGFR9ydCs4wJwHEV9tts44ajSlGeA==
+  dependencies:
+    debug "^4.4.1"
+    eslint-import-context "^0.1.5"
+    get-tsconfig "^4.10.1"
+    is-bun-module "^2.0.0"
+    stable-hash "^0.0.5"
+    tinyglobby "^0.2.14"
+    unrs-resolver "^1.7.2"
+
 eslint-module-utils@^2.12.0:
   version "2.12.0"
   resolved "https://registry.npmjs.org/eslint-module-utils/-/eslint-module-utils-2.12.0.tgz"
