@@ -178,6 +178,7 @@ export const createPackage = (config: PackageConfig) => {
   addTestTargets(tsProject);
   addPrettierConfig(tsProject);
   configureMarkDownLinting(tsProject);
+  tsProject.package.file.addOverride("private", false);
   return tsProject;
 };
 
@@ -196,5 +197,5 @@ const package2 = new typescript.TypeScriptProject({
 addTestTargets(package2);
 addPrettierConfig(package2);
 configureMarkDownLinting(package2);
-
+package2.package.file.addOverride("private", false);
 project.synth();
