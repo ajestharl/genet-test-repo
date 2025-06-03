@@ -197,6 +197,7 @@ const package2 = new typescript.TypeScriptProject({
   projenrcTs: false,
   release: true,
   releaseToNpm: true,
+  repository: projectMetadata.repositoryUrl,
 });
 addTestTargets(package2);
 addPrettierConfig(package2);
