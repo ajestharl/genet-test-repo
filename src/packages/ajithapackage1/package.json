@@ -27,8 +27,8 @@
     "projen": "npx projen"
   },
   "author": {
-    "name": "Amazon OSPO",
-    "email": "osa-dev+puzzleglue@amazon.com",
+    "name": "Ajitha",
+    "email": "ajithamanit@gmail.com",
     "organization": false
   },
   "devDependencies": {

@@ -33,8 +33,8 @@
     "get-table-name": "ts-node src/packages/app-framework-ops-tools/src/getTableName.ts"
   },
   "author": {
-    "name": "Amazon OSPO",
-    "email": "osa-dev+puzzleglue@amazon.com",
+    "name": "Ajitha",
+    "email": "ajithamanit@gmail.com",
     "organization": false
   },
   "devDependencies": {

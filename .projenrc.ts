@@ -2,8 +2,8 @@ import { awscdk, JsonFile, Project, typescript } from "projen";
 import { TypeScriptAppProject } from "projen/lib/typescript";
 
 const projectMetadata = {
-  author: "Amazon OSPO",
-  authorAddress: "osa-dev+puzzleglue@amazon.com",
+  author: "Ajitha",
+  authorAddress: "ajithamanit@gmail.com",
   repositoryUrl: "https://github.com/ajestharl/genet-test-repo.git",
   cdkVersion: "2.1.0",
   defaultReleaseBranch: "main",
