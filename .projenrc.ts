@@ -102,8 +102,8 @@ const project = new awscdk.AwsCdkConstructLibrary({
   autoMerge: false,
   releaseToNpm: false,
   publishToPypi: {
-      distName: projectMetadata.name,
-      module: projectMetadata.name.replace(/-/g, "_"),
+    distName: projectMetadata.name,
+    module: projectMetadata.name.replace(/-/g, "_"),
   },
   workflowNodeVersion: "lts/*",
   constructsVersion: "10.4.2",
