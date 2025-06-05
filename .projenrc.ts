@@ -98,6 +98,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
   },
   cdkVersionPinning: false,
   release: true,
+  releaseWorkflow: true,
   autoMerge: false,
   releaseToNpm: false,
   constructsVersion: "10.4.2",
@@ -112,7 +113,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
 if (project.github) {
   const buildWorkflow = project.github?.tryFindWorkflow("build");
   if (buildWorkflow && buildWorkflow.file) {
-    buildWorkflow.file.addOverride("jobs.build.permissions.contents", "read");
+    buildWorkflow.file.addOverride("jobs.build.permissions", { contents: "write", packages: "write"});
     buildWorkflow.file.addOverride("jobs.build.env", {
       CI: "true",
       // Increasing heap size to mitigate potential "heap out of memory" errors during ESLint execution.
@@ -175,11 +176,15 @@ export const createPackage = (config: PackageConfig) => {
     docgen: false,
     packageName: config.name,
     release: true,
+    releaseWorkflow: true,
     releaseToNpm: false,
     publishToPypi: {
       distName: config.name,
       module: config.name.replace(/-/g, "_"),
     },
+    workflowNodeVersion: "lts/*",
+    workflowContainerImage: "jsii/superchain",
+    jsiiVersion: "~5.7.0",
   });
   addTestTargets(tsProject);
   addPrettierConfig(tsProject);
@@ -201,12 +206,16 @@ const package2 = new awscdk.AwsCdkConstructLibrary({
   projenrcTs: false,
   docgen: false,
   release: true,
+  releaseWorkflow: true,
   releaseToNpm: false,
   repository: projectMetadata.repositoryUrl,
   publishToPypi: {
     distName: "ajithapackage2",
     module: "ajithapackage2".replace(/-/g, "_"),
   },
+  workflowNodeVersion: "lts/*",
+    workflowContainerImage: "jsii/superchain",
+    jsiiVersion: "~5.7.0",
 });
 addTestTargets(package2);
 addPrettierConfig(package2);

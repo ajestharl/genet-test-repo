@@ -62,6 +62,8 @@ jobs:
           name: build-artifact
           path: src/packages/ajithapackage2/dist
           overwrite: true
+    container:
+      image: jsii/superchain
   release_github:
     name: Publish to GitHub Releases
     needs:
@@ -89,6 +91,8 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF: ${{ github.sha }}
         run: errout=$(mktemp); gh release create $(cat dist/releasetag.txt) -R $GITHUB_REPOSITORY -F dist/changelog.md -t $(cat dist/releasetag.txt) --target $GITHUB_REF 2> $errout && true; exitcode=$?; if [ $exitcode -ne 0 ] && ! grep -q "Release.tag_name already exists" $errout; then cat $errout; exit $exitcode; fi
+    container:
+      image: jsii/superchain
   release_pypi:
     name: Publish to PyPI
     needs: release
@@ -130,3 +134,5 @@ jobs:
           TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
         run: npx -p publib@latest publib-pypi
+    container:
+      image: jsii/superchain
