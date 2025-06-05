@@ -113,7 +113,10 @@ const project = new awscdk.AwsCdkConstructLibrary({
 if (project.github) {
   const buildWorkflow = project.github?.tryFindWorkflow("build");
   if (buildWorkflow && buildWorkflow.file) {
-    buildWorkflow.file.addOverride("jobs.build.permissions", { contents: "write", packages: "write"});
+    buildWorkflow.file.addOverride("jobs.build.permissions", {
+      contents: "write",
+      packages: "write",
+    });
     buildWorkflow.file.addOverride("jobs.build.env", {
       CI: "true",
       // Increasing heap size to mitigate potential "heap out of memory" errors during ESLint execution.
@@ -214,8 +217,8 @@ const package2 = new awscdk.AwsCdkConstructLibrary({
     module: "ajithapackage2".replace(/-/g, "_"),
   },
   workflowNodeVersion: "lts/*",
-    workflowContainerImage: "jsii/superchain",
-    jsiiVersion: "~5.7.0",
+  workflowContainerImage: "jsii/superchain",
+  jsiiVersion: "~5.7.0",
 });
 addTestTargets(package2);
 addPrettierConfig(package2);
