@@ -186,7 +186,6 @@ export const createPackage = (config: PackageConfig) => {
       module: config.name.replace(/-/g, "_"),
     },
     workflowNodeVersion: "lts/*",
-    workflowContainerImage: "jsii/superchain",
     jsiiVersion: "~5.7.0",
   });
   addTestTargets(tsProject);
@@ -217,7 +216,6 @@ const package2 = new awscdk.AwsCdkConstructLibrary({
     module: "ajithapackage2".replace(/-/g, "_"),
   },
   workflowNodeVersion: "lts/*",
-  workflowContainerImage: "jsii/superchain",
   jsiiVersion: "~5.7.0",
 });
 addTestTargets(package2);
