@@ -1,4 +1,4 @@
-import { awscdk, JsonFile, Project, typescript } from "projen";
+import { awscdk, JsonFile, Project } from "projen";
 import { TypeScriptAppProject } from "projen/lib/typescript";
 
 const projectMetadata = {
@@ -98,8 +98,14 @@ const project = new awscdk.AwsCdkConstructLibrary({
   },
   cdkVersionPinning: false,
   release: true,
+  releaseWorkflow: true,
   autoMerge: false,
   releaseToNpm: false,
+  publishToPypi: {
+    distName: projectMetadata.name,
+    module: projectMetadata.name.replace(/-/g, "_"),
+  },
+  workflowNodeVersion: "lts/*",
   constructsVersion: "10.4.2",
   packageName: "@example/genet-test-repo",
   description: "Test Package",
@@ -112,7 +118,10 @@ const project = new awscdk.AwsCdkConstructLibrary({
 if (project.github) {
   const buildWorkflow = project.github?.tryFindWorkflow("build");
   if (buildWorkflow && buildWorkflow.file) {
-    buildWorkflow.file.addOverride("jobs.build.permissions.contents", "read");
+    buildWorkflow.file.addOverride("jobs.build.permissions", {
+      contents: "write",
+      packages: "write",
+    });
     buildWorkflow.file.addOverride("jobs.build.env", {
       CI: "true",
       // Increasing heap size to mitigate potential "heap out of memory" errors during ESLint execution.
@@ -175,7 +184,14 @@ export const createPackage = (config: PackageConfig) => {
     docgen: false,
     packageName: config.name,
     release: true,
-    releaseToNpm: true,
+    releaseWorkflow: true,
+    releaseToNpm: false,
+    publishToPypi: {
+      distName: config.name,
+      module: config.name.replace(/-/g, "_"),
+    },
+    workflowNodeVersion: "lts/*",
+    jsiiVersion: "~5.7.0",
   });
   addTestTargets(tsProject);
   addPrettierConfig(tsProject);
@@ -189,15 +205,23 @@ createPackage({
   outdir: "src/packages/ajithapackage1",
 });
 
-const package2 = new typescript.TypeScriptProject({
+const package2 = new awscdk.AwsCdkConstructLibrary({
   ...projectMetadata,
   name: "ajithapackage2",
   outdir: "src/packages/ajithapackage2",
   parent: project,
   projenrcTs: false,
+  docgen: false,
   release: true,
-  releaseToNpm: true,
+  releaseWorkflow: true,
+  releaseToNpm: false,
   repository: projectMetadata.repositoryUrl,
+  publishToPypi: {
+    distName: "ajithapackage2",
+    module: "ajithapackage2".replace(/-/g, "_"),
+  },
+  workflowNodeVersion: "lts/*",
+  jsiiVersion: "~5.7.0",
 });
 addTestTargets(package2);
 addPrettierConfig(package2);
