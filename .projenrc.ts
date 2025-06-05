@@ -205,8 +205,8 @@ const package2 = new awscdk.AwsCdkConstructLibrary({
   repository: projectMetadata.repositoryUrl,
   publishToPypi: {
     distName: "ajithapackage2",
-      module: "ajithapackage2".replace(/-/g, "_"),
-  }
+    module: "ajithapackage2".replace(/-/g, "_"),
+  },
 });
 addTestTargets(package2);
 addPrettierConfig(package2);
