@@ -1,4 +1,4 @@
-import { awscdk, JsonFile, Project, typescript } from "projen";
+import { awscdk, JsonFile, Project } from "projen";
 import { TypeScriptAppProject } from "projen/lib/typescript";
 
 const projectMetadata = {
@@ -175,7 +175,11 @@ export const createPackage = (config: PackageConfig) => {
     docgen: false,
     packageName: config.name,
     release: true,
-    releaseToNpm: true,
+    releaseToNpm: false,
+    publishToPypi: {
+      distName: config.name,
+      module: config.name.replace(/-/g, "_"),
+    },
   });
   addTestTargets(tsProject);
   addPrettierConfig(tsProject);
@@ -189,15 +193,20 @@ createPackage({
   outdir: "src/packages/ajithapackage1",
 });
 
-const package2 = new typescript.TypeScriptProject({
+const package2 = new awscdk.AwsCdkConstructLibrary({
   ...projectMetadata,
   name: "ajithapackage2",
   outdir: "src/packages/ajithapackage2",
   parent: project,
   projenrcTs: false,
+  docgen: false,
   release: true,
-  releaseToNpm: true,
+  releaseToNpm: false,
   repository: projectMetadata.repositoryUrl,
+  publishToPypi: {
+    distName: "ajithapackage2",
+      module: "ajithapackage2".replace(/-/g, "_"),
+  }
 });
 addTestTargets(package2);
 addPrettierConfig(package2);
