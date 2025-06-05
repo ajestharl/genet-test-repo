@@ -1,29 +1,33 @@
 // src/packages/ajithapackage1/src/index.ts
 
-export interface IHelloOptions {
+import { Construct } from 'constructs';
+
+export interface HelloWorldProps {
   readonly name: string;
   readonly greeting?: string;
 }
 
-export interface IHelloInfo {
+export interface HelloInfo {
   readonly message: string;
   readonly timestamp: string;
 }
 
-export class HelloWorld {
+export class HelloWorldConstruct extends Construct {
   private readonly name: string;
   private readonly greeting: string;
 
-  constructor(options: IHelloOptions) {
-    this.name = options.name;
-    this.greeting = options.greeting ?? 'Hello';
+  constructor(scope: Construct, id: string, props: HelloWorldProps) {
+    super(scope, id);
+
+    this.name = props.name;
+    this.greeting = props.greeting ?? 'Hello';
   }
 
   public sayHello(): string {
     return `${this.greeting}, ${this.name}!`;
   }
 
-  public generateInfo(): IHelloInfo {
+  public generateInfo(): HelloInfo {
     return {
       message: this.sayHello(),
       timestamp: new Date().toISOString(),
