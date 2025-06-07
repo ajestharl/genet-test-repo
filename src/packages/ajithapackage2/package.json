@@ -4,6 +4,9 @@
     "type": "git",
     "url": "https://github.com/ajestharl/genet-test-repo.git"
   },
+  "bin": {
+    "ajitha-cli": "lib/index.js"
+  },
   "scripts": {
     "accept": "npx projen accept",
     "build": "npx projen build",
@@ -40,6 +43,9 @@
     "markdown-eslint-parser": "^1.2.1",
     "ts-jest": "^29.3.4",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "commander": "^11.0.0"
   },
   "main": "lib/index.js",
   "license": "Apache-2.0",
