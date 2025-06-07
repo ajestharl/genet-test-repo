@@ -200,6 +200,10 @@ const package2 = new typescript.TypeScriptProject({
   releaseToNpm: true,
   repository: projectMetadata.repositoryUrl,
 });
+package2.package.addBin({
+  "ajitha-cli": "src/packages/ajithapackage2/src/index.ts",
+});
+package2.addDeps("commander@^11.0.0");
 addTestTargets(package2);
 addPrettierConfig(package2);
 configureMarkDownLinting(package2);
