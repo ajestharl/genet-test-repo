@@ -201,7 +201,7 @@ const package2 = new typescript.TypeScriptProject({
   repository: projectMetadata.repositoryUrl,
 });
 package2.package.addBin({
-  "ajitha-cli": "src/packages/ajithapackage2/src/index.ts",
+  "ajitha-cli": "lib/index.js",
 });
 package2.addDeps("commander@^11.0.0");
 addTestTargets(package2);
