@@ -142,6 +142,8 @@ project.addScripts({
     "ts-node src/packages/app-framework-ops-tools/src/importPrivateKey.ts",
   "get-table-name":
     "ts-node src/packages/app-framework-ops-tools/src/getTableName.ts",
+  "display-books":
+    "ts-node src/packages/ajithapackage2/src/index.ts",
 });
 
 addTestTargets(project);
