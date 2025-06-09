@@ -8,8 +8,7 @@ import { version } from '../package.json';
  * @returns Array of book titles
  */
 export const listBooksImpl = async (): Promise<string[]> => {
-  // Simulated data - could be replaced with actual data source
-  return ['The Great Gatsby', '1984', 'A Brief History of Time'];
+  return ['Book One', 'Book Two', 'Book Three'];
 };
 
 export type DisplayBooks = ({
