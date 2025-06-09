@@ -1,57 +1,27 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-
-/**
- * Represents a book with basic details
- */
-interface Book {
-  title: string;
-  author: string;
-  category: string;
-}
-
-/**
- * Command options interface
- */
-interface ListCommandOptions {
-  category?: string;
-  author?: string;
-}
+import { version } from '../package.json';
 
 /**
  * Returns a list of books
- * @returns Array of books
+ * @returns Array of book titles
  */
-export const listBooksImpl = async (): Promise<Book[]> => {
+export const listBooksImpl = async (): Promise<string[]> => {
   // Simulated data - could be replaced with actual data source
-  return [
-    {
-      title: 'The Great Gatsby',
-      author: 'F. Scott Fitzgerald',
-      category: 'Fiction',
-    },
-    {
-      title: '1984',
-      author: 'George Orwell',
-      category: 'Fiction',
-    },
-    {
-      title: 'A Brief History of Time',
-      author: 'Stephen Hawking',
-      category: 'Science',
-    },
-  ];
+  return ['The Great Gatsby', '1984', 'A Brief History of Time'];
 };
 
 export type DisplayBooks = ({
   listBooks,
 }: {
-  listBooks?: () => Promise<Book[]>;
+  listBooks?: () => Promise<string[]>;
 }) => Promise<void>;
 
 /**
- * Displays a list of books with their authors and categories.
+ * Displays a list of books in a numbered format.
+ *
+ * @param listBooks Function that fetches the list of books
  */
 export const displayBooks: DisplayBooks = async ({
   listBooks = listBooksImpl,
@@ -61,11 +31,9 @@ export const displayBooks: DisplayBooks = async ({
     if (books.length === 0) {
       throw new Error('No books found in the library');
     }
-    console.log('\nAvailable Books:');
-    books.forEach((book, index) => {
-      console.log(
-        `${index + 1}. ${book.title} by ${book.author} (${book.category})`,
-      );
+    console.log('\nAvailable books:');
+    books.forEach((name, index) => {
+      console.log(`${index + 1}. ${name}`);
     });
     console.log(`\nTotal books found: ${books.length}\n`);
   } catch (error) {
@@ -73,111 +41,25 @@ export const displayBooks: DisplayBooks = async ({
   }
 };
 
-/**
- * Creates and configures the CLI program
- */
-export const createCli = (): Command => {
+export const main = () => {
   const program = new Command();
 
   program
-    .name('ajitha-cli')
-    .description('CLI tool for managing books')
-    .version('1.0.0');
-
-  // List all books command
-  program
-    .command('list')
-    .description('List all available books')
-    .option('-c, --category <category>', 'Filter books by category')
-    .option('-a, --author <author>', 'Filter books by author')
-    .action(async (options: ListCommandOptions) => {
-      try {
-        const books = await listBooksImpl();
-        let filteredBooks = books;
-
-        if (options.category) {
-          filteredBooks = filteredBooks.filter(
-            (book) =>
-              book.category.toLowerCase() === options.category!.toLowerCase(),
-          );
-        }
-
-        if (options.author) {
-          filteredBooks = filteredBooks.filter((book) =>
-            book.author.toLowerCase().includes(options.author!.toLowerCase()),
-          );
-        }
-
-        if (filteredBooks.length === 0) {
-          console.log('No books found matching your criteria.');
-          return;
-        }
-
-        console.log('\nAvailable Books:');
-        filteredBooks.forEach((book, index) => {
-          console.log(
-            `${index + 1}. ${book.title} by ${book.author} (${book.category})`,
-          );
-        });
-        console.log(`\nTotal books found: ${filteredBooks.length}\n`);
-      } catch (error) {
-        console.error(
-          'Error:',
-          error instanceof Error ? error.message : 'Unknown error',
-        );
-        process.exit(1);
-      }
-    });
-
-  // Show categories command
-  program
-    .command('categories')
-    .description('List all available book categories')
+    .name('book-list')
+    .description('CLI to display available books')
+    .version(version)
     .action(async () => {
       try {
-        const books = await listBooksImpl();
-        const categories = [...new Set(books.map((book) => book.category))];
-        console.log('\nAvailable Categories:');
-        categories.forEach((category, index) => {
-          console.log(`${index + 1}. ${category}`);
-        });
-        console.log();
+        await displayBooks({});
       } catch (error) {
-        console.error(
-          'Error:',
-          error instanceof Error ? error.message : 'Unknown error',
-        );
+        console.error('Error:', error);
         process.exit(1);
       }
     });
 
-  // Show authors command
-  program
-    .command('authors')
-    .description('List all authors')
-    .action(async () => {
-      try {
-        const books = await listBooksImpl();
-        const authors = [...new Set(books.map((book) => book.author))];
-        console.log('\nAvailable Authors:');
-        authors.forEach((author, index) => {
-          console.log(`${index + 1}. ${author}`);
-        });
-        console.log();
-      } catch (error) {
-        console.error(
-          'Error:',
-          error instanceof Error ? error.message : 'Unknown error',
-        );
-        process.exit(1);
-      }
-    });
-
-  return program;
+  program.parse(process.argv);
 };
 
-// Only run the CLI when the file is being executed directly
 if (require.main === module) {
-  const program = createCli();
-  program.parse(process.argv);
+  main();
 }
