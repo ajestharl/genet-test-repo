@@ -44,7 +44,7 @@ export const main = () => {
   const program = new Command();
 
   program
-    .name('book-list')
+    .name('display')
     .description('CLI to display available books')
     .version(version)
     .action(async () => {

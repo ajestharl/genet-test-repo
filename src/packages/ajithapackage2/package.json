@@ -5,7 +5,7 @@
     "url": "https://github.com/ajestharl/genet-test-repo.git"
   },
   "bin": {
-    "aji-cli": "lib/index.js"
+    "display": "lib/index.js"
   },
   "scripts": {
     "accept": "npx projen accept",
