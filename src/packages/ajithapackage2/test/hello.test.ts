@@ -1,4 +1,3 @@
-// import { spawn } from 'child_process';
 import { displayBooks } from '../src/index';
 
 describe('displayBooks', () => {
@@ -12,7 +11,7 @@ describe('displayBooks', () => {
     consoleSpy.mockRestore();
   });
 
-  test('displays books in numbered format', async () => {
+  it('displays books in numbered format', async () => {
     const mockBooks = ['Book 1', 'Book 2', 'Book 3'];
     const mockListBooks = jest.fn().mockResolvedValue(mockBooks);
 
@@ -25,7 +24,7 @@ describe('displayBooks', () => {
     expect(consoleSpy).toHaveBeenCalledWith('\nTotal books found: 3\n');
   });
 
-  test('throws error when no books found', async () => {
+  it('throws error when no books found', async () => {
     const mockListBooks = jest.fn().mockResolvedValue([]);
 
     await expect(displayBooks({ listBooks: mockListBooks })).rejects.toThrow(
@@ -33,4 +32,3 @@ describe('displayBooks', () => {
     );
   });
 });
-

@@ -103,6 +103,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
   constructsVersion: "10.4.2",
   packageName: "@example/genet-test-repo",
   description: "Test Package",
+  devDeps: ["lerna", "jest-runner-groups"],
   // deps: [],                /* Runtime dependencies of this module. */
   // description: undefined,  /* The description is just a string that helps people understand the purpose of the package. */
   // devDeps: [],             /* Build dependencies for this module. */
@@ -199,6 +200,13 @@ const package2 = new typescript.TypeScriptProject({
   release: true,
   releaseToNpm: true,
   repository: projectMetadata.repositoryUrl,
+  devDeps: ["jest-runner-groups"],
+  jestOptions: {
+    jestConfig: {
+      runner: "groups",
+      verbose: true,
+    },
+  },
 });
 package2.package.addBin({
   display: "lib/index.js",

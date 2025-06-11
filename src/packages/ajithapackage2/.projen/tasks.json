@@ -206,13 +206,13 @@
       },
       "steps": [
         {
-          "exec": "npx npm-check-updates@16 --upgrade --target=minor --peer --no-deprecated --dep=dev,peer,prod,optional --filter=@types/jest,@types/node,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-md,eslint-plugin-prettier,jest,markdown-eslint-parser,ts-jest,typescript"
+          "exec": "npx npm-check-updates@16 --upgrade --target=minor --peer --no-deprecated --dep=dev,peer,prod,optional --filter=@types/jest,@types/node,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-md,eslint-plugin-prettier,jest,jest-runner-groups,markdown-eslint-parser,ts-jest,typescript"
         },
         {
           "exec": "yarn install --check-files"
         },
         {
-          "exec": "yarn upgrade @stylistic/eslint-plugin @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser commit-and-tag-version eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-md eslint-plugin-prettier eslint jest jest-junit markdown-eslint-parser ts-jest typescript commander"
+          "exec": "yarn upgrade @stylistic/eslint-plugin @types/jest @types/node @typescript-eslint/eslint-plugin @typescript-eslint/parser commit-and-tag-version eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-md eslint-plugin-prettier eslint jest jest-junit jest-runner-groups markdown-eslint-parser ts-jest typescript commander"
         },
         {
           "exec": "npx projen"
