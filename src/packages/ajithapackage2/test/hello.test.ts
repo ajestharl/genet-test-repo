@@ -35,7 +35,7 @@ describe('displayBooks', () => {
 
 describe('display CLI', () => {
   it('should display books when called via display command unit', (done) => {
-    const process = spawn('npx', ['display']);
+    const process = spawn('display');
 
     let output = '';
     let errorOutput = '';
