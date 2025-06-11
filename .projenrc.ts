@@ -142,6 +142,7 @@ project.addScripts({
     "ts-node src/packages/app-framework-ops-tools/src/importPrivateKey.ts",
   "get-table-name":
     "ts-node src/packages/app-framework-ops-tools/src/getTableName.ts",
+  "display-books": "ts-node src/packages/ajithapackage2/src/index.ts",
 });
 
 addTestTargets(project);
@@ -199,6 +200,10 @@ const package2 = new typescript.TypeScriptProject({
   releaseToNpm: true,
   repository: projectMetadata.repositoryUrl,
 });
+package2.package.addBin({
+  "aji-cli": "lib/index.js",
+});
+package2.addDeps("commander@^11.0.0");
 addTestTargets(package2);
 addPrettierConfig(package2);
 configureMarkDownLinting(package2);
