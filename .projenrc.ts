@@ -47,8 +47,10 @@ export const configureMarkDownLinting = (tsProject: TypeScriptAppProject) => {
 export const addTestTargets = (subProject: Project) => {
   const eslintTask = subProject.tasks.tryFind("eslint");
   const testTask = subProject.tasks.tryFind("test");
-  if (testTask && eslintTask) {
+  const compileTask = subProject.tasks.tryFind("compile");
+  if (testTask && eslintTask && compileTask) {
     testTask.reset();
+    testTask.spawn(compileTask);
     testTask.exec(
       "jest --passWithNoTests --updateSnapshot --testPathIgnorePatterns=.*\\.accept\\.test\\.ts$",
       {
@@ -67,7 +69,7 @@ export const addTestTargets = (subProject: Project) => {
   const preCompileTask = subProject.tasks.tryFind("pre-compile");
   if (preCompileTask) acceptTask.spawn(preCompileTask);
 
-  const compileTask = subProject.tasks.tryFind("compile");
+  // const compileTask = subProject.tasks.tryFind("compile");
   if (compileTask) acceptTask.spawn(compileTask);
 
   const postCompileTask = subProject.tasks.tryFind("post-compile");

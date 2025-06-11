@@ -258,6 +258,9 @@
       "description": "Run tests",
       "steps": [
         {
+          "spawn": "compile"
+        },
+        {
           "exec": "jest --passWithNoTests --updateSnapshot --testPathIgnorePatterns=.*\\.accept\\.test\\.ts$",
           "receiveArgs": true
         },
