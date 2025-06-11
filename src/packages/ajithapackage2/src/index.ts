@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { version } from '../package.json';
 
 /**
  * Returns a list of books
@@ -46,7 +45,6 @@ export const main = () => {
   program
     .name('display')
     .description('CLI to display available books')
-    .version(version)
     .action(async () => {
       try {
         await displayBooks({});
