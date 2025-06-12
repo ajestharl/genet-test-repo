@@ -212,8 +212,7 @@ const package2 = new typescript.TypeScriptProject({
   },
 });
 package2.package.addBin({
-  "display-books": "lib/index.js",
-  "display-movies": "lib/index2.js",
+  ajithapackage2: "lib/cli.js",
 });
 package2.addDeps("commander@^11.0.0");
 addTestTargets(package2);
