@@ -28,6 +28,7 @@ const execCLI = (
 
 describe('ajithapackage2 CLI', () => {
   beforeAll(() => {
+    console.log('clipath', cliPath);
     if (!fs.existsSync(cliPath)) {
       throw new Error(
         `CLI not built: ${cliPath} not found. Run \`npx projen build\` first.`,
