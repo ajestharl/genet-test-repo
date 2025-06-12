@@ -47,8 +47,10 @@ export const configureMarkDownLinting = (tsProject: TypeScriptAppProject) => {
 export const addTestTargets = (subProject: Project) => {
   const eslintTask = subProject.tasks.tryFind("eslint");
   const testTask = subProject.tasks.tryFind("test");
+  // const compileTask = subProject.tasks.tryFind("compile");
   if (testTask && eslintTask) {
     testTask.reset();
+    // testTask.spawn(compileTask);
     testTask.exec(
       "jest --passWithNoTests --updateSnapshot --testPathIgnorePatterns=.*\\.accept\\.test\\.ts$",
       {
@@ -103,6 +105,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
   constructsVersion: "10.4.2",
   packageName: "@example/genet-test-repo",
   description: "Test Package",
+  devDeps: ["lerna", "jest-runner-groups"],
   // deps: [],                /* Runtime dependencies of this module. */
   // description: undefined,  /* The description is just a string that helps people understand the purpose of the package. */
   // devDeps: [],             /* Build dependencies for this module. */
@@ -142,6 +145,8 @@ project.addScripts({
     "ts-node src/packages/app-framework-ops-tools/src/importPrivateKey.ts",
   "get-table-name":
     "ts-node src/packages/app-framework-ops-tools/src/getTableName.ts",
+  "display-books": "ts-node src/packages/ajithapackage2/src/index.ts",
+  "display-movies": "ts-node src/packages/ajithapackage2/src/index2.ts",
 });
 
 addTestTargets(project);
@@ -198,7 +203,18 @@ const package2 = new typescript.TypeScriptProject({
   release: true,
   releaseToNpm: true,
   repository: projectMetadata.repositoryUrl,
+  devDeps: ["jest-runner-groups"],
+  jestOptions: {
+    jestConfig: {
+      runner: "groups",
+      verbose: true,
+    },
+  },
 });
+package2.package.addBin({
+  ajithapackage2: "lib/cli.js",
+});
+package2.addDeps("commander@^11.0.0");
 addTestTargets(package2);
 addPrettierConfig(package2);
 configureMarkDownLinting(package2);
