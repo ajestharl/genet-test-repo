@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander';
-
 /**
  * Returns a list of books
  * @returns Array of book titles
@@ -38,25 +36,3 @@ export const displayBooks: DisplayBooks = async ({
     throw error;
   }
 };
-
-export const main = () => {
-  const program = new Command();
-
-  program
-    .name('display')
-    .description('CLI to display available books')
-    .action(async () => {
-      try {
-        await displayBooks({});
-      } catch (error) {
-        console.error('Error:', error);
-        process.exit(1);
-      }
-    });
-
-  program.parse(process.argv);
-};
-
-if (require.main === module) {
-  main();
-}

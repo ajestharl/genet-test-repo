@@ -4,7 +4,7 @@ import { spawn } from 'child_process';
  */
 describe('display CLI', () => {
   it('should display books when called via display command', (done) => {
-    const process = spawn('npx', ['display']);
+    const process = spawn('npx', ['display-books']);
 
     let output = '';
     let errorOutput = '';

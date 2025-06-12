@@ -145,7 +145,8 @@ project.addScripts({
     "ts-node src/packages/app-framework-ops-tools/src/importPrivateKey.ts",
   "get-table-name":
     "ts-node src/packages/app-framework-ops-tools/src/getTableName.ts",
-  display: "ts-node src/packages/ajithapackage2/src/index.ts",
+  "display-books": "ts-node src/packages/ajithapackage2/src/index.ts",
+  "display-movies": "ts-node src/packages/ajithapackage2/src/index2.ts",
 });
 
 addTestTargets(project);
@@ -211,7 +212,8 @@ const package2 = new typescript.TypeScriptProject({
   },
 });
 package2.package.addBin({
-  display: "lib/index.js",
+  "display-books": "lib/index.js",
+  "display-movies": "lib/index2.js",
 });
 package2.addDeps("commander@^11.0.0");
 addTestTargets(package2);
