@@ -91,7 +91,6 @@ const project = new awscdk.AwsCdkConstructLibrary({
     prettier: true,
     fileExtensions: [".ts", ".md"],
     dirs: ["src", "test", "docs"],
-    ignorePatterns: ["src/packages/smithy/build/**/*"],
   },
   jestOptions: {
     jestConfig: {
@@ -131,7 +130,6 @@ new JsonFile(project, "lerna.json", {
     npmClient: "yarn",
   },
 });
-
 project.package.file.addOverride("private", true);
 project.package.file.addOverride("workspaces", [
   "src/packages/*",
