@@ -11,7 +11,6 @@ const projectMetadata = {
   name: "genet-test-repo",
 };
 
-
 export const configureMarkDownLinting = (tsProject: TypeScriptAppProject) => {
   tsProject.addDevDeps(
     "eslint-plugin-md",
@@ -234,7 +233,7 @@ if (workflow) {
     defaults: {
       run: {
         workingDirectory:
-          "./src/packages/******/build/smithy/source/typescript-client-codegen",
+          "./src/packages/smithy/build/smithy/source/typescript-client-codegen",
       },
     },
     steps: [

@@ -18,7 +18,7 @@ jobs:
       CI: "true"
     defaults:
       run:
-        working-directory: ./src/packages/******/build/smithy/source/typescript-client-codegen
+        working-directory: ./src/packages/smithy/build/smithy/source/typescript-client-codegen
     steps:
       - name: Checkout
         uses: actions/checkout@v4
