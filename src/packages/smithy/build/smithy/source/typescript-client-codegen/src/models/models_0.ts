@@ -1,7 +1,7 @@
 // @ts-nocheck
 // smithy-typescript generated code
-import { ExceptionOptionType as __ExceptionOptionType } from "@smithy/smithy-client";
 import { HelloServiceException as __BaseException } from "./HelloServiceException";
+import { ExceptionOptionType as __ExceptionOptionType } from "@smithy/smithy-client";
 
 /**
  * @public
@@ -30,7 +30,7 @@ export class InvalidInputError extends __BaseException {
     super({
       name: "InvalidInputError",
       $fault: "client",
-      ...opts,
+      ...opts
     });
     Object.setPrototypeOf(this, InvalidInputError.prototype);
   }

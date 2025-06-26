@@ -1,6 +1,22 @@
 // @ts-nocheck
 // smithy-typescript generated code
 import {
+  HttpAuthSchemeInputConfig,
+  HttpAuthSchemeResolvedConfig,
+  defaultHelloHttpAuthSchemeParametersProvider,
+  resolveHttpAuthSchemeConfig,
+} from "./auth/httpAuthSchemeProvider";
+import {
+  HelloCommandInput,
+  HelloCommandOutput,
+} from "./commands/HelloCommand";
+import { getRuntimeConfig as __getRuntimeConfig } from "./runtimeConfig";
+import {
+  RuntimeExtension,
+  RuntimeExtensionsConfig,
+  resolveRuntimeExtensions,
+} from "./runtimeExtensions";
+import {
   HostHeaderInputConfig,
   HostHeaderResolvedConfig,
   getHostHeaderPlugin,
@@ -57,31 +73,20 @@ import {
   UrlParser as __UrlParser,
   UserAgent as __UserAgent,
 } from "@smithy/types";
-import {
-  HttpAuthSchemeInputConfig,
-  HttpAuthSchemeResolvedConfig,
-  defaultHelloHttpAuthSchemeParametersProvider,
-  resolveHttpAuthSchemeConfig,
-} from "./auth/httpAuthSchemeProvider";
-import { HelloCommandInput, HelloCommandOutput } from "./commands/HelloCommand";
-import { getRuntimeConfig as __getRuntimeConfig } from "./runtimeConfig";
-import {
-  RuntimeExtension,
-  RuntimeExtensionsConfig,
-  resolveRuntimeExtensions,
-} from "./runtimeExtensions";
 
-export { __Client };
+export { __Client }
 
 /**
  * @public
  */
-export type ServiceInputTypes = HelloCommandInput;
+export type ServiceInputTypes =
+  | HelloCommandInput;
 
 /**
  * @public
  */
-export type ServiceOutputTypes = HelloCommandOutput;
+export type ServiceOutputTypes =
+  | HelloCommandOutput;
 
 /**
  * @public
@@ -232,21 +237,20 @@ export interface ClientDefaults
    * The {@link @smithy/smithy-client#DefaultsMode} that will be used to determine how certain default configuration options are resolved in the SDK.
    */
   defaultsMode?: __DefaultsMode | __Provider<__DefaultsMode>;
+
 }
 
 /**
  * @public
  */
-export type HelloClientConfigType = Partial<
-  __SmithyConfiguration<__HttpHandlerOptions>
-> &
-  ClientDefaults &
-  UserAgentInputConfig &
-  RetryInputConfig &
-  RegionInputConfig &
-  HostHeaderInputConfig &
-  EndpointsInputConfig &
-  HttpAuthSchemeInputConfig;
+export type HelloClientConfigType = Partial<__SmithyConfiguration<__HttpHandlerOptions>>
+  & ClientDefaults
+  & UserAgentInputConfig
+  & RetryInputConfig
+  & RegionInputConfig
+  & HostHeaderInputConfig
+  & EndpointsInputConfig
+  & HttpAuthSchemeInputConfig
 /**
  * @public
  *
@@ -257,23 +261,21 @@ export interface HelloClientConfig extends HelloClientConfigType {}
 /**
  * @public
  */
-export type HelloClientResolvedConfigType =
-  __SmithyResolvedConfiguration<__HttpHandlerOptions> &
-    Required<ClientDefaults> &
-    RuntimeExtensionsConfig &
-    UserAgentResolvedConfig &
-    RetryResolvedConfig &
-    RegionResolvedConfig &
-    HostHeaderResolvedConfig &
-    EndpointsResolvedConfig &
-    HttpAuthSchemeResolvedConfig;
+export type HelloClientResolvedConfigType = __SmithyResolvedConfiguration<__HttpHandlerOptions>
+  & Required<ClientDefaults>
+  & RuntimeExtensionsConfig
+  & UserAgentResolvedConfig
+  & RetryResolvedConfig
+  & RegionResolvedConfig
+  & HostHeaderResolvedConfig
+  & EndpointsResolvedConfig
+  & HttpAuthSchemeResolvedConfig
 /**
  * @public
  *
  *  The resolved configuration interface of HelloClient class. This is resolved and normalized from the {@link HelloClientConfig | constructor configuration interface}.
  */
-export interface HelloClientResolvedConfig
-  extends HelloClientResolvedConfigType {}
+export interface HelloClientResolvedConfig extends HelloClientResolvedConfigType {}
 
 /**
  * @public
@@ -289,9 +291,7 @@ export class HelloClient extends __Client<
    */
   readonly config: HelloClientResolvedConfig;
 
-  constructor(
-    ...[configuration]: __CheckOptionalClientConfig<HelloClientConfig>
-  ) {
+  constructor(...[configuration]: __CheckOptionalClientConfig<HelloClientConfig>) {
     let _config_0 = __getRuntimeConfig(configuration || {});
     super(_config_0 as any);
     this.initConfig = _config_0;
@@ -301,27 +301,27 @@ export class HelloClient extends __Client<
     let _config_4 = resolveHostHeaderConfig(_config_3);
     let _config_5 = resolveEndpointsConfig(_config_4);
     let _config_6 = resolveHttpAuthSchemeConfig(_config_5);
-    let _config_7 = resolveRuntimeExtensions(
-      _config_6,
-      configuration?.extensions || [],
-    );
+    let _config_7 = resolveRuntimeExtensions(_config_6, configuration?.extensions || []);
     this.config = _config_7;
-    this.middlewareStack.use(getUserAgentPlugin(this.config));
-    this.middlewareStack.use(getRetryPlugin(this.config));
-    this.middlewareStack.use(getContentLengthPlugin(this.config));
-    this.middlewareStack.use(getHostHeaderPlugin(this.config));
-    this.middlewareStack.use(getLoggerPlugin(this.config));
-    this.middlewareStack.use(getRecursionDetectionPlugin(this.config));
-    this.middlewareStack.use(
-      getHttpAuthSchemePlugin(this.config, {
-        httpAuthSchemeParametersProvider:
-          defaultHelloHttpAuthSchemeParametersProvider,
-        identityProviderConfigProvider: async (
-          config: HelloClientResolvedConfig,
-        ) => new DefaultIdentityProviderConfig({}),
-      }),
-    );
-    this.middlewareStack.use(getHttpSigningPlugin(this.config));
+    this.middlewareStack.use(getUserAgentPlugin(this.config
+    ));
+    this.middlewareStack.use(getRetryPlugin(this.config
+    ));
+    this.middlewareStack.use(getContentLengthPlugin(this.config
+    ));
+    this.middlewareStack.use(getHostHeaderPlugin(this.config
+    ));
+    this.middlewareStack.use(getLoggerPlugin(this.config
+    ));
+    this.middlewareStack.use(getRecursionDetectionPlugin(this.config
+    ));
+    this.middlewareStack.use(getHttpAuthSchemePlugin(this.config
+      , {
+        httpAuthSchemeParametersProvider: defaultHelloHttpAuthSchemeParametersProvider,identityProviderConfigProvider: async (config: HelloClientResolvedConfig) => new DefaultIdentityProviderConfig({
+        }), }
+    ));
+    this.middlewareStack.use(getHttpSigningPlugin(this.config
+    ));
   }
 
   /**

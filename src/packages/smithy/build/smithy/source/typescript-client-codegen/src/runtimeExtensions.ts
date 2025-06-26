@@ -1,6 +1,10 @@
 // @ts-nocheck
 // smithy-typescript generated code
 import {
+  getHttpAuthExtensionConfiguration,
+  resolveHttpAuthRuntimeConfig,
+} from "./auth/httpAuthExtensionConfiguration";
+import {
   getAwsRegionExtensionConfiguration,
   resolveAwsRegionExtensionConfiguration,
 } from "@aws-sdk/region-config-resolver";
@@ -12,32 +16,28 @@ import {
   getDefaultExtensionConfiguration,
   resolveDefaultRuntimeConfig,
 } from "@smithy/smithy-client";
-import {
-  getHttpAuthExtensionConfiguration,
-  resolveHttpAuthRuntimeConfig,
-} from "./auth/httpAuthExtensionConfiguration";
 import { HelloExtensionConfiguration } from "./extensionConfiguration";
 
 /**
  * @public
  */
 export interface RuntimeExtension {
-  configure(extensionConfiguration: HelloExtensionConfiguration): void;
+    configure(extensionConfiguration: HelloExtensionConfiguration): void;
 }
 
 /**
  * @public
  */
 export interface RuntimeExtensionsConfig {
-  extensions: RuntimeExtension[];
+    extensions: RuntimeExtension[]
 }
 
 /**
  * @internal
  */
 export const resolveRuntimeExtensions = (
-  runtimeConfig: any,
-  extensions: RuntimeExtension[],
+    runtimeConfig: any,
+    extensions: RuntimeExtension[]
 ) => {
   const extensionConfiguration: HelloExtensionConfiguration = Object.assign(
     getAwsRegionExtensionConfiguration(runtimeConfig),
@@ -46,15 +46,12 @@ export const resolveRuntimeExtensions = (
     getHttpAuthExtensionConfiguration(runtimeConfig),
   );
 
-  extensions.forEach((extension) =>
-    extension.configure(extensionConfiguration),
-  );
+  extensions.forEach(extension => extension.configure(extensionConfiguration));
 
-  return Object.assign(
-    runtimeConfig,
+  return Object.assign(runtimeConfig,
     resolveAwsRegionExtensionConfiguration(extensionConfiguration),
     resolveDefaultRuntimeConfig(extensionConfiguration),
     resolveHttpHandlerRuntimeConfig(extensionConfiguration),
     resolveHttpAuthRuntimeConfig(extensionConfiguration),
   );
-};
+}

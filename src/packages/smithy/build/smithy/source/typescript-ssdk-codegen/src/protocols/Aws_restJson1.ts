@@ -1,5 +1,10 @@
 // @ts-nocheck
 // smithy-typescript generated code
+import { InvalidInputError } from "../models/models_0";
+import {
+  HelloServerInput,
+  HelloServerOutput,
+} from "../server/operations/Hello";
 import {
   loadRestJsonErrorCode,
   parseJsonBody as parseBody,
@@ -30,35 +35,27 @@ import {
   SerdeContext as __SerdeContext,
 } from "@smithy/types";
 import { calculateBodyLength } from "@smithy/util-body-length-node";
-import { InvalidInputError } from "../models/models_0";
-import {
-  HelloServerInput,
-  HelloServerOutput,
-} from "../server/operations/Hello";
 
-export const deserializeHelloRequest = async (
+export const deserializeHelloRequest = async(
   output: __HttpRequest,
-  context: __SerdeContext,
+  context: __SerdeContext
 ): Promise<HelloServerInput> => {
-  const contentTypeHeaderKey: string | undefined = Object.keys(
-    output.headers,
-  ).find((key) => key.toLowerCase() === "content-type");
+  const contentTypeHeaderKey: string | undefined = Object.keys(output.headers).find(key => key.toLowerCase() === 'content-type');
   if (contentTypeHeaderKey != null) {
     const contentType = output.headers[contentTypeHeaderKey];
     if (contentType !== undefined && contentType !== "application/json") {
       throw new __UnsupportedMediaTypeException();
-    }
-  }
-  const acceptHeaderKey: string | undefined = Object.keys(output.headers).find(
-    (key) => key.toLowerCase() === "accept",
-  );
+    };
+  };
+  const acceptHeaderKey: string | undefined = Object.keys(output.headers).find(key => key.toLowerCase() === 'accept');
   if (acceptHeaderKey != null) {
     const accept = output.headers[acceptHeaderKey];
     if (!__acceptMatches(accept, "application/json")) {
       throw new __NotAcceptableException();
-    }
-  }
-  const contents: any = map({});
+    };
+  };
+  const contents: any = map({
+  });
   const pathRegex = new RegExp("/hello/(?<name>[^/]+)");
   const parsedPath = output.path.match(pathRegex);
   if (parsedPath?.groups !== undefined) {
@@ -66,40 +63,32 @@ export const deserializeHelloRequest = async (
   }
   await collectBody(output.body, context);
   return contents;
-};
+}
 
-export const serializeHelloResponse = async (
+export const serializeHelloResponse = async(
   input: HelloServerOutput,
-  ctx: ServerSerdeContext,
+  ctx: ServerSerdeContext
 ): Promise<__HttpResponse> => {
   const context: __SerdeContext = {
     ...ctx,
-    endpoint: () =>
-      Promise.resolve({
-        protocol: "",
-        hostname: "",
-        path: "",
-      }),
-  };
-  let statusCode: number = 200;
+    endpoint: () => Promise.resolve({
+      protocol: '',
+      hostname: '',
+      path: '',
+    }),
+  }
+  let statusCode: number = 200
   let headers: any = map({}, isSerializableHeaderValue, {
-    "content-type": "application/json",
+    'content-type': 'application/json',
   });
   let body: any;
-  body = JSON.stringify(
-    take(input, {
-      message: [],
-    }),
-  );
-  if (
-    body &&
-    Object.keys(headers)
-      .map((str) => str.toLowerCase())
-      .indexOf("content-length") === -1
-  ) {
+  body = JSON.stringify(take(input, {
+    'message': [],
+  }));
+  if (body && Object.keys(headers).map((str) => str.toLowerCase()).indexOf('content-length') === -1) {
     const length = calculateBodyLength(body);
     if (length !== undefined) {
-      headers = { ...headers, "content-length": String(length) };
+      headers = { ...headers, 'content-length': String(length) };
     }
   }
   return new __HttpResponse({
@@ -107,27 +96,26 @@ export const serializeHelloResponse = async (
     body,
     statusCode,
   });
-};
+}
 
-export const serializeFrameworkException = async (
+export const serializeFrameworkException = async(
   input: __SmithyFrameworkException,
-  ctx: ServerSerdeContext,
+  ctx: ServerSerdeContext
 ): Promise<__HttpResponse> => {
   const context: __SerdeContext = {
     ...ctx,
-    endpoint: () =>
-      Promise.resolve({
-        protocol: "",
-        hostname: "",
-        path: "",
-      }),
-  };
+    endpoint: () => Promise.resolve({
+      protocol: '',
+      hostname: '',
+      path: '',
+    }),
+  }
   switch (input.name) {
     case "InternalFailure": {
-      const statusCode: number = 500;
+      const statusCode: number = 500
       let headers: any = map({}, isSerializableHeaderValue, {
-        "x-amzn-errortype": "InternalFailure",
-        "content-type": "application/json",
+        'x-amzn-errortype': "InternalFailure",
+        'content-type': 'application/json',
       });
       let body: any;
       body = "{}";
@@ -138,10 +126,10 @@ export const serializeFrameworkException = async (
       });
     }
     case "NotAcceptableException": {
-      const statusCode: number = 406;
+      const statusCode: number = 406
       let headers: any = map({}, isSerializableHeaderValue, {
-        "x-amzn-errortype": "NotAcceptableException",
-        "content-type": "application/json",
+        'x-amzn-errortype': "NotAcceptableException",
+        'content-type': 'application/json',
       });
       let body: any;
       body = "{}";
@@ -152,10 +140,10 @@ export const serializeFrameworkException = async (
       });
     }
     case "SerializationException": {
-      const statusCode: number = 400;
+      const statusCode: number = 400
       let headers: any = map({}, isSerializableHeaderValue, {
-        "x-amzn-errortype": "SerializationException",
-        "content-type": "application/json",
+        'x-amzn-errortype': "SerializationException",
+        'content-type': 'application/json',
       });
       let body: any;
       body = "{}";
@@ -166,10 +154,10 @@ export const serializeFrameworkException = async (
       });
     }
     case "UnknownOperationException": {
-      const statusCode: number = 404;
+      const statusCode: number = 404
       let headers: any = map({}, isSerializableHeaderValue, {
-        "x-amzn-errortype": "UnknownOperationException",
-        "content-type": "application/json",
+        'x-amzn-errortype': "UnknownOperationException",
+        'content-type': 'application/json',
       });
       let body: any;
       body = "{}";
@@ -180,10 +168,10 @@ export const serializeFrameworkException = async (
       });
     }
     case "UnsupportedMediaTypeException": {
-      const statusCode: number = 415;
+      const statusCode: number = 415
       let headers: any = map({}, isSerializableHeaderValue, {
-        "x-amzn-errortype": "UnsupportedMediaTypeException",
-        "content-type": "application/json",
+        'x-amzn-errortype': "UnsupportedMediaTypeException",
+        'content-type': 'application/json',
       });
       let body: any;
       body = "{}";
@@ -194,52 +182,42 @@ export const serializeFrameworkException = async (
       });
     }
   }
-};
+}
 
-export const serializeInvalidInputErrorError = async (
+export const serializeInvalidInputErrorError = async(
   input: InvalidInputError,
-  ctx: ServerSerdeContext,
+  ctx: ServerSerdeContext
 ): Promise<__HttpResponse> => {
   const context: __SerdeContext = {
     ...ctx,
-    endpoint: () =>
-      Promise.resolve({
-        protocol: "",
-        hostname: "",
-        path: "",
-      }),
-  };
-  const statusCode: number = 400;
+    endpoint: () => Promise.resolve({
+      protocol: '',
+      hostname: '',
+      path: '',
+    }),
+  }
+  const statusCode: number = 400
   let headers: any = map({}, isSerializableHeaderValue, {
-    "x-amzn-errortype": "InvalidInputError",
-    "content-type": "application/json",
+    'x-amzn-errortype': "InvalidInputError",
+    'content-type': 'application/json',
   });
   let body: any;
-  body = JSON.stringify(
-    take(input, {
-      message: [],
-    }),
-  );
+  body = JSON.stringify(take(input, {
+    'message': [],
+  }));
   return new __HttpResponse({
     headers,
     body,
     statusCode,
   });
-};
+}
 
 const deserializeMetadata = (output: __HttpResponse): __ResponseMetadata => ({
   httpStatusCode: output.statusCode,
-  requestId:
-    output.headers["x-amzn-requestid"] ??
-    output.headers["x-amzn-request-id"] ??
-    output.headers["x-amz-request-id"],
+  requestId: output.headers["x-amzn-requestid"] ?? output.headers["x-amzn-request-id"] ?? output.headers["x-amz-request-id"],
   extendedRequestId: output.headers["x-amz-id-2"],
   cfId: output.headers["x-amz-cf-id"],
 });
 
 // Encode Uint8Array data into string with utf-8.
-const collectBodyString = (
-  streamBody: any,
-  context: __SerdeContext,
-): Promise<string> =>
-  collectBody(streamBody, context).then((body) => context.utf8Encoder(body));
+const collectBodyString = (streamBody: any, context: __SerdeContext): Promise<string> => collectBody(streamBody, context).then(body => context.utf8Encoder(body))

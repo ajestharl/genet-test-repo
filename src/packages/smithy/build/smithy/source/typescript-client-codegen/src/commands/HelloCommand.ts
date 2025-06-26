@@ -1,15 +1,21 @@
 // @ts-nocheck
 // smithy-typescript generated code
-import { getSerdePlugin } from "@smithy/middleware-serde";
-import { Command as $Command } from "@smithy/smithy-client";
-import { MetadataBearer as __MetadataBearer } from "@smithy/types";
 import {
   HelloClientResolvedConfig,
   ServiceInputTypes,
   ServiceOutputTypes,
 } from "../HelloClient";
-import { HelloInput, HelloOutput } from "../models/models_0";
-import { de_HelloCommand, se_HelloCommand } from "../protocols/Aws_restJson1";
+import {
+  HelloInput,
+  HelloOutput,
+} from "../models/models_0";
+import {
+  de_HelloCommand,
+  se_HelloCommand,
+} from "../protocols/Aws_restJson1";
+import { getSerdePlugin } from "@smithy/middleware-serde";
+import { Command as $Command } from "@smithy/smithy-client";
+import { MetadataBearer as __MetadataBearer } from "@smithy/types";
 
 /**
  * @public
@@ -62,38 +68,30 @@ export interface HelloCommandOutput extends HelloOutput, __MetadataBearer {}
  *
  *
  */
-export class HelloCommand extends $Command
-  .classBuilder<
-    HelloCommandInput,
-    HelloCommandOutput,
-    HelloClientResolvedConfig,
-    ServiceInputTypes,
-    ServiceOutputTypes
-  >()
-  .m(function (
-    this: any,
-    Command: any,
-    cs: any,
-    config: HelloClientResolvedConfig,
-    o: any,
-  ) {
-    return [getSerdePlugin(config, this.serialize, this.deserialize)];
+export class HelloCommand extends $Command.classBuilder<HelloCommandInput, HelloCommandOutput, HelloClientResolvedConfig, ServiceInputTypes, ServiceOutputTypes>()
+      .m(function (this: any, Command: any, cs: any, config: HelloClientResolvedConfig, o: any) {
+          return [
+
+  getSerdePlugin(config, this.serialize, this.deserialize),
+      ];
   })
-  .s("HelloService", "Hello", {})
+  .s("HelloService", "Hello", {
+
+  })
   .n("HelloClient", "HelloCommand")
   .f(void 0, void 0)
   .ser(se_HelloCommand)
   .de(de_HelloCommand)
-  .build() {
-  /** @internal type navigation helper, not in runtime. */
-  declare protected static __types: {
-    api: {
+.build() {
+/** @internal type navigation helper, not in runtime. */
+declare protected static __types: {
+  api: {
       input: HelloInput;
       output: HelloOutput;
-    };
-    sdk: {
+  };
+  sdk: {
       input: HelloCommandInput;
       output: HelloCommandOutput;
-    };
   };
+};
 }

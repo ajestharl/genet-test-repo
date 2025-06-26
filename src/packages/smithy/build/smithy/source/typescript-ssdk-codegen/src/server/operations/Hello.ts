@@ -1,6 +1,18 @@
 // @ts-nocheck
 // smithy-typescript generated code
 import {
+  HelloInput,
+  HelloOutput,
+  InvalidInputError,
+} from "../../models/models_0";
+import {
+  deserializeHelloRequest,
+  serializeFrameworkException,
+  serializeHelloResponse,
+  serializeInvalidInputErrorError,
+} from "../../protocols/Aws_restJson1";
+import { HelloServiceService } from "../HelloServiceService";
+import {
   ServerSerdeContext,
   ServiceException as __BaseException,
   InternalFailureException as __InternalFailureException,
@@ -19,61 +31,46 @@ import {
   isFrameworkException as __isFrameworkException,
   httpbinding,
 } from "@aws-smithy/server-common";
-import { NodeHttpHandler, streamCollector } from "@smithy/node-http-handler";
+import {
+  NodeHttpHandler,
+  streamCollector,
+} from "@smithy/node-http-handler";
 import {
   HttpRequest as __HttpRequest,
   HttpResponse as __HttpResponse,
 } from "@smithy/protocol-http";
-import { fromBase64, toBase64 } from "@smithy/util-base64";
-import { fromUtf8, toUtf8 } from "@smithy/util-utf8";
 import {
-  HelloInput,
-  HelloOutput,
-  InvalidInputError,
-} from "../../models/models_0";
+  fromBase64,
+  toBase64,
+} from "@smithy/util-base64";
 import {
-  deserializeHelloRequest,
-  serializeFrameworkException,
-  serializeHelloResponse,
-  serializeInvalidInputErrorError,
-} from "../../protocols/Aws_restJson1";
-import { HelloServiceService } from "../HelloServiceService";
+  fromUtf8,
+  toUtf8,
+} from "@smithy/util-utf8";
 
-export type Hello<Context> = __Operation<
-  HelloServerInput,
-  HelloServerOutput,
-  Context
->;
+export type Hello<Context> = __Operation<HelloServerInput, HelloServerOutput, Context>
 
 export interface HelloServerInput extends HelloInput {}
 export namespace HelloServerInput {
   /**
    * @internal
    */
-  export const validate: (
-    obj: Parameters<typeof HelloInput.validate>[0],
-  ) => __ValidationFailure[] = HelloInput.validate;
+  export const validate: (obj: Parameters<typeof HelloInput.validate>[0]) => __ValidationFailure[] = HelloInput.validate;
 }
 export interface HelloServerOutput extends HelloOutput {}
 
-export type HelloErrors = InvalidInputError;
+export type HelloErrors = InvalidInputError
 
-export class HelloSerializer
-  implements
-    __OperationSerializer<HelloServiceService<any>, "Hello", HelloErrors>
-{
+export class HelloSerializer implements __OperationSerializer<HelloServiceService<any>, "Hello", HelloErrors> {
   serialize = serializeHelloResponse;
   deserialize = deserializeHelloRequest;
 
   isOperationError(error: any): error is HelloErrors {
-    const names: HelloErrors["name"][] = ["InvalidInputError"];
+    const names: HelloErrors['name'][] = ["InvalidInputError"];
     return names.includes(error.name);
-  }
+  };
 
-  serializeError(
-    error: HelloErrors,
-    ctx: ServerSerdeContext,
-  ): Promise<__HttpResponse> {
+  serializeError(error: HelloErrors, ctx: ServerSerdeContext): Promise<__HttpResponse> {
     switch (error.name) {
       case "InvalidInputError": {
         return serializeInvalidInputErrorError(error, ctx);
@@ -83,28 +80,23 @@ export class HelloSerializer
       }
     }
   }
+
 }
 
-export const getHelloHandler = <Context>(
-  operation: __Operation<HelloServerInput, HelloServerOutput, Context>,
-  customizer: __ValidationCustomizer<"Hello">,
-): __ServiceHandler<Context, __HttpRequest, __HttpResponse> => {
+export const getHelloHandler = <Context>(operation: __Operation<HelloServerInput, HelloServerOutput, Context>, customizer: __ValidationCustomizer<"Hello">): __ServiceHandler<Context, __HttpRequest, __HttpResponse> => {
   const mux = new httpbinding.HttpBindingMux<"HelloService", "Hello">([
     new httpbinding.UriSpec<"HelloService", "Hello">(
-      "GET",
-      [{ type: "path_literal", value: "hello" }, { type: "path" }],
-      [],
-      { service: "HelloService", operation: "Hello" },
-    ),
+      'GET',
+      [
+        { type: 'path_literal', value: "hello" },
+        { type: 'path' },
+      ],
+      [
+      ],
+      { service: "HelloService", operation: "Hello" }),
   ]);
-  return new HelloHandler(
-    operation,
-    mux,
-    new HelloSerializer(),
-    serializeFrameworkException,
-    customizer,
-  );
-};
+  return new HelloHandler(operation, mux, new HelloSerializer(), serializeFrameworkException, customizer);
+}
 
 const serdeContextBase = {
   base64Encoder: toBase64,
@@ -113,80 +105,52 @@ const serdeContextBase = {
   utf8Decoder: fromUtf8,
   streamCollector: streamCollector,
   requestHandler: new NodeHttpHandler(),
-  disableHostPrefix: true,
+  disableHostPrefix: true
 };
 async function handle<S, O extends keyof S & string, Context>(
   request: __HttpRequest,
   context: Context,
   operationName: O,
   serializer: __OperationSerializer<S, O, __ServiceException>,
-  operation: __Operation<
-    __OperationInput<S[O]>,
-    __OperationOutput<S[O]>,
-    Context
-  >,
-  serializeFrameworkException: (
-    e: __SmithyFrameworkException,
-    ctx: __ServerSerdeContext,
-  ) => Promise<__HttpResponse>,
+  operation: __Operation<__OperationInput<S[O]>, __OperationOutput<S[O]>, Context>,
+  serializeFrameworkException: (e: __SmithyFrameworkException, ctx: __ServerSerdeContext) => Promise<__HttpResponse>,
   validationFn: (input: __OperationInput<S[O]>) => __ValidationFailure[],
-  validationCustomizer: __ValidationCustomizer<O>,
+  validationCustomizer: __ValidationCustomizer<O>
 ): Promise<__HttpResponse> {
   let input;
   try {
     input = await serializer.deserialize(request, {
-      endpoint: () => Promise.resolve(request),
-      ...serdeContextBase,
+      endpoint: () => Promise.resolve(request), ...serdeContextBase
     });
   } catch (error: unknown) {
     if (__isFrameworkException(error)) {
       return serializeFrameworkException(error, serdeContextBase);
-    }
-    return serializeFrameworkException(
-      new __SerializationException(),
-      serdeContextBase,
-    );
+    };
+    return serializeFrameworkException(new __SerializationException(), serdeContextBase);
   }
   try {
     let validationFailures = validationFn(input);
     if (validationFailures && validationFailures.length > 0) {
-      let validationException = validationCustomizer(
-        { operation: operationName },
-        validationFailures,
-      );
+      let validationException = validationCustomizer({ operation: operationName }, validationFailures);
       if (validationException) {
         return serializer.serializeError(validationException, serdeContextBase);
       }
     }
     let output = await operation(input, context);
     return serializer.serialize(output, serdeContextBase);
-  } catch (error: unknown) {
+  } catch(error: unknown) {
     if (serializer.isOperationError(error)) {
       return serializer.serializeError(error, serdeContextBase);
     }
-    console.log("Received an unexpected error", error);
-    return serializeFrameworkException(
-      new __InternalFailureException(),
-      serdeContextBase,
-    );
+    console.log('Received an unexpected error', error);
+    return serializeFrameworkException(new __InternalFailureException(), serdeContextBase);
   }
 }
 export class HelloHandler<Context> implements __ServiceHandler<Context> {
-  private readonly operation: __Operation<
-    HelloServerInput,
-    HelloServerOutput,
-    Context
-  >;
+  private readonly operation: __Operation<HelloServerInput, HelloServerOutput, Context>;
   private readonly mux: __Mux<"HelloService", "Hello">;
-  private readonly serializer: __OperationSerializer<
-    HelloServiceService<Context>,
-    "Hello",
-    HelloErrors
-  >;
-  private readonly serializeFrameworkException: (
-    e: __SmithyFrameworkException,
-    ctx: __ServerSerdeContext,
-  ) => Promise<__HttpResponse>;
+  private readonly serializer: __OperationSerializer<HelloServiceService<Context>, "Hello", HelloErrors>;
+  private readonly serializeFrameworkException: (e: __SmithyFrameworkException, ctx: __ServerSerdeContext) => Promise<__HttpResponse>;
   private readonly validationCustomizer: __ValidationCustomizer<"Hello">;
   /**
    * Construct a Hello handler.
@@ -200,16 +164,9 @@ export class HelloHandler<Context> implements __ServiceHandler<Context> {
   constructor(
     operation: __Operation<HelloServerInput, HelloServerOutput, Context>,
     mux: __Mux<"HelloService", "Hello">,
-    serializer: __OperationSerializer<
-      HelloServiceService<Context>,
-      "Hello",
-      HelloErrors
-    >,
-    serializeFrameworkException: (
-      e: __SmithyFrameworkException,
-      ctx: __ServerSerdeContext,
-    ) => Promise<__HttpResponse>,
-    validationCustomizer: __ValidationCustomizer<"Hello">,
+    serializer: __OperationSerializer<HelloServiceService<Context>, "Hello", HelloErrors>,
+    serializeFrameworkException: (e: __SmithyFrameworkException, ctx: __ServerSerdeContext) => Promise<__HttpResponse>,
+    validationCustomizer: __ValidationCustomizer<"Hello">
   ) {
     this.operation = operation;
     this.mux = mux;
@@ -217,29 +174,12 @@ export class HelloHandler<Context> implements __ServiceHandler<Context> {
     this.serializeFrameworkException = serializeFrameworkException;
     this.validationCustomizer = validationCustomizer;
   }
-  async handle(
-    request: __HttpRequest,
-    context: Context,
-  ): Promise<__HttpResponse> {
+  async handle(request: __HttpRequest, context: Context): Promise<__HttpResponse> {
     const target = this.mux.match(request);
     if (target === undefined) {
-      console.log(
-        "Received a request that did not match example.hello#HelloService.Hello. This indicates a misconfiguration.",
-      );
-      return this.serializeFrameworkException(
-        new __InternalFailureException(),
-        serdeContextBase,
-      );
+      console.log('Received a request that did not match example.hello#HelloService.Hello. This indicates a misconfiguration.');
+      return this.serializeFrameworkException(new __InternalFailureException(), serdeContextBase);
     }
-    return handle(
-      request,
-      context,
-      "Hello",
-      this.serializer,
-      this.operation,
-      this.serializeFrameworkException,
-      HelloServerInput.validate,
-      this.validationCustomizer,
-    );
+    return handle(request, context, "Hello", this.serializer, this.operation, this.serializeFrameworkException, HelloServerInput.validate, this.validationCustomizer);
   }
 }

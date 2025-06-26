@@ -14,20 +14,22 @@ import {
   streamCollector,
 } from "@smithy/fetch-http-handler";
 import { invalidProvider } from "@smithy/invalid-dependency";
-import { loadConfigsForDefaultMode } from "@smithy/smithy-client";
 import { calculateBodyLength } from "@smithy/util-body-length-browser";
-import { resolveDefaultsModeConfig } from "@smithy/util-defaults-mode-browser";
-import { DEFAULT_MAX_ATTEMPTS, DEFAULT_RETRY_MODE } from "@smithy/util-retry";
+import {
+  DEFAULT_MAX_ATTEMPTS,
+  DEFAULT_RETRY_MODE,
+} from "@smithy/util-retry";
 import { HelloClientConfig } from "./HelloClient";
 import { getRuntimeConfig as getSharedRuntimeConfig } from "./runtimeConfig.shared";
+import { loadConfigsForDefaultMode } from "@smithy/smithy-client";
+import { resolveDefaultsModeConfig } from "@smithy/util-defaults-mode-browser";
 
 /**
  * @internal
  */
 export const getRuntimeConfig = (config: HelloClientConfig) => {
   const defaultsMode = resolveDefaultsModeConfig(config);
-  const defaultConfigProvider = () =>
-    defaultsMode().then(loadConfigsForDefaultMode);
+  const defaultConfigProvider = () => defaultsMode().then(loadConfigsForDefaultMode);
   const clientSharedValues = getSharedRuntimeConfig(config);
   return {
     ...clientSharedValues,
@@ -35,28 +37,14 @@ export const getRuntimeConfig = (config: HelloClientConfig) => {
     runtime: "browser",
     defaultsMode,
     bodyLengthChecker: config?.bodyLengthChecker ?? calculateBodyLength,
-    defaultUserAgentProvider:
-      config?.defaultUserAgentProvider ??
-      createDefaultUserAgentProvider({
-        serviceId: clientSharedValues.serviceId,
-        clientVersion: packageInfo.version,
-      }),
+    defaultUserAgentProvider: config?.defaultUserAgentProvider ?? createDefaultUserAgentProvider({serviceId: clientSharedValues.serviceId, clientVersion: packageInfo.version}),
     maxAttempts: config?.maxAttempts ?? DEFAULT_MAX_ATTEMPTS,
     region: config?.region ?? invalidProvider("Region is missing"),
-    requestHandler: RequestHandler.create(
-      config?.requestHandler ?? defaultConfigProvider,
-    ),
-    retryMode:
-      config?.retryMode ??
-      (async () =>
-        (await defaultConfigProvider()).retryMode || DEFAULT_RETRY_MODE),
+    requestHandler: RequestHandler.create(config?.requestHandler ?? defaultConfigProvider),
+    retryMode: config?.retryMode ?? (async () => (await defaultConfigProvider()).retryMode || DEFAULT_RETRY_MODE),
     sha256: config?.sha256 ?? Sha256,
     streamCollector: config?.streamCollector ?? streamCollector,
-    useDualstackEndpoint:
-      config?.useDualstackEndpoint ??
-      (() => Promise.resolve(DEFAULT_USE_DUALSTACK_ENDPOINT)),
-    useFipsEndpoint:
-      config?.useFipsEndpoint ??
-      (() => Promise.resolve(DEFAULT_USE_FIPS_ENDPOINT)),
+    useDualstackEndpoint: config?.useDualstackEndpoint ?? (() => Promise.resolve(DEFAULT_USE_DUALSTACK_ENDPOINT)),
+    useFipsEndpoint: config?.useFipsEndpoint ?? (() => Promise.resolve(DEFAULT_USE_FIPS_ENDPOINT)),
   };
 };

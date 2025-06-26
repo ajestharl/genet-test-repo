@@ -17,23 +17,18 @@ export interface HelloInput {
 }
 
 export namespace HelloInput {
-  const memberValidators: {
-    name?: __MultiConstraintValidator<string>;
+  const memberValidators : {
+    name?: __MultiConstraintValidator<string>,
   } = {};
   /**
    * @internal
    */
-  export const validate = (
-    obj: HelloInput,
-    path: string = "",
-  ): __ValidationFailure[] => {
-    function getMemberValidator<T extends keyof typeof memberValidators>(
-      member: T,
-    ): NonNullable<(typeof memberValidators)[T]> {
+  export const validate = (obj: HelloInput, path: string = ""): __ValidationFailure[] => {
+    function getMemberValidator<T extends keyof typeof memberValidators>(member: T): NonNullable<typeof memberValidators[T]> {
       if (memberValidators[member] === undefined) {
         switch (member) {
           case "name": {
-            memberValidators.name = new __CompositeValidator<string>([
+            memberValidators["name"] = new __CompositeValidator<string>([
               new __RequiredValidator(),
             ]);
             break;
@@ -42,8 +37,10 @@ export namespace HelloInput {
       }
       return memberValidators[member]!!;
     }
-    return [...getMemberValidator("name").validate(obj.name, `${path}/name`)];
-  };
+    return [
+      ...getMemberValidator("name").validate(obj.name, `${path}/name`),
+    ];
+  }
 }
 
 /**
@@ -54,23 +51,18 @@ export interface HelloOutput {
 }
 
 export namespace HelloOutput {
-  const memberValidators: {
-    message?: __MultiConstraintValidator<string>;
+  const memberValidators : {
+    message?: __MultiConstraintValidator<string>,
   } = {};
   /**
    * @internal
    */
-  export const validate = (
-    obj: HelloOutput,
-    path: string = "",
-  ): __ValidationFailure[] => {
-    function getMemberValidator<T extends keyof typeof memberValidators>(
-      member: T,
-    ): NonNullable<(typeof memberValidators)[T]> {
+  export const validate = (obj: HelloOutput, path: string = ""): __ValidationFailure[] => {
+    function getMemberValidator<T extends keyof typeof memberValidators>(member: T): NonNullable<typeof memberValidators[T]> {
       if (memberValidators[member] === undefined) {
         switch (member) {
           case "message": {
-            memberValidators.message = new __CompositeValidator<string>([
+            memberValidators["message"] = new __CompositeValidator<string>([
               new __RequiredValidator(),
             ]);
             break;
@@ -82,7 +74,7 @@ export namespace HelloOutput {
     return [
       ...getMemberValidator("message").validate(obj.message, `${path}/message`),
     ];
-  };
+  }
 }
 
 /**
@@ -95,7 +87,7 @@ export class InvalidInputError extends __BaseException {
     super({
       name: "InvalidInputError",
       $fault: "client",
-      ...opts,
+      ...opts
     });
     Object.setPrototypeOf(this, InvalidInputError.prototype);
   }

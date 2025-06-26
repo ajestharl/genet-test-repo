@@ -1,7 +1,7 @@
 // @ts-nocheck
 // smithy-typescript generated code
-import { HttpAuthScheme } from "@smithy/types";
 import { HelloHttpAuthSchemeProvider } from "./httpAuthSchemeProvider";
+import { HttpAuthScheme } from "@smithy/types";
 
 /**
  * @internal
@@ -9,9 +9,7 @@ import { HelloHttpAuthSchemeProvider } from "./httpAuthSchemeProvider";
 export interface HttpAuthExtensionConfiguration {
   setHttpAuthScheme(httpAuthScheme: HttpAuthScheme): void;
   httpAuthSchemes(): HttpAuthScheme[];
-  setHttpAuthSchemeProvider(
-    httpAuthSchemeProvider: HelloHttpAuthSchemeProvider,
-  ): void;
+  setHttpAuthSchemeProvider(httpAuthSchemeProvider: HelloHttpAuthSchemeProvider): void;
   httpAuthSchemeProvider(): HelloHttpAuthSchemeProvider;
 }
 
@@ -26,16 +24,12 @@ export type HttpAuthRuntimeConfig = Partial<{
 /**
  * @internal
  */
-export const getHttpAuthExtensionConfiguration = (
-  runtimeConfig: HttpAuthRuntimeConfig,
-): HttpAuthExtensionConfiguration => {
+export const getHttpAuthExtensionConfiguration = (runtimeConfig: HttpAuthRuntimeConfig): HttpAuthExtensionConfiguration => {
   let _httpAuthSchemes = runtimeConfig.httpAuthSchemes!;
   let _httpAuthSchemeProvider = runtimeConfig.httpAuthSchemeProvider!;
   return {
     setHttpAuthScheme(httpAuthScheme: HttpAuthScheme): void {
-      const index = _httpAuthSchemes.findIndex(
-        (scheme) => scheme.schemeId === httpAuthScheme.schemeId,
-      );
+      const index = _httpAuthSchemes.findIndex(scheme => scheme.schemeId === httpAuthScheme.schemeId);
       if (index === -1) {
         _httpAuthSchemes.push(httpAuthScheme);
       } else {
@@ -45,23 +39,19 @@ export const getHttpAuthExtensionConfiguration = (
     httpAuthSchemes(): HttpAuthScheme[] {
       return _httpAuthSchemes;
     },
-    setHttpAuthSchemeProvider(
-      httpAuthSchemeProvider: HelloHttpAuthSchemeProvider,
-    ): void {
+    setHttpAuthSchemeProvider(httpAuthSchemeProvider: HelloHttpAuthSchemeProvider): void {
       _httpAuthSchemeProvider = httpAuthSchemeProvider;
     },
     httpAuthSchemeProvider(): HelloHttpAuthSchemeProvider {
       return _httpAuthSchemeProvider;
     },
-  };
+  }
 };
 
 /**
  * @internal
  */
-export const resolveHttpAuthRuntimeConfig = (
-  config: HttpAuthExtensionConfiguration,
-): HttpAuthRuntimeConfig => {
+export const resolveHttpAuthRuntimeConfig = (config: HttpAuthExtensionConfiguration): HttpAuthRuntimeConfig => {
   return {
     httpAuthSchemes: config.httpAuthSchemes(),
     httpAuthSchemeProvider: config.httpAuthSchemeProvider(),

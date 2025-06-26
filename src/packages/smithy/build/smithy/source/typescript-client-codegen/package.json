@@ -15,8 +15,6 @@
     "types": "./dist-types/index.d.ts",
     "module": "./dist-es/index.js",
     "sideEffects": false,
-    "private": false,
-    "releaseToNpm": true,
     "dependencies": {
         "tslib": "^2.6.2",
         "@aws-crypto/sha256-browser": "5.2.0",

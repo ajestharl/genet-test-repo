@@ -1,17 +1,20 @@
 // @ts-nocheck
 // smithy-typescript generated code
-import { createAggregatedClient } from "@smithy/smithy-client";
-import { HttpHandlerOptions as __HttpHandlerOptions } from "@smithy/types";
+import {
+  HelloClient,
+  HelloClientConfig,
+} from "./HelloClient";
 import {
   HelloCommand,
   HelloCommandInput,
   HelloCommandOutput,
 } from "./commands/HelloCommand";
-import { HelloClient, HelloClientConfig } from "./HelloClient";
+import { createAggregatedClient } from "@smithy/smithy-client";
+import { HttpHandlerOptions as __HttpHandlerOptions } from "@smithy/types";
 
 const commands = {
   HelloCommand,
-};
+}
 
 export interface Hello {
   /**
@@ -23,13 +26,14 @@ export interface Hello {
   ): Promise<HelloCommandOutput>;
   hello(
     args: HelloCommandInput,
-    cb: (err: any, data?: HelloCommandOutput) => void,
+    cb: (err: any, data?: HelloCommandOutput) => void
   ): void;
   hello(
     args: HelloCommandInput,
     options: __HttpHandlerOptions,
-    cb: (err: any, data?: HelloCommandOutput) => void,
+    cb: (err: any, data?: HelloCommandOutput) => void
   ): void;
+
 }
 
 /**

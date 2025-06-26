@@ -1,5 +1,6 @@
 // @ts-nocheck
 // smithy-typescript generated code
+import { HelloClientResolvedConfig } from "../HelloClient";
 import {
   HandlerExecutionContext,
   HttpAuthOption,
@@ -9,65 +10,52 @@ import {
   HttpAuthSchemeProvider,
   Provider,
 } from "@smithy/types";
-import { getSmithyContext, normalizeProvider } from "@smithy/util-middleware";
-import { HelloClientResolvedConfig } from "../HelloClient";
+import {
+  getSmithyContext,
+  normalizeProvider,
+} from "@smithy/util-middleware";
 
 /**
  * @internal
  */
-export interface HelloHttpAuthSchemeParameters
-  extends HttpAuthSchemeParameters {}
-
-/**
- * @internal
- */
-export interface HelloHttpAuthSchemeParametersProvider
-  extends HttpAuthSchemeParametersProvider<
-    HelloClientResolvedConfig,
-    HandlerExecutionContext,
-    HelloHttpAuthSchemeParameters,
-    object
-  > {}
-
-/**
- * @internal
- */
-export const defaultHelloHttpAuthSchemeParametersProvider = async (
-  config: HelloClientResolvedConfig,
-  context: HandlerExecutionContext,
-  input: object,
-): Promise<HelloHttpAuthSchemeParameters> => {
-  return {
-    operation: getSmithyContext(context).operation as string,
-  };
-};
-
-function createSmithyApiNoAuthHttpAuthOption(
-  authParameters: HelloHttpAuthSchemeParameters,
-): HttpAuthOption {
-  return {
-    schemeId: "smithy.api#noAuth",
-  };
+export interface HelloHttpAuthSchemeParameters extends HttpAuthSchemeParameters {
 }
 
 /**
  * @internal
  */
-export interface HelloHttpAuthSchemeProvider
-  extends HttpAuthSchemeProvider<HelloHttpAuthSchemeParameters> {}
+export interface HelloHttpAuthSchemeParametersProvider extends HttpAuthSchemeParametersProvider<HelloClientResolvedConfig, HandlerExecutionContext, HelloHttpAuthSchemeParameters, object> {}
 
 /**
  * @internal
  */
-export const defaultHelloHttpAuthSchemeProvider: HelloHttpAuthSchemeProvider = (
-  authParameters,
-) => {
+export const defaultHelloHttpAuthSchemeParametersProvider = async (config: HelloClientResolvedConfig, context: HandlerExecutionContext, input: object): Promise<HelloHttpAuthSchemeParameters> => {
+  return {
+    operation: getSmithyContext(context).operation as string,
+  };
+};
+
+function createSmithyApiNoAuthHttpAuthOption(authParameters: HelloHttpAuthSchemeParameters): HttpAuthOption {
+  return {
+    schemeId: "smithy.api#noAuth",
+  };
+};
+
+/**
+ * @internal
+ */
+export interface HelloHttpAuthSchemeProvider extends HttpAuthSchemeProvider<HelloHttpAuthSchemeParameters> {}
+
+/**
+ * @internal
+ */
+export const defaultHelloHttpAuthSchemeProvider: HelloHttpAuthSchemeProvider = (authParameters) => {
   const options: HttpAuthOption[] = [];
   switch (authParameters.operation) {
     default: {
       options.push(createSmithyApiNoAuthHttpAuthOption(authParameters));
-    }
-  }
+    };
+  };
   return options;
 };
 
@@ -94,6 +82,7 @@ export interface HttpAuthSchemeInputConfig {
    * @internal
    */
   httpAuthSchemeProvider?: HelloHttpAuthSchemeProvider;
+
 }
 
 /**
@@ -119,15 +108,15 @@ export interface HttpAuthSchemeResolvedConfig {
    * @internal
    */
   readonly httpAuthSchemeProvider: HelloHttpAuthSchemeProvider;
+
 }
 
 /**
  * @internal
  */
-export const resolveHttpAuthSchemeConfig = <T>(
-  config: T & HttpAuthSchemeInputConfig,
-): T & HttpAuthSchemeResolvedConfig => {
-  return Object.assign(config, {
+export const resolveHttpAuthSchemeConfig = <T>(config: T & HttpAuthSchemeInputConfig): T & HttpAuthSchemeResolvedConfig => {
+  return Object.assign(
+    config, {
     authSchemePreference: normalizeProvider(config.authSchemePreference ?? []),
   }) as T & HttpAuthSchemeResolvedConfig;
 };
