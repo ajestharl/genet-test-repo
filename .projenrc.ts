@@ -90,6 +90,7 @@ const project = new awscdk.AwsCdkConstructLibrary({
     prettier: true,
     fileExtensions: [".ts", ".md"],
     dirs: ["src", "test", "docs"],
+    ignorePatterns: ["**/smithy/build/**/*"],
   },
   jestOptions: {
     jestConfig: {
