@@ -7,8 +7,6 @@
     ".github/workflows/pull-request-lint.yml",
     ".github/workflows/release_ajithapackage1.yml",
     ".github/workflows/release_ajithapackage2.yml",
-    ".github/workflows/release_hello_client.yml",
-    ".github/workflows/release_hello_server.yml",
     ".github/workflows/release.yml",
     ".github/workflows/upgrade-main.yml",
     ".gitignore",
