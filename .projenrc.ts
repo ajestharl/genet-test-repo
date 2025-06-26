@@ -1,4 +1,5 @@
-import { awscdk, JsonFile, Project, typescript } from "projen";
+import { awscdk, JsonFile, Project, typescript, github } from "projen";
+import { JobStepOutput, Job } from "projen/lib/github/workflows-model";
 import { TypeScriptAppProject } from "projen/lib/typescript";
 
 const projectMetadata = {
@@ -131,407 +132,6 @@ new JsonFile(project, "lerna.json", {
   },
 });
 
-// Add workflow for smithy client package
-new JsonFile(project, ".github/workflows/release_hello_client.yml", {
-  obj: {
-    name: "release_hello_client",
-    on: {
-      push: {
-        branches: ["main"],
-      },
-      workflow_dispatch: {},
-    },
-    concurrency: {
-      group: "${{ github.workflow }}",
-      "cancel-in-progress": false,
-    },
-    jobs: {
-      release: {
-        "runs-on": "ubuntu-latest",
-        permissions: {
-          contents: "write",
-        },
-        outputs: {
-          latest_commit: "${{ steps.git_remote.outputs.latest_commit }}",
-          tag_exists: "${{ steps.check_tag_exists.outputs.exists }}",
-        },
-        env: {
-          CI: "true",
-        },
-        defaults: {
-          run: {
-            "working-directory":
-              "./src/packages/smithy/build/smithy/source/typescript-client-codegen",
-          },
-        },
-        steps: [
-          {
-            name: "Checkout",
-            uses: "actions/checkout@v4",
-            with: {
-              "fetch-depth": 0,
-            },
-          },
-          {
-            name: "Set git identity",
-            run: 'git config user.name "github-actions"\ngit config user.email "github-actions@github.com"',
-          },
-          {
-            name: "Setup Node.js",
-            uses: "actions/setup-node@v4",
-            with: {
-              "node-version": "lts/*",
-            },
-          },
-          {
-            name: "Install dependencies",
-            run: "yarn install --check-files --frozen-lockfile",
-            "working-directory": "./",
-          },
-          {
-            name: "release",
-            run: "npx projen release",
-          },
-          {
-            name: "Check if version has already been tagged",
-            id: "check_tag_exists",
-            run: 'TAG=$(cat dist/releasetag.txt)\n([ ! -z "$TAG" ] && git ls-remote -q --exit-code --tags origin $TAG && (echo "exists=true" >> $GITHUB_OUTPUT)) || (echo "exists=false" >> $GITHUB_OUTPUT)\ncat $GITHUB_OUTPUT',
-          },
-          {
-            name: "Check for new commits",
-            id: "git_remote",
-            run: 'echo "latest_commit=$(git ls-remote origin -h ${{ github.ref }} | cut -f1)" >> $GITHUB_OUTPUT\ncat $GITHUB_OUTPUT',
-          },
-          {
-            name: "Backup artifact permissions",
-            if: "${{ steps.git_remote.outputs.latest_commit == github.sha }}",
-            run: "cd dist && getfacl -R . > permissions-backup.acl",
-            "continue-on-error": true,
-          },
-          {
-            name: "Upload artifact",
-            if: "${{ steps.git_remote.outputs.latest_commit == github.sha }}",
-            uses: "actions/upload-artifact@v4.4.0",
-            with: {
-              name: "build-artifact",
-              path: "src/packages/smithy/build/smithy/source/typescript-client-codegen/dist",
-              overwrite: true,
-            },
-          },
-        ],
-      },
-      release_github: {
-        name: "Publish to GitHub Releases",
-        needs: ["release", "release_npm"],
-        "runs-on": "ubuntu-latest",
-        permissions: {
-          contents: "write",
-        },
-        if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
-        steps: [
-          {
-            uses: "actions/setup-node@v4",
-            with: {
-              "node-version": "lts/*",
-            },
-          },
-          {
-            name: "Download build artifacts",
-            uses: "actions/download-artifact@v4",
-            with: {
-              name: "build-artifact",
-              path: "dist",
-            },
-          },
-          {
-            name: "Restore build artifact permissions",
-            run: "cd dist && setfacl --restore=permissions-backup.acl",
-            "continue-on-error": true,
-          },
-          {
-            name: "Release",
-            env: {
-              GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-              GITHUB_REPOSITORY: "${{ github.repository }}",
-              GITHUB_REF: "${{ github.sha }}",
-            },
-            run: 'errout=$(mktemp); gh release create $(cat dist/releasetag.txt) -R $GITHUB_REPOSITORY -F dist/changelog.md -t $(cat dist/releasetag.txt) --target $GITHUB_REF 2> $errout && true; exitcode=$?; if [ $exitcode -ne 0 ] && ! grep -q "Release.tag_name already exists" $errout; then cat $errout; exit $exitcode; fi',
-          },
-        ],
-      },
-      release_npm: {
-        name: "Publish to npm",
-        needs: "release",
-        "runs-on": "ubuntu-latest",
-        permissions: {
-          "id-token": "write",
-          contents: "read",
-        },
-        if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
-        steps: [
-          {
-            uses: "actions/setup-node@v4",
-            with: {
-              "node-version": "lts/*",
-            },
-          },
-          {
-            name: "Download build artifacts",
-            uses: "actions/download-artifact@v4",
-            with: {
-              name: "build-artifact",
-              path: "dist",
-            },
-          },
-          {
-            name: "Restore build artifact permissions",
-            run: "cd dist && setfacl --restore=permissions-backup.acl",
-            "continue-on-error": true,
-          },
-          {
-            name: "Checkout",
-            uses: "actions/checkout@v4",
-            with: {
-              path: ".repo",
-            },
-          },
-          {
-            name: "Install Dependencies",
-            run: "cd .repo && yarn install --check-files --frozen-lockfile",
-          },
-          {
-            name: "Extract build artifact",
-            run: "tar --strip-components=1 -xzvf dist/js/*.tgz -C .repo",
-          },
-          {
-            name: "Move build artifact out of the way",
-            run: "mv dist dist.old",
-          },
-          {
-            name: "Create js artifact",
-            run: "cd .repo && npx projen package:js",
-          },
-          {
-            name: "Collect js artifact",
-            run: "mv .repo/dist dist",
-          },
-          {
-            name: "Release",
-            env: {
-              NPM_DIST_TAG: "latest",
-              NPM_REGISTRY: "registry.npmjs.org",
-              NPM_CONFIG_PROVENANCE: "true",
-              NPM_TOKEN: "${{ secrets.NPM_TOKEN }}",
-            },
-            run: "npx -p publib@latest publib-npm",
-          },
-        ],
-      },
-    },
-  },
-  committed: true,
-});
-
-// Add workflow for smithy server package
-new JsonFile(project, ".github/workflows/release_hello_server.yml", {
-  obj: {
-    name: "release_hello_server",
-    on: {
-      push: {
-        branches: ["main"],
-      },
-      workflow_dispatch: {},
-    },
-    concurrency: {
-      group: "${{ github.workflow }}",
-      "cancel-in-progress": false,
-    },
-    jobs: {
-      release: {
-        "runs-on": "ubuntu-latest",
-        permissions: {
-          contents: "write",
-        },
-        outputs: {
-          latest_commit: "${{ steps.git_remote.outputs.latest_commit }}",
-          tag_exists: "${{ steps.check_tag_exists.outputs.exists }}",
-        },
-        env: {
-          CI: "true",
-        },
-        defaults: {
-          run: {
-            "working-directory":
-              "./src/packages/smithy/build/smithy/source/typescript-ssdk-codegen",
-          },
-        },
-        steps: [
-          {
-            name: "Checkout",
-            uses: "actions/checkout@v4",
-            with: {
-              "fetch-depth": 0,
-            },
-          },
-          {
-            name: "Set git identity",
-            run: 'git config user.name "github-actions"\ngit config user.email "github-actions@github.com"',
-          },
-          {
-            name: "Setup Node.js",
-            uses: "actions/setup-node@v4",
-            with: {
-              "node-version": "lts/*",
-            },
-          },
-          {
-            name: "Install dependencies",
-            run: "yarn install --check-files --frozen-lockfile",
-            "working-directory": "./",
-          },
-          {
-            name: "release",
-            run: "npx projen release",
-          },
-          {
-            name: "Check if version has already been tagged",
-            id: "check_tag_exists",
-            run: 'TAG=$(cat dist/releasetag.txt)\n([ ! -z "$TAG" ] && git ls-remote -q --exit-code --tags origin $TAG && (echo "exists=true" >> $GITHUB_OUTPUT)) || (echo "exists=false" >> $GITHUB_OUTPUT)\ncat $GITHUB_OUTPUT',
-          },
-          {
-            name: "Check for new commits",
-            id: "git_remote",
-            run: 'echo "latest_commit=$(git ls-remote origin -h ${{ github.ref }} | cut -f1)" >> $GITHUB_OUTPUT\ncat $GITHUB_OUTPUT',
-          },
-          {
-            name: "Backup artifact permissions",
-            if: "${{ steps.git_remote.outputs.latest_commit == github.sha }}",
-            run: "cd dist && getfacl -R . > permissions-backup.acl",
-            "continue-on-error": true,
-          },
-          {
-            name: "Upload artifact",
-            if: "${{ steps.git_remote.outputs.latest_commit == github.sha }}",
-            uses: "actions/upload-artifact@v4.4.0",
-            with: {
-              name: "build-artifact",
-              path: "src/packages/smithy/build/smithy/source/typescript-ssdk-codegen/dist",
-              overwrite: true,
-            },
-          },
-        ],
-      },
-      release_github: {
-        name: "Publish to GitHub Releases",
-        needs: ["release", "release_npm"],
-        "runs-on": "ubuntu-latest",
-        permissions: {
-          contents: "write",
-        },
-        if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
-        steps: [
-          {
-            uses: "actions/setup-node@v4",
-            with: {
-              "node-version": "lts/*",
-            },
-          },
-          {
-            name: "Download build artifacts",
-            uses: "actions/download-artifact@v4",
-            with: {
-              name: "build-artifact",
-              path: "dist",
-            },
-          },
-          {
-            name: "Restore build artifact permissions",
-            run: "cd dist && setfacl --restore=permissions-backup.acl",
-            "continue-on-error": true,
-          },
-          {
-            name: "Release",
-            env: {
-              GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-              GITHUB_REPOSITORY: "${{ github.repository }}",
-              GITHUB_REF: "${{ github.sha }}",
-            },
-            run: 'errout=$(mktemp); gh release create $(cat dist/releasetag.txt) -R $GITHUB_REPOSITORY -F dist/changelog.md -t $(cat dist/releasetag.txt) --target $GITHUB_REF 2> $errout && true; exitcode=$?; if [ $exitcode -ne 0 ] && ! grep -q "Release.tag_name already exists" $errout; then cat $errout; exit $exitcode; fi',
-          },
-        ],
-      },
-      release_npm: {
-        name: "Publish to npm",
-        needs: "release",
-        "runs-on": "ubuntu-latest",
-        permissions: {
-          "id-token": "write",
-          contents: "read",
-        },
-        if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
-        steps: [
-          {
-            uses: "actions/setup-node@v4",
-            with: {
-              "node-version": "lts/*",
-            },
-          },
-          {
-            name: "Download build artifacts",
-            uses: "actions/download-artifact@v4",
-            with: {
-              name: "build-artifact",
-              path: "dist",
-            },
-          },
-          {
-            name: "Restore build artifact permissions",
-            run: "cd dist && setfacl --restore=permissions-backup.acl",
-            "continue-on-error": true,
-          },
-          {
-            name: "Checkout",
-            uses: "actions/checkout@v4",
-            with: {
-              path: ".repo",
-            },
-          },
-          {
-            name: "Install Dependencies",
-            run: "cd .repo && yarn install --check-files --frozen-lockfile",
-          },
-          {
-            name: "Extract build artifact",
-            run: "tar --strip-components=1 -xzvf dist/js/*.tgz -C .repo",
-          },
-          {
-            name: "Move build artifact out of the way",
-            run: "mv dist dist.old",
-          },
-          {
-            name: "Create js artifact",
-            run: "cd .repo && npx projen package:js",
-          },
-          {
-            name: "Collect js artifact",
-            run: "mv .repo/dist dist",
-          },
-          {
-            name: "Release",
-            env: {
-              NPM_DIST_TAG: "latest",
-              NPM_REGISTRY: "registry.npmjs.org",
-              NPM_CONFIG_PROVENANCE: "true",
-              NPM_TOKEN: "${{ secrets.NPM_TOKEN }}",
-            },
-            run: "npx -p publib@latest publib-npm",
-          },
-        ],
-      },
-    },
-  },
-  committed: true,
-});
 project.package.file.addOverride("private", true);
 project.package.file.addOverride("workspaces", [
   "src/packages/*",
@@ -606,4 +206,203 @@ addTestTargets(package2);
 addPrettierConfig(package2);
 configureMarkDownLinting(package2);
 package2.package.file.addOverride("private", false);
+
+const workflow = project.github?.addWorkflow("release_client");
+if (workflow) {
+  workflow.on({
+    push: { branches: ["main"] },
+    workflowDispatch: {},
+  });
+
+  const releaseJob: Job = {
+    runsOn: ["ubuntu-latest"],
+    permissions: { contents: github.workflows.JobPermission.WRITE },
+    outputs: {
+      latest_commit: {
+        stepId: "git_remote",
+        outputName: "latest_commit",
+      } as JobStepOutput,
+      tag_exists: {
+        stepId: "check_tag_exists",
+        outputName: "exists",
+      } as JobStepOutput,
+    },
+    env: {
+      CI: "true",
+    },
+    defaults: {
+      run: {
+        workingDirectory:
+          "./src/packages/******/build/smithy/source/typescript-client-codegen",
+      },
+    },
+    steps: [
+      {
+        name: "Checkout",
+        uses: "actions/checkout@v4",
+        with: { "fetch-depth": 0 },
+      },
+      {
+        name: "Set git identity",
+        run: [
+          'git config user.name "github-actions"',
+          'git config user.email "github-actions@github.com"',
+        ].join("\n"),
+      },
+      {
+        name: "Setup Node.js",
+        uses: "actions/setup-node@v4",
+        with: { "node-version": "lts/*" },
+      },
+      {
+        name: "Install dependencies",
+        run: "yarn install --check-files --frozen-lockfile",
+        workingDirectory: "./",
+      },
+      {
+        name: "release",
+        run: "npx projen release",
+      },
+      {
+        name: "Check if version has already been tagged",
+        id: "check_tag_exists",
+        run: [
+          "TAG=$(cat dist/releasetag.txt)",
+          '([ ! -z "$TAG" ] && git ls-remote -q --exit-code --tags origin $TAG && (echo "exists=true" >> $GITHUB_OUTPUT)) || (echo "exists=false" >> $GITHUB_OUTPUT)',
+          "cat $GITHUB_OUTPUT",
+        ].join("\n"),
+      },
+      {
+        name: "Check for new commits",
+        id: "git_remote",
+        run: [
+          'echo "latest_commit=$(git ls-remote origin -h ${{ github.ref }} | cut -f1)" >> $GITHUB_OUTPUT',
+          "cat $GITHUB_OUTPUT",
+        ].join("\n"),
+      },
+      {
+        name: "Backup artifact permissions",
+        if: "${{ steps.git_remote.outputs.latest_commit == github.sha }}",
+        run: "cd dist && getfacl -R . > permissions-backup.acl",
+        continueOnError: true,
+      },
+      {
+        name: "Upload artifact",
+        if: "${{ steps.git_remote.outputs.latest_commit == github.sha }}",
+        uses: "actions/upload-artifact@v4.4.0",
+        with: {
+          name: "build-artifact",
+          path: "./src/packages/smithy/build/smithy/source/typescript-client-codegen/dist",
+          overwrite: true,
+        },
+      },
+    ],
+  };
+
+  const releaseGithubJob: Job = {
+    name: "Publish to GitHub Releases",
+    needs: ["release", "release_npm"],
+    runsOn: ["ubuntu-latest"],
+    permissions: { contents: github.workflows.JobPermission.WRITE },
+    if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+    steps: [
+      {
+        uses: "actions/setup-node@v4",
+        with: { "node-version": "lts/*" },
+      },
+      {
+        name: "Download build artifacts",
+        uses: "actions/download-artifact@v4",
+        with: {
+          name: "build-artifact",
+          path: "dist",
+        },
+      },
+      {
+        name: "Restore build artifact permissions",
+        run: "cd dist && setfacl --restore=permissions-backup.acl",
+        continueOnError: true,
+      },
+      {
+        name: "Release",
+        env: {
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+        },
+        run: 'errout=$(mktemp); gh release create $(cat dist/releasetag.txt) -R $GITHUB_REPOSITORY -F dist/changelog.md -t $(cat dist/releasetag.txt) --target $GITHUB_SHA 2> $errout && true; exitcode=$?; if [ $exitcode -ne 0 ] && ! grep -q "Release.tag_name already exists" $errout; then cat $errout; exit $exitcode; fi',
+      },
+    ],
+  };
+
+  const releaseNpmJob: Job = {
+    name: "Publish to npm",
+    needs: ["release"],
+    runsOn: ["ubuntu-latest"],
+    permissions: {
+      idToken: github.workflows.JobPermission.WRITE,
+      contents: github.workflows.JobPermission.READ,
+    },
+    if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+    steps: [
+      {
+        uses: "actions/setup-node@v4",
+        with: { "node-version": "lts/*" },
+      },
+      {
+        name: "Download build artifacts",
+        uses: "actions/download-artifact@v4",
+        with: {
+          name: "build-artifact",
+          path: "dist",
+        },
+      },
+      {
+        name: "Restore build artifact permissions",
+        run: "cd dist && setfacl --restore=permissions-backup.acl",
+        continueOnError: true,
+      },
+      {
+        name: "Checkout",
+        uses: "actions/checkout@v4",
+        with: { path: ".repo" },
+      },
+      {
+        name: "Install Dependencies",
+        run: "cd .repo && yarn install --check-files --frozen-lockfile",
+      },
+      {
+        name: "Extract build artifact",
+        run: "tar --strip-components=1 -xzvf dist/js/*.tgz -C .repo",
+      },
+      {
+        name: "Move build artifact out of the way",
+        run: "mv dist dist.old",
+      },
+      {
+        name: "Create js artifact",
+        run: "cd .repo && npx projen package:js",
+      },
+      {
+        name: "Collect js artifact",
+        run: "mv .repo/dist dist",
+      },
+      {
+        name: "Release",
+        env: {
+          NPM_DIST_TAG: "latest",
+          NPM_REGISTRY: "registry.npmjs.org",
+          NPM_CONFIG_PROVENANCE: "true",
+          NPM_TOKEN: "${{ secrets.NPM_TOKEN }}",
+        },
+        run: "npx -p publib@latest publib-npm",
+      },
+    ],
+  };
+
+  workflow.addJobs({
+    release: releaseJob,
+    release_github: releaseGithubJob,
+    release_npm: releaseNpmJob,
+  });
+}
+
 project.synth();

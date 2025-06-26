@@ -9,8 +9,7 @@
 /.github/workflows/pull-request-lint.yml linguist-generated
 /.github/workflows/release_ajithapackage1.yml linguist-generated
 /.github/workflows/release_ajithapackage2.yml linguist-generated
-/.github/workflows/release_hello_client.yml linguist-generated
-/.github/workflows/release_hello_server.yml linguist-generated
+/.github/workflows/release_client.yml linguist-generated
 /.github/workflows/release.yml linguist-generated
 /.github/workflows/upgrade-main.yml linguist-generated
 /.gitignore linguist-generated
