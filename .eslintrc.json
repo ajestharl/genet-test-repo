@@ -36,7 +36,7 @@
     }
   },
   "ignorePatterns": [
-    "**/smithy/build/**/*",
+    "src/packages/smithy/build/**/*",
     "!.projenrc.ts",
     "!projenrc/**/*.ts"
   ],
