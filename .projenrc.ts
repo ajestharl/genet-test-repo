@@ -176,6 +176,10 @@ export const createPackage = (config: PackageConfig) => {
     packageName: config.name,
     release: true,
     releaseToNpm: true,
+    publishToPypi: {
+      distName: config.name,
+      module: config.name,
+    },
   });
   addTestTargets(tsProject);
   addPrettierConfig(tsProject);
