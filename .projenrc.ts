@@ -100,6 +100,10 @@ const project = new awscdk.AwsCdkConstructLibrary({
   release: false,
   autoMerge: false,
   releaseToNpm: false,
+  publishToPypi: {
+    distName: projectMetadata.name,
+    module: projectMetadata.name,
+  },
   constructsVersion: "10.4.2",
   packageName: "@example/genet-test-repo",
   description: "Test Package",
@@ -142,7 +146,6 @@ project.addScripts({
     "ts-node src/packages/app-framework-ops-tools/src/importPrivateKey.ts",
   "get-table-name":
     "ts-node src/packages/app-framework-ops-tools/src/getTableName.ts",
-  "package:python": "npx projen package:python",
 });
 
 addTestTargets(project);
