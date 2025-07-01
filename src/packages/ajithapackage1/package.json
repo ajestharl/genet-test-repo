@@ -1,5 +1,5 @@
 {
-  "name": "ajithapackage1",
+  "name": "ajithapackage",
   "repository": {
     "type": "git",
     "url": "https://github.com/ajestharl/genet-test-repo.git"
@@ -118,8 +118,8 @@
     "outdir": "dist",
     "targets": {
       "python": {
-        "distName": "ajithapackage1",
-        "module": "ajithapackage1"
+        "distName": "ajithapackage",
+        "module": "ajithapackage"
       }
     },
     "tsc": {

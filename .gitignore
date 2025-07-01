@@ -48,6 +48,6 @@ junit.xml
 tsconfig.json
 !/API.md
 !/lerna.json
-!/.github/workflows/release_ajithapackage1.yml
+!/.github/workflows/release_ajithapackage.yml
 !/.github/workflows/release_ajithapackage2.yml
 !/.projenrc.ts
