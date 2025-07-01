@@ -222,7 +222,7 @@ createPackage({
 // }
 
 const releaseWorkflow = project.tryFindObjectFile(
-  ".github/workflows/release_ajithapackage1.yml",
+  ".github/workflows/release_ajithapackage.yml",
 );
 if (releaseWorkflow) {
   // Add OIDC permissions for PyPI
