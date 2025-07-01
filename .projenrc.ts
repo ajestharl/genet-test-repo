@@ -277,10 +277,9 @@ if (releaseWorkflow) {
     },
     // :white_check_mark: Replace the publish step with OIDC
     {
+      name: "Release",
+      run: "npx -p publib@latest publib-pypi",
       uses: "pypa/gh-action-pypi-publish@release/v1",
-      with: {
-        packages_dir: "dist",
-      },
     },
   ];
   releaseWorkflow.addOverride("jobs.release_pypi.steps", pypiSteps);
