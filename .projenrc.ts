@@ -279,7 +279,7 @@ if (releaseWorkflow) {
     {
       uses: "pypa/gh-action-pypi-publish@release/v1",
       with: {
-        packages_dir: "dist",
+        "packages-dir": "dist",
       },
     },
   ];
