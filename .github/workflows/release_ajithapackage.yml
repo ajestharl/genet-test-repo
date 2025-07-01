@@ -167,5 +167,7 @@ jobs:
       - name: Create python artifact
         run: cd .repo && npx projen package:python
       - name: Collect python artifact
-        run: mkdir -p dist && cd .repo/dist/*.whl .repo/dist/*.tar.gz dist/
-      - uses: pypa/gh-action-pypi-publish@release/v1
+        run: mv .repo/dist dist
+      - name: Release
+        run: npx -p publib@latest publib-pypi
+        uses: pypa/gh-action-pypi-publish@release/v1
