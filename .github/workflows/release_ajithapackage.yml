@@ -166,6 +166,8 @@ jobs:
         run: mv dist dist.old
       - name: Create python artifact
         run: cd .repo && npx projen package:python
+      - name: debug dist folder
+        run: ls -R dist
       - name: Collect python artifact
         run: mv .repo/dist dist
       - uses: pypa/gh-action-pypi-publish@release/v1
