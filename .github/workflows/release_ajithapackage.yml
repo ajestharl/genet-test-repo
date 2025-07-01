@@ -171,5 +171,3 @@ jobs:
       - name: Collect python artifact
         run: mv .repo/dist dist
       - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist

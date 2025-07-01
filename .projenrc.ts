@@ -282,9 +282,6 @@ if (releaseWorkflow) {
     // :white_check_mark: Replace the publish step with OIDC
     {
       uses: "pypa/gh-action-pypi-publish@release/v1",
-      with: {
-        "packages-dir": "dist",
-      },
     },
   ];
   releaseWorkflow.addOverride("jobs.release_pypi.steps", pypiSteps);
