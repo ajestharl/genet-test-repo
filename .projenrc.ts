@@ -272,10 +272,6 @@ if (releaseWorkflow) {
       run: "cd .repo && npx projen package:python",
     },
     {
-      name: "debug dist folder",
-      run: "ls -R dist",
-    },
-    {
       name: "Collect python artifact",
       run: "mv .repo/dist dist",
     },
