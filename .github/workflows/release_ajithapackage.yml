@@ -168,6 +168,6 @@ jobs:
         run: cd .repo && npx projen package:python
       - name: Collect python artifact
         run: mv .repo/dist dist
-      - name: Release
+      - name: publish
         run: npx -p publib@latest publib-pypi
         uses: pypa/gh-action-pypi-publish@release/v1
