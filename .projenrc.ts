@@ -273,7 +273,7 @@ if (releaseWorkflow) {
     },
     {
       name: "Collect python artifact",
-      run: "mv .repo/dist/python/* dist/",
+      run: "mkdir -p dist && mv .repo/dist/python/* dist/",
     },
     // :white_check_mark: Replace the publish step with OIDC
     {
