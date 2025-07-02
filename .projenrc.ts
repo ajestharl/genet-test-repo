@@ -285,6 +285,66 @@ if (releaseWorkflow) {
   releaseWorkflow.addOverride("jobs.release_pypi.steps", pypiSteps);
 }
 
+import { Job, JobPermission } from "projen/lib/github/workflows-model";
+
+const workflow = project.github?.addWorkflow("release_ssdk");
+if (workflow) {
+  // Trigger on push to main and allow manual trigger
+  workflow.on({
+    push: {
+      branches: ["main"],
+    },
+    workflowDispatch: {}, // Enables manual execution from GitHub UI
+  });
+  // Define the release job
+  const releaseJob: Job = {
+    runsOn: ["ubuntu-latest"],
+    permissions: {
+      contents: JobPermission.READ,
+    },
+    defaults: {
+      run: {
+        workingDirectory:
+          "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
+      },
+    },
+    env: {
+      CI: "true",
+    },
+    steps: [
+      {
+        name: "Checkout repository",
+        uses: "actions/checkout@v4",
+      },
+      {
+        name: "Setup Node.js",
+        uses: "actions/setup-node@v4",
+        with: {
+          "node-version": "lts/*",
+          "registry-url": "https://registry.npmjs.org/",
+        },
+      },
+      {
+        name: "Install dependencies",
+        run: "yarn install",
+      },
+      {
+        name: "Build package",
+        run: "yarn build",
+      },
+      {
+        name: "Publish to NPM",
+        run: "npm publish --access public",
+        env: {
+          NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}",
+        },
+      },
+    ],
+  };
+  // Add the job to the workflow
+  workflow.addJobs({ release: releaseJob });
+}
+
 const package2 = new typescript.TypeScriptProject({
   ...projectMetadata,
   name: "ajithapackage2",

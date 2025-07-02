@@ -49,5 +49,6 @@ tsconfig.json
 !/API.md
 !/lerna.json
 !/.github/workflows/release_ajithapackage.yml
+!/.github/workflows/release_ssdk.yml
 !/.github/workflows/release_ajithapackage2.yml
 !/.projenrc.ts
