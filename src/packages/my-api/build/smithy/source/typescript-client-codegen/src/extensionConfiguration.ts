@@ -1,3 +1,4 @@
+// @ts-nocheck
 // smithy-typescript generated code
 import { AwsRegionExtensionConfiguration } from "@aws-sdk/types";
 import { HttpHandlerExtensionConfiguration } from "@smithy/protocol-http";
