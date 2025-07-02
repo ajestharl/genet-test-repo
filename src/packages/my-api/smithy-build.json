@@ -9,14 +9,14 @@
     },
     "plugins": {
         "typescript-ssdk-codegen": {
-            "package": "@example/my-service-ssdk",
+            "package": "my-service-ssdk",
             "packageVersion": "0.0.1",
             "protocol": "aws.protocols#restJson1",
             "service": "com.example#ExampleService",
             "disableDefaultValidation": true
         },
         "typescript-client-codegen": {
-            "package": "@example/my-service-client",
+            "package": "my-service-client",
             "packageVersion": "0.0.1",
             "protocol": "aws.protocols#restJson1",
             "service": "com.example#ExampleService",

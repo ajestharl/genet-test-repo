@@ -1,6 +1,6 @@
 import { awscdk, JsonFile, Project, typescript } from "projen";
+import { Job, JobPermission } from "projen/lib/github/workflows-model";
 import { TypeScriptAppProject } from "projen/lib/typescript";
-
 const projectMetadata = {
   author: "Ajitha",
   authorAddress: "ajithamanit@gmail.com",
@@ -197,8 +197,6 @@ createPackage({
   name: "ajithapackage",
   outdir: "src/packages/ajithapackage1",
 });
-
-import { Job, JobPermission } from "projen/lib/github/workflows-model";
 
 const workflow = project.github?.addWorkflow("release_ssdk");
 if (workflow) {
