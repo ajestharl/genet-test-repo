@@ -128,7 +128,7 @@ if (project.github) {
 // Add Lerna configuration file (lerna.json)
 new JsonFile(project, "lerna.json", {
   obj: {
-    packages: ["src/packages/*", "src/packages/smithy/build/smithy/source/*"],
+    packages: ["src/packages/*", "src/packages/my-api/build/smithy/source/*"],
     version: "0.0.0",
     npmClient: "yarn",
   },
@@ -136,7 +136,7 @@ new JsonFile(project, "lerna.json", {
 project.package.file.addOverride("private", true);
 project.package.file.addOverride("workspaces", [
   "src/packages/*",
-  "src/packages/smithy/build/smithy/source/*",
+  "src/packages/my-api/build/smithy/source/*",
 ]);
 // Run Lerna build one package at a time and,
 // waits for each package to complete before showing its logs.
@@ -198,91 +198,64 @@ createPackage({
   outdir: "src/packages/ajithapackage1",
 });
 
-// const releaseWorkflow = project.tryFindObjectFile('.github/workflows/release_ajithapackage1.yml');
-// if (releaseWorkflow) {
-//   // Add OIDC permissions
-//   releaseWorkflow.addOverride('jobs.release_pypi.permissions', {
-//     contents: 'read',
-//     'id-token': 'write'
-//   });
+import { Job, JobPermission } from "projen/lib/github/workflows-model";
 
-//   // // Add environment configuration
-//   // releaseWorkflow.addOverride('jobs.release_pypi.steps.env', {
-//   //   name: 'pypi',
-//   //   url: 'https://pypi.org/p/ajithapackage1'
-//   // });
-
-//   // Replace only the last step in the steps array
-//   releaseWorkflow.addOverride('jobs.release_pypi.steps[-1]', {
-//     uses: 'pypa/gh-action-pypi-publish@release/v1',
-//     with: {
-//       packages_dir: 'dist',
-//     }
-//   });
-// }
-
-const releaseWorkflow = project.tryFindObjectFile(
-  ".github/workflows/release_ajithapackage.yml",
-);
-if (releaseWorkflow) {
-  // Add OIDC permissions for PyPI
-  releaseWorkflow.addOverride("jobs.release_pypi.permissions", {
-    contents: "read",
-    "id-token": "write",
+const workflow = project.github?.addWorkflow("release_ssdk");
+if (workflow) {
+  // Trigger on push to main and allow manual trigger
+  workflow.on({
+    push: {
+      branches: ["main"],
+    },
+    workflowDispatch: {}, // Enables manual execution from GitHub UI
   });
-  // Fully override the steps array, by keeping existing steps except the last one
-  const pypiSteps = [
-    {
-      uses: "actions/setup-node@v4",
-      with: { "node-version": "lts/*" },
+  // Define the release job
+  const releaseJob: Job = {
+    runsOn: ["ubuntu-latest"],
+    permissions: {
+      contents: JobPermission.READ,
     },
-    {
-      uses: "actions/setup-python@v5",
-      with: { "python-version": "3.x" },
+    defaults: {
+      run: {
+        workingDirectory:
+          "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
+      },
     },
-    {
-      name: "Download build artifacts",
-      uses: "actions/download-artifact@v4",
-      with: { name: "build-artifact", path: "dist" },
+    env: {
+      CI: "true",
     },
-    {
-      name: "Restore build artifact permissions",
-      run: "cd dist && setfacl --restore=permissions-backup.acl",
-      "continue-on-error": true,
-    },
-    {
-      name: "Checkout",
-      uses: "actions/checkout@v4",
-      with: { path: ".repo" },
-    },
-    {
-      name: "Install Dependencies",
-      run: "cd .repo && yarn install --check-files --frozen-lockfile",
-    },
-    {
-      name: "Extract build artifact",
-      run: "tar --strip-components=1 -xzvf dist/js/*.tgz -C .repo",
-    },
-    {
-      name: "Move build artifact out of the way",
-      run: "mv dist dist.old",
-    },
-    {
-      name: "Create python artifact",
-      run: "cd .repo && npx projen package:python",
-    },
-    {
-      name: "Collect python artifact",
-      run: "mv .repo/dist dist",
-    },
-    // :white_check_mark: Replace the publish step with OIDC
-    {
-      name: "Release",
-      run: "npx -p publib@latest publib-pypi",
-      uses: "pypa/gh-action-pypi-publish@release/v1",
-    },
-  ];
-  releaseWorkflow.addOverride("jobs.release_pypi.steps", pypiSteps);
+    steps: [
+      {
+        name: "Checkout repository",
+        uses: "actions/checkout@v4",
+      },
+      {
+        name: "Setup Node.js",
+        uses: "actions/setup-node@v4",
+        with: {
+          "node-version": "lts/*",
+          "registry-url": "https://registry.npmjs.org/",
+        },
+      },
+      {
+        name: "Install dependencies",
+        run: "yarn install",
+      },
+      {
+        name: "Build package",
+        run: "yarn build",
+      },
+      {
+        name: "Publish to NPM",
+        run: "npm publish --access public",
+        env: {
+          NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}",
+        },
+      },
+    ],
+  };
+  // Add the job to the workflow
+  workflow.addJobs({ release: releaseJob });
 }
 
 const package2 = new typescript.TypeScriptProject({

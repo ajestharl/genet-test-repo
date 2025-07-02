@@ -1,7 +1,7 @@
 {
   "packages": [
     "src/packages/*",
-    "src/packages/smithy/build/smithy/source/*"
+    "src/packages/my-api/build/smithy/source/*"
   ],
   "version": "0.0.0",
   "npmClient": "yarn",
