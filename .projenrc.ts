@@ -221,69 +221,68 @@ createPackage({
 //   });
 // }
 
-// const releaseWorkflow = project.tryFindObjectFile(
-//   ".github/workflows/release_ajithapackage.yml",
-// );
-// if (releaseWorkflow) {
-//   // Add OIDC permissions for PyPI
-//   releaseWorkflow.addOverride("jobs.release_pypi.permissions", {
-//     contents: "read",
-//     "id-token": "write",
-//   });
-//   // Fully override the steps array, by keeping existing steps except the last one
-//   const pypiSteps = [
-//     {
-//       uses: "actions/setup-node@v4",
-//       with: { "node-version": "lts/*" },
-//     },
-//     {
-//       uses: "actions/setup-python@v5",
-//       with: { "python-version": "3.x" },
-//     },
-//     {
-//       name: "Download build artifacts",
-//       uses: "actions/download-artifact@v4",
-//       with: { name: "build-artifact", path: "dist" },
-//     },
-//     {
-//       name: "Restore build artifact permissions",
-//       run: "cd dist && setfacl --restore=permissions-backup.acl",
-//       "continue-on-error": true,
-//     },
-//     {
-//       name: "Checkout",
-//       uses: "actions/checkout@v4",
-//       with: { path: ".repo" },
-//     },
-//     {
-//       name: "Install Dependencies",
-//       run: "cd .repo && yarn install --check-files --frozen-lockfile",
-//     },
-//     {
-//       name: "Extract build artifact",
-//       run: "tar --strip-components=1 -xzvf dist/js/*.tgz -C .repo",
-//     },
-//     {
-//       name: "Move build artifact out of the way",
-//       run: "mv dist dist.old",
-//     },
-//     {
-//       name: "Create python artifact",
-//       run: "cd .repo && npx projen package:python",
-//     },
-//     {
-//       name: "Collect python artifact",
-//       run: "mv .repo/dist dist",
-//     },
-//     // :white_check_mark: Replace the publish step with OIDC
-//     {
-//       name: "publish",
-//       run: "npx -p publib@latest publib-pypi",
-//       uses: "pypa/gh-action-pypi-publish@release/v1",
-//     },
-//   ];
-//   releaseWorkflow.addOverride("jobs.release_pypi.steps", pypiSteps);
-// }
+const releaseWorkflow = project.tryFindObjectFile(
+  ".github/workflows/release_ajithapackage.yml",
+);
+if (releaseWorkflow) {
+  // Add OIDC permissions for PyPI
+  releaseWorkflow.addOverride("jobs.release_pypi.permissions", {
+    contents: "read",
+    "id-token": "write",
+  });
+  // Fully override the steps array, by keeping existing steps except the last one
+  const pypiSteps = [
+    {
+      uses: "actions/setup-node@v4",
+      with: { "node-version": "lts/*" },
+    },
+    {
+      uses: "actions/setup-python@v5",
+      with: { "python-version": "3.x" },
+    },
+    {
+      name: "Download build artifacts",
+      uses: "actions/download-artifact@v4",
+      with: { name: "build-artifact", path: "dist" },
+    },
+    {
+      name: "Restore build artifact permissions",
+      run: "cd dist && setfacl --restore=permissions-backup.acl",
+      "continue-on-error": true,
+    },
+    {
+      name: "Checkout",
+      uses: "actions/checkout@v4",
+      with: { path: ".repo" },
+    },
+    {
+      name: "Install Dependencies",
+      run: "cd .repo && yarn install --check-files --frozen-lockfile",
+    },
+    {
+      name: "Extract build artifact",
+      run: "tar --strip-components=1 -xzvf dist/js/*.tgz -C .repo",
+    },
+    {
+      name: "Move build artifact out of the way",
+      run: "mv dist dist.old",
+    },
+    {
+      name: "Create python artifact",
+      run: "cd .repo && npx projen package:python",
+    },
+    {
+      name: "Collect python artifact",
+      run: "mv .repo/dist dist",
+    },
+    // :white_check_mark: Replace the publish step with OIDC
+    {
+      name: "publish to pypi",
+      uses: "pypa/gh-action-pypi-publish@release/v1",
+    },
+  ];
+  releaseWorkflow.addOverride("jobs.release_pypi.steps", pypiSteps);
+}
 
 const package2 = new typescript.TypeScriptProject({
   ...projectMetadata,
