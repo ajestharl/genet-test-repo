@@ -128,7 +128,7 @@ if (project.github) {
 // Add Lerna configuration file (lerna.json)
 new JsonFile(project, "lerna.json", {
   obj: {
-    packages: ["src/packages/*", "src/packages/smithy/build/smithy/source/*"],
+    packages: ["src/packages/*", "src/packages/my-api/build/smithy/source/*"],
     version: "0.0.0",
     npmClient: "yarn",
   },
@@ -136,7 +136,7 @@ new JsonFile(project, "lerna.json", {
 project.package.file.addOverride("private", true);
 project.package.file.addOverride("workspaces", [
   "src/packages/*",
-  "src/packages/smithy/build/smithy/source/*",
+  "src/packages/my-api/build/smithy/source/*",
 ]);
 // Run Lerna build one package at a time and,
 // waits for each package to complete before showing its logs.
