@@ -273,12 +273,11 @@ if (releaseWorkflow) {
     },
     {
       name: "Collect python artifact",
-      run: "mv .repo/dist dist",
+      run: "mkdir -p dist && mv .repo/dist/python/* dist/",
     },
     // :white_check_mark: Replace the publish step with OIDC
     {
-      name: "Release",
-      run: "npx -p publib@latest publib-pypi",
+      name: "publish to pypi",
       uses: "pypa/gh-action-pypi-publish@release/v1",
     },
   ];
