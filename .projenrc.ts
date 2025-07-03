@@ -147,7 +147,11 @@ project.addScripts({
   "get-table-name":
     "ts-node src/packages/app-framework-ops-tools/src/getTableName.ts",
 });
-
+project.addFields({
+  engines: {
+    node: ">=16.0.0",
+  },
+});
 addTestTargets(project);
 configureMarkDownLinting(project);
 
@@ -190,6 +194,11 @@ export const createPackage = (config: PackageConfig) => {
   addPrettierConfig(tsProject);
   configureMarkDownLinting(tsProject);
   tsProject.package.file.addOverride("private", false);
+  tsProject.addFields({
+    engines: {
+      node: ">=16.0.0",
+    },
+  });
   return tsProject;
 };
 
@@ -271,5 +280,10 @@ const package2 = new typescript.TypeScriptProject({
 addTestTargets(package2);
 addPrettierConfig(package2);
 configureMarkDownLinting(package2);
+package2.addFields({
+  engines: {
+    node: ">=16.0.0",
+  },
+});
 package2.package.file.addOverride("private", false);
 project.synth();
