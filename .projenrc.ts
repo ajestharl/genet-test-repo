@@ -324,7 +324,7 @@ if (wf) {
         {
           name: "Determine Version",
           id: "get_version",
-          run: 'echo "version=v$(node -p \\"require(\'./package.json\').version\\")" >> $GITHUB_OUTPUT',
+          run: 'echo "version=v$(node -p "require(\'./package.json\').version")" >> $GITHUB_OUTPUT',
         },
         {
           name: "Check if Tag Exists",
