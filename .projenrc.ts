@@ -273,7 +273,7 @@ if (wf) {
     release: {
       runsOn: ["ubuntu-latest"],
       permissions: {
-        contents: JobPermission.READ,
+        contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
       outputs: {
