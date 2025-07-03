@@ -100,7 +100,7 @@ jobs:
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish dist/smithy-ssdk.tgz --access public
+        run: npm publish --access public
   release_github:
     name: Publish to GitHub Releases
     needs:

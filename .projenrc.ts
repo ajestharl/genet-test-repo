@@ -419,7 +419,7 @@ if (wf) {
         },
         {
           name: "Publish",
-          run: "npm publish dist/smithy-ssdk.tgz --access public",
+          run: "npm publish --access public",
           env: {
             NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}", // or OIDC setup
           },
