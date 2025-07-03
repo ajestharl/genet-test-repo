@@ -1,4 +1,5 @@
 import { awscdk, JsonFile, Project, typescript } from "projen";
+import { Job, JobPermission } from "projen/lib/github/workflows-model";
 import { TypeScriptAppProject } from "projen/lib/typescript";
 
 const projectMetadata = {
@@ -198,71 +199,248 @@ createPackage({
   outdir: "src/packages/ajithapackage1",
 });
 
-import {
-  Job,
-  JobPermission,
-  JobStepOutput,
-} from "projen/lib/github/workflows-model";
+// const wf1 = project.github?.addWorkflow("release_smithy_ssdk");
+// if (wf) {
+//   wf.on({
+//     push: {
+//       branches: ["main"],
+//     },
+//     workflowDispatch: {},
+//   });
+//   const releaseJob: Job = {
+//     runsOn: ["ubuntu-latest"],
+//     permissions: {
+//       contents: JobPermission.READ,
+//     },
+//     outputs: {
+//       latest_commit: {
+//         stepId: "git_remote",
+//         outputName: "latest_commit",
+//       } as JobStepOutput,
+//       tag_exists: {
+//         stepId: "check_tag_exists",
+//         outputName: "exists",
+//       } as JobStepOutput,
+//     },
+//     env: {
+//       CI: "true",
+//     },
+//     defaults: {
+//       run: {
+//         workingDirectory:
+//           "./src/packages/******/build/smithy/source/typescript-client-codegen",
+//       },
+//     },
+//     steps: [
+//       {
+//         name: "Checkout",
+//         uses: "actions/checkout@v4",
+//         with: { "fetch-depth": 0 },
+//       },
+//       {
+//         name: "Set git identity",
+//         run: [
+//           'git config user.name "github-actions"',
+//           'git config user.email "github-actions@github.com"',
+//         ].join("\n"),
+//       },
+//       {
+//         name: "Setup Node.js",
+//         uses: "actions/setup-node@v4",
+//         with: { "node-version": "lts/*" },
+//       },
+//       {
+//         name: "Install dependencies",
+//         run: "yarn install --check-files --frozen-lockfile",
+//         workingDirectory: "./",
+//       },
+//       {
+//         name: "Determine latest commit",
+
+//       }
+//     ]
+//   };
+//   wf.addJobs({ release: releaseJob });
+// }
 
 const wf = project.github?.addWorkflow("release_smithy_ssdk");
 if (wf) {
   wf.on({
-    push: {
-      branches: ["main"],
-    },
+    push: { branches: ["main"] },
     workflowDispatch: {},
   });
-  const releaseJob: Job = {
-    runsOn: ["ubuntu-latest"],
-    permissions: {
-      contents: JobPermission.READ,
-    },
-    outputs: {
-      latest_commit: {
-        stepId: "git_remote",
-        outputName: "latest_commit",
-      } as JobStepOutput,
-      tag_exists: {
-        stepId: "check_tag_exists",
-        outputName: "exists",
-      } as JobStepOutput,
-    },
-    env: {
-      CI: "true",
-    },
-    defaults: {
-      run: {
-        workingDirectory:
-          "./src/packages/******/build/smithy/source/typescript-client-codegen",
+  wf.addJobs({
+    release: {
+      runsOn: ["ubuntu-latest"],
+      permissions: {
+        contents: JobPermission.READ,
       },
-    },
-    steps: [
-      {
-        name: "Checkout",
-        uses: "actions/checkout@v4",
-        with: {
-          "fetch-depth": 0,
+      outputs: {
+        latest_commit: {
+          stepId: "git_remote",
+          outputName: "latest_commit",
+        },
+        tag_exists: {
+          stepId: "check_tag_exists",
+          outputName: "exists",
         },
       },
-      {
-        name: "Set git identity",
-        run: 'git config user.name "github-actions"\ngit config user.email "github-actions@github.com"',
+      env: {
+        CI: "true",
       },
-      {
-        name: "Setup Node.js",
-        uses: "actions/setup-node@v4",
-        with: {
-          "node-version": "lts/*",
+      defaults: {
+        run: {
+          workingDirectory:
+            "./src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
         },
       },
-      {
-        name: "Install dependencies",
-        run: "yarn install --check-files --frozen-lockfile",
-        workingDirectory: "./",
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v4",
+          with: { "fetch-depth": 0 },
+        },
+        {
+          name: "Set Git Identity",
+          run: [
+            'git config user.name "github-actions"',
+            'git config user.email "github-actions@github.com"',
+          ].join("\n"),
+        },
+        {
+          name: "Setup Node.js",
+          uses: "actions/setup-node@v4",
+          with: { "node-version": "lts/*" },
+        },
+        {
+          name: "Install Dependencies",
+          run: "yarn install --check-files --frozen-lockfile",
+          workingDirectory: "./", // root for monorepo
+        },
+        {
+          name: "Build",
+          run: "yarn build",
+        },
+        {
+          name: "Determine Version",
+          id: "get_version",
+          run: 'echo "version=v$(node -p \\"require(\'./package.json\').version\\")" >> $GITHUB_OUTPUT',
+        },
+        {
+          name: "Check if Tag Exists",
+          id: "check_tag_exists",
+          run: [
+            'TAG="v$(node -p \\"require(\'./package.json\').version\\")"',
+            'if git rev-parse "$TAG" >/dev/null 2>&1; then',
+            '  echo "exists=true" >> $GITHUB_OUTPUT',
+            "else",
+            '  echo "exists=false" >> $GITHUB_OUTPUT',
+            "fi",
+          ].join("\n"),
+        },
+        {
+          name: "Create Tag",
+          if: "steps.check_tag_exists.outputs.exists == 'false'",
+          run: [
+            "VERSION=$(node -p \"require('./package.json').version\")",
+            'git tag "v$VERSION"',
+            'git push origin "v$VERSION"',
+          ].join("\n"),
+        },
+        {
+          name: "Pack Artifact",
+          run: "yarn pack --filename smithy-ssdk.tgz",
+        },
+        {
+          name: "Backup Permissions",
+          run: "getfacl -R . > permissions-backup.acl",
+          continueOnError: true,
+        },
+        {
+          name: "Upload Artifact",
+          uses: "actions/upload-artifact@v4",
+          with: {
+            name: "smithy-ssdk-artifact",
+            path: "./src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
+            overwrite: true,
+          },
+        },
+        {
+          name: "Upload Tag",
+          run: 'echo "v$(node -p \\"require(\'./package.json\').version\\")" > releasetag.txt',
+        },
+      ],
+    },
+  });
+
+  wf.addJobs({
+    release_npm: {
+      name: "Publish to NPM",
+      needs: ["release"],
+      runsOn: ["ubuntu-latest"],
+      permissions: {
+        contents: JobPermission.READ,
+        idToken: JobPermission.WRITE,
       },
-    ],
-  };
-  wf.addJobs({ release: releaseJob });
+      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+      steps: [
+        {
+          uses: "actions/setup-node@v4",
+          with: {
+            "node-version": "lts/*",
+          },
+        },
+        {
+          name: "Download Artifact",
+          uses: "actions/download-artifact@v4",
+          with: {
+            name: "smithy-ssdk-artifact",
+            path: "./dist",
+          },
+        },
+        {
+          name: "Restore Permissions",
+          run: "cd dist && setfacl --restore=permissions-backup.acl",
+          continueOnError: true,
+        },
+        {
+          name: "Publish",
+          run: "npm publish dist/smithy-ssdk.tgz --access public",
+          env: {
+            NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}", // or OIDC setup
+          },
+        },
+      ],
+    },
+  });
+  wf.addJobs({
+    release_github: {
+      name: "Publish to GitHub Releases",
+      needs: ["release", "release_npm"],
+      runsOn: ["ubuntu-latest"],
+      permissions: {
+        contents: JobPermission.READ,
+      },
+      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+      steps: [
+        {
+          name: "Download Artifact",
+          uses: "actions/download-artifact@v4",
+          with: {
+            name: "smithy-ssdk-artifact",
+            path: "./dist",
+          },
+        },
+        {
+          name: "GitHub Release",
+          run: 'gh release create $(cat dist/releasetag.txt) --title "$(cat dist/releasetag.txt)" --notes "Automated release for SSDK"',
+          env: {
+            GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+          },
+        },
+      ],
+    },
+  });
 }
 
 const workflow = project.github?.addWorkflow("release_ssdk");
