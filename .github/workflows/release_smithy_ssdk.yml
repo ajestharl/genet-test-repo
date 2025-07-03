@@ -67,7 +67,7 @@ jobs:
           path: ./src/packages/my-api/build/smithy/source/typescript-ssdk-codegen
           overwrite: true
       - name: Upload Tag
-        run: echo "v$(node -p \"require('./package.json').version\")" > releasetag.txt
+        run: echo "v$(node -p 'require(`./package.json`).version')" > releasetag.txt
   release_npm:
     name: Publish to NPM
     needs: release

@@ -367,7 +367,7 @@ if (wf) {
         },
         {
           name: "Upload Tag",
-          run: 'echo "v$(node -p \\"require(\'./package.json\').version\\")" > releasetag.txt',
+          run: "echo \"v$(node -p 'require(`./package.json`).version')\" > releasetag.txt",
         },
       ],
     },
