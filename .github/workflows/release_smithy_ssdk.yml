@@ -43,7 +43,7 @@ jobs:
       - name: Check if Tag Exists
         id: check_tag_exists
         run: |-
-          TAG="v$(node -p \"require('./package.json').version\")"
+          TAG="v$(node -p 'require(`./package.json`).version')"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
