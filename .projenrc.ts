@@ -147,11 +147,7 @@ project.addScripts({
   "get-table-name":
     "ts-node src/packages/app-framework-ops-tools/src/getTableName.ts",
 });
-project.addFields({
-  engines: {
-    node: ">=16.0.0",
-  },
-});
+
 addTestTargets(project);
 configureMarkDownLinting(project);
 
@@ -194,11 +190,6 @@ export const createPackage = (config: PackageConfig) => {
   addPrettierConfig(tsProject);
   configureMarkDownLinting(tsProject);
   tsProject.package.file.addOverride("private", false);
-  tsProject.addFields({
-    engines: {
-      node: ">=16.0.0",
-    },
-  });
   return tsProject;
 };
 
@@ -207,7 +198,72 @@ createPackage({
   outdir: "src/packages/ajithapackage1",
 });
 
-import { Job, JobPermission } from "projen/lib/github/workflows-model";
+import {
+  Job,
+  JobPermission,
+  JobStepOutput,
+} from "projen/lib/github/workflows-model";
+
+const wf = project.github?.addWorkflow("release_smithy_ssdk");
+if (wf) {
+  wf.on({
+    push: {
+      branches: ["main"],
+    },
+    workflowDispatch: {},
+  });
+  const releaseJob: Job = {
+    runsOn: ["ubuntu-latest"],
+    permissions: {
+      contents: JobPermission.READ,
+    },
+    outputs: {
+      latest_commit: {
+        stepId: "git_remote",
+        outputName: "latest_commit",
+      } as JobStepOutput,
+      tag_exists: {
+        stepId: "check_tag_exists",
+        outputName: "exists",
+      } as JobStepOutput,
+    },
+    env: {
+      CI: "true",
+    },
+    defaults: {
+      run: {
+        workingDirectory:
+          "./src/packages/******/build/smithy/source/typescript-client-codegen",
+      },
+    },
+    steps: [
+      {
+        name: "Checkout",
+        uses: "actions/checkout@v4",
+        with: {
+          "fetch-depth": 0,
+        },
+      },
+      {
+        name: "Set git identity",
+        run: 'git config user.name "github-actions"\ngit config user.email "github-actions@github.com"',
+      },
+      {
+        name: "Setup Node.js",
+        uses: "actions/setup-node@v4",
+        with: {
+          "node-version": "lts/*",
+        },
+      },
+      {
+        name: "Install dependencies",
+        run: "yarn install --check-files --frozen-lockfile",
+        workingDirectory: "./",
+      },
+    ],
+  };
+  wf.addJobs({ release: releaseJob });
+}
 
 const workflow = project.github?.addWorkflow("release_ssdk");
 if (workflow) {
@@ -280,10 +336,5 @@ const package2 = new typescript.TypeScriptProject({
 addTestTargets(package2);
 addPrettierConfig(package2);
 configureMarkDownLinting(package2);
-package2.addFields({
-  engines: {
-    node: ">=16.0.0",
-  },
-});
 package2.package.file.addOverride("private", false);
 project.synth();
