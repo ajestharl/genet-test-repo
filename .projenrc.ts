@@ -339,6 +339,11 @@ if (wf) {
           ].join("\n"),
         },
         {
+          name: "Check for new commits",
+          id: "git_remote",
+          run: 'echo "latest_commit=$(git ls-remote origin -h ${{ github.ref }} | cut -f1)" >> $GITHUB_OUTPUT',
+        },
+        {
           name: "Create Tag",
           if: "steps.check_tag_exists.outputs.exists == 'false'",
           run: [
