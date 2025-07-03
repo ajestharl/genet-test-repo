@@ -344,6 +344,14 @@ if (wf) {
           run: 'echo "latest_commit=$(git ls-remote origin -h ${{ github.ref }} | cut -f1)" >> $GITHUB_OUTPUT',
         },
         {
+          name: "Debug Values",
+          run: [
+            'echo "Tag Exists: ${{ steps.check_tag_exists.outputs.exists }}"',
+            'echo "Latest Commit: ${{ steps.git_remote.outputs.latest_commit }}"',
+            'echo "Current SHA: ${{ github.sha }}"'
+          ].join("\n")
+        },
+        {
           name: "Create Tag",
           if: "steps.check_tag_exists.outputs.exists == 'false'",
           run: [
