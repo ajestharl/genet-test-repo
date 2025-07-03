@@ -38,8 +38,8 @@ export interface GetItemCommandOutput extends GetItemOutput, __MetadataBearer {}
  * @example
  * Use a bare-bones client and the command you need to make an API call.
  * ```javascript
- * import { ExampleClient, GetItemCommand } from "@example/my-service-client"; // ES Modules import
- * // const { ExampleClient, GetItemCommand } = require("@example/my-service-client"); // CommonJS import
+ * import { ExampleClient, GetItemCommand } from "my-service-client"; // ES Modules import
+ * // const { ExampleClient, GetItemCommand } = require("my-service-client"); // CommonJS import
  * const client = new ExampleClient(config);
  * const input = { // GetItemInput
  *   id: "STRING_VALUE", // required
