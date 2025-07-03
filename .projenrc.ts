@@ -355,10 +355,10 @@ if (wf) {
           name: "Create Tag",
           if: "steps.check_tag_exists.outputs.exists == 'false'",
           run: [
-            "VERSION=$(node -p \'require('./package.json').version\')",
+            "VERSION=$(node -p 'require(`./package.json`).version')",
             'git tag "v$VERSION"',
-            'git push origin "v$VERSION"',
-          ].join("\n"),
+            'git push origin "v$VERSION"'
+          ].join("\n")
         },
         {
           name: "Pack Artifact",
