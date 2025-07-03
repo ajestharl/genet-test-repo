@@ -342,7 +342,7 @@ if (wf) {
         {
           name: "Check for new commits",
           id: "git_remote",
-          run: 'echo "latest_commit=$(git ls-remote origin -h ${{ github.ref }} | cut -f1)" >> $GITHUB_OUTPUT',
+          run: 'echo "latest_commit=${{ github.sha }}" >> $GITHUB_OUTPUT',
         },
         {
           name: "Debug Values",
