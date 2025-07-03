@@ -274,6 +274,7 @@ if (wf) {
       runsOn: ["ubuntu-latest"],
       permissions: {
         contents: JobPermission.READ,
+        idToken: JobPermission.WRITE,
       },
       outputs: {
         latest_commit: {
