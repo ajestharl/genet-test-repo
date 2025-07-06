@@ -77,7 +77,7 @@ jobs:
           overwrite: true
       - name: Upload Tag
         run: echo "v$(node -p 'require(`./package.json`).version')" > releasetag.txt
-  release_npm:
+  releaseNpmJob:
     name: Publish to NPM
     needs: release
     runs-on: ubuntu-latest
@@ -89,18 +89,33 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-      - name: Download Artifact
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: smithy-ssdk-artifact
-          path: ./dist
-      - name: Verify artifact contents
-        run: ls -R ./dist
-      - name: Publish
+          path: dist
+      - name: Restore artifact permissions
+        run: cd dist && setfacl --restore=permissions-backup.acl
+        continue-on-error: true
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          path: .repo
+      - name: Install dependencies
+        run: cd .repo && yarn install --check-files --frozen-lockfile
+      - name: Extract tarball
+        run: tar --strip-components=1 -xzf dist/smithy-ssdk.tgz -C .repo
+      - name: Rebuild dist
+        run: cd .repo && npx projen package:js
+      - name: Move dist to root
+        run: mv .repo/dist dist
+      - name: Publish to NPM
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
-        working-directory: ./dist
+          NPM_DIST_TAG: latest
+          NPM_REGISTRY: registry.npmjs.org
+          NPM_CONFIG_PROVENANCE: "true"
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx -p publib@latest publib-npm
   release_github:
     name: Publish to GitHub Releases
     needs:
