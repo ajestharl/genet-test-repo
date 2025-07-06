@@ -488,6 +488,11 @@ if (wf) {
           ].join(" & "),
         },
         {
+          name: "Remove prepack script",
+          workingDirectory: "./repo",
+          run: "jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json",
+        },
+        {
           name: "Publish",
           workingDirectory: "./repo",
           env: {

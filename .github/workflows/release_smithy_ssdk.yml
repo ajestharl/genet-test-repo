@@ -98,6 +98,9 @@ jobs:
         run: ls -lh ./dist/*.tgz
       - name: Extract smithy-ssdk.tgz
         run: mkdir repo & tar -xzf ./dist/smithy-ssdk.tgz -C repo --strip-components=1
+      - name: Remove prepack script
+        run: jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json
+        working-directory: ./repo
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
