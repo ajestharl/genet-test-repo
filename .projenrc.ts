@@ -413,15 +413,15 @@ if (wf) {
           },
         },
         {
-          name: "Restore Permissions",
-          run: "cd dist && setfacl --restore=permissions-backup.acl",
-          continueOnError: true,
+          name: "Verify artifact contents",
+          run: "ls -R ./dist"
         },
         {
           name: "Publish",
+          workingDirectory: "./dist",
           run: "npm publish --access public",
           env: {
-            NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}", // or OIDC setup
+            NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}",
           },
         },
       ],

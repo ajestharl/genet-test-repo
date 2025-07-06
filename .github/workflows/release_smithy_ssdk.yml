@@ -94,13 +94,13 @@ jobs:
         with:
           name: smithy-ssdk-artifact
           path: ./dist
-      - name: Restore Permissions
-        run: cd dist && setfacl --restore=permissions-backup.acl
-        continue-on-error: true
+      - name: Verify artifact contents
+        run: ls -R ./dist
       - name: Publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public
+        working-directory: ./dist
   release_github:
     name: Publish to GitHub Releases
     needs:
