@@ -107,6 +107,9 @@ jobs:
         run: ls -lh ./dist/*.tgz
       - name: Extract smithy-ssdk.tgz
         run: mkdir repo & tar -xzf ./dist/smithy-ssdk.tgz -C repo --strip-components=1
+      - name: Update Version
+        run: "PACKAGE_NAME=$(node -p \"require('./package.json').name\") && CURRENT_VERSION=$(npm view $PACKAGE_NAME version || echo '0.0.0') && NEXT_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g') && echo \"Next version will be: $NEXT_VERSION\" && sed -i 's/\"version\": \".*\"/\"version\": \"'$NEXT_VERSION'\"/' package.json"
+        working-directory: ./repo
       - name: Remove prepack script
         run: jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json
         working-directory: ./repo

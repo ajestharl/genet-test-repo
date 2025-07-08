@@ -436,6 +436,17 @@ if (wf) {
           ].join(" & "),
         },
         {
+          name: "Update Version",
+          workingDirectory: "./repo",
+          run: [
+            "PACKAGE_NAME=$(node -p \"require('./package.json').name\")",
+            "CURRENT_VERSION=$(npm view $PACKAGE_NAME version || echo '0.0.0')",
+            "NEXT_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')",
+            'echo "Next version will be: $NEXT_VERSION"',
+            'sed -i \'s/"version": ".*"/"version": "\'$NEXT_VERSION\'"/\' package.json',
+          ].join(" && "),
+        },
+        {
           name: "Remove prepack script",
           workingDirectory: "./repo",
           run: "jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json",
@@ -451,6 +462,60 @@ if (wf) {
       ],
     },
   });
+
+  // wf.addJobs({
+  //   release_npm: {
+  //     name: "Publish to NPM",
+  //     needs: ["release"],
+  //     runsOn: ["ubuntu-latest"],
+  //     permissions: {
+  //       contents: JobPermission.READ,
+  //       idToken: JobPermission.WRITE,
+  //     },
+  //     if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+  //     steps: [
+  //       {
+  //         uses: "actions/setup-node@v4",
+  //         with: {
+  //           "node-version": "lts/*",
+  //           "registry-url": "https://registry.npmjs.org",
+  //         },
+  //       },
+  //       {
+  //         name: "Download Artifact",
+  //         uses: "actions/download-artifact@v4",
+  //         with: {
+  //           name: "smithy-ssdk-artifact",
+  //           path: "./dist",
+  //         },
+  //       },
+  //       {
+  //         name: "Verify .tgz is present",
+  //         run: "ls -lh ./dist/*.tgz",
+  //       },
+  //       {
+  //         name: "Extract smithy-ssdk.tgz",
+  //         run: [
+  //           "mkdir repo",
+  //           "tar -xzf ./dist/smithy-ssdk.tgz -C repo --strip-components=1",
+  //         ].join(" & "),
+  //       },
+  //       {
+  //         name: "Remove prepack script",
+  //         workingDirectory: "./repo",
+  //         run: "jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json",
+  //       },
+  //       {
+  //         name: "Publish",
+  //         workingDirectory: "./repo",
+  //         env: {
+  //           NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN_SMITHY }}",
+  //         },
+  //         run: "npm publish --access public",
+  //       },
+  //     ],
+  //   },
+  // });
   // wf.addJobs({
   //   release_github: {
   //     name: "Publish to GitHub Releases",
