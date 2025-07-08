@@ -496,7 +496,7 @@ if (wf) {
           name: "Publish",
           workingDirectory: "./repo",
           env: {
-            NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}",
+            NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN_SMITHY }}",
           },
           run: "npm publish --access public",
         },
