@@ -614,7 +614,7 @@ if (wf) {
 
   wf.addJobs({
     release_github: {
-      name: "Publish to GitHub Releases yes",
+      name: "Publish to GitHub Releases",
       needs: ["release", "release_npm"],
       runsOn: ["ubuntu-latest"],
       permissions: {
@@ -622,6 +622,11 @@ if (wf) {
       },
       if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
       steps: [
+        {
+          name: "Checkout", // Add this step
+          uses: "actions/checkout@v4",
+          with: { "fetch-depth": 0 },
+        },
         {
           name: "Download Artifact",
           uses: "actions/download-artifact@v4",
@@ -637,12 +642,45 @@ if (wf) {
           },
           run: [
             'VERSION="${{ needs.release.outputs.next_version }}"',
+            'echo "Creating release for version: v$VERSION"',
             'gh release create "v$VERSION" --title "v$VERSION" --notes "Automated release for SSDK" ./dist/smithy-ssdk.tgz',
           ].join(" && "),
         },
       ],
     },
   });
+
+  // wf.addJobs({
+  //   release_github: {
+  //     name: "Publish to GitHub Releases yes",
+  //     needs: ["release", "release_npm"],
+  //     runsOn: ["ubuntu-latest"],
+  //     permissions: {
+  //       contents: JobPermission.WRITE,
+  //     },
+  //     if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+  //     steps: [
+  //       {
+  //         name: "Download Artifact",
+  //         uses: "actions/download-artifact@v4",
+  //         with: {
+  //           name: "build-artifact",
+  //           path: "./dist",
+  //         },
+  //       },
+  //       {
+  //         name: "GitHub Release",
+  //         env: {
+  //           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+  //         },
+  //         run: [
+  //           'VERSION="${{ needs.release.outputs.next_version }}"',
+  //           'gh release create "v$VERSION" --title "v$VERSION" --notes "Automated release for SSDK" ./dist/smithy-ssdk.tgz',
+  //         ].join(" && "),
+  //       },
+  //     ],
+  //   },
+  // });
 }
 
 const package2 = new typescript.TypeScriptProject({
