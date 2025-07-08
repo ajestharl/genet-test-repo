@@ -309,7 +309,7 @@ if (wf) {
             'git config user.email "github-actions@github.com"',
             "git add package.json",
             'git commit -m "chore: Bump version [skip ci][no ci]"',
-            "git push",
+            "git push -f",
           ].join("\n"),
         },
         {
