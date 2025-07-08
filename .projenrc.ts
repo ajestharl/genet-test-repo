@@ -614,7 +614,7 @@ if (wf) {
 
   wf.addJobs({
     release_github: {
-      name: "Publish to GitHub Releases",
+      name: "Publish to GitHub Releases yes",
       needs: ["release", "release_npm"],
       runsOn: ["ubuntu-latest"],
       permissions: {

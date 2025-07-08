@@ -99,7 +99,7 @@ jobs:
         run: npm publish --access public
         working-directory: ./repo
   release_github:
-    name: Publish to GitHub Releases
+    name: Publish to GitHub Releases yes
     needs:
       - release
       - release_npm
