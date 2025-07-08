@@ -122,7 +122,7 @@ jobs:
       - release_npm
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     if: needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha
     steps:
       - name: Download Artifact
@@ -130,6 +130,8 @@ jobs:
         with:
           name: smithy-ssdk-artifact
           path: ./dist
+      - name: List Contents
+        run: ls -la ./dist
       - name: GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

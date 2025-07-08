@@ -451,13 +451,41 @@ if (wf) {
       ],
     },
   });
+  // wf.addJobs({
+  //   release_github: {
+  //     name: "Publish to GitHub Releases",
+  //     needs: ["release", "release_npm"],
+  //     runsOn: ["ubuntu-latest"],
+  //     permissions: {
+  //       contents: JobPermission.WRITE,
+  //     },
+  //     if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+  //     steps: [
+  //       {
+  //         name: "Download Artifact",
+  //         uses: "actions/download-artifact@v4",
+  //         with: {
+  //           name: "smithy-ssdk-artifact",
+  //           path: "./dist",
+  //         },
+  //       },
+  //       {
+  //         name: "GitHub Release",
+  //         run: 'gh release create $(cat dist/releasetag.txt) --title "$(cat dist/releasetag.txt)" --notes "Automated release for SSDK"',
+  //         env: {
+  //           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+  //         },
+  //       },
+  //     ],
+  //   },
+  // });
   wf.addJobs({
     release_github: {
       name: "Publish to GitHub Releases",
       needs: ["release", "release_npm"],
       runsOn: ["ubuntu-latest"],
       permissions: {
-        contents: JobPermission.READ,
+        contents: JobPermission.WRITE, // Changed from READ to WRITE
       },
       if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
       steps: [
@@ -470,11 +498,15 @@ if (wf) {
           },
         },
         {
+          name: "List Contents",
+          run: "ls -la ./dist",
+        },
+        {
           name: "GitHub Release",
-          run: 'gh release create $(cat dist/releasetag.txt) --title "$(cat dist/releasetag.txt)" --notes "Automated release for SSDK"',
           env: {
             GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
           },
+          run: 'gh release create $(cat dist/releasetag.txt) --title "$(cat dist/releasetag.txt)" --notes "Automated release for SSDK"',
         },
       ],
     },
