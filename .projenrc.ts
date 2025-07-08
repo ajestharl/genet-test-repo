@@ -466,6 +466,7 @@ if (wf) {
           uses: "actions/setup-node@v4",
           with: {
             "node-version": "lts/*",
+            "registry-url": "https://registry.npmjs.org"
           },
         },
         {
