@@ -605,7 +605,6 @@ if (wf) {
           workingDirectory: "./repo",
           env: {
             NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN_SMITHY }}",
-            NPM_CONFIG_PROVENANCE: "true",
           },
           run: "npm publish --access public",
         },
