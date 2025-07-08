@@ -40,11 +40,16 @@ jobs:
         id: check_tag_exists
         run: |-
           TAG="v${{ steps.next_version.outputs.version }}"
+          echo "Checking for tag: $TAG"
           if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag exists=true"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
+            echo "Tag exists=false"
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
+          echo "Output value:"
+          cat $GITHUB_OUTPUT
       - name: Create Tag
         if: steps.check_tag_exists.outputs.exists == 'false'
         run: |-
