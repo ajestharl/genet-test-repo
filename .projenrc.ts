@@ -349,8 +349,8 @@ if (wf) {
           run: [
             'echo "Tag Exists: ${{ steps.check_tag_exists.outputs.exists }}"',
             'echo "Latest Commit: ${{ steps.git_remote.outputs.latest_commit }}"',
-            'echo "Current SHA: ${{ github.sha }}"'
-          ].join("\n")
+            'echo "Current SHA: ${{ github.sha }}"',
+          ].join("\n"),
         },
         {
           name: "Create Tag",
@@ -358,8 +358,8 @@ if (wf) {
           run: [
             "VERSION=$(node -p 'require(`./package.json`).version')",
             'git tag "v$VERSION"',
-            'git push origin "v$VERSION"'
-          ].join("\n")
+            'git push origin "v$VERSION"',
+          ].join("\n"),
         },
         {
           name: "Pack Artifact",
@@ -386,70 +386,6 @@ if (wf) {
       ],
     },
   });
-//   const releaseNpmJob: Job = {
-//   name: "Publish to NPM",
-//   needs: ["release"],
-//   runsOn: ["ubuntu-latest"],
-//   permissions: {
-//     contents: JobPermission.READ,
-//     idToken: JobPermission.WRITE,
-//   },
-//   if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
-//   steps: [
-//     {
-//       uses: "actions/setup-node@v4",
-//       with: {
-//         "node-version": "lts/*",
-//       },
-//     },
-//     {
-//       name: "Download artifact",
-//       uses: "actions/download-artifact@v4",
-//       with: {
-//         name: "smithy-ssdk-artifact",
-//         path: "dist",
-//       },
-//     },
-//     {
-//       name: "Restore artifact permissions",
-//       run: "cd dist && setfacl --restore=permissions-backup.acl",
-//       continueOnError: true,
-//     },
-//     {
-//       name: "Checkout repo",
-//       uses: "actions/checkout@v4",
-//       with: {
-//         path: ".repo",
-//       },
-//     },
-//     {
-//       name: "Install dependencies",
-//       run: "cd .repo && yarn install --check-files --frozen-lockfile",
-//     },
-//     {
-//       name: "Extract tarball",
-//       run: "tar --strip-components=1 -xzf dist/smithy-ssdk.tgz -C .repo",
-//     },
-//     {
-//       name: "Rebuild dist",
-//       run: "cd .repo && npx projen package:js",
-//     },
-//     {
-//       name: "Move dist to root",
-//       run: "mv .repo/dist dist",
-//     },
-//     {
-//       name: "Publish to NPM",
-//       env: {
-//         NPM_DIST_TAG: "latest",
-//         NPM_REGISTRY: "registry.npmjs.org",
-//         NPM_CONFIG_PROVENANCE: "true",
-//         NPM_TOKEN: "${{ secrets.NPM_TOKEN }}",
-//       },
-//       run: "npx -p publib@latest publib-npm",
-//     },
-//   ],
-// };
 
   wf.addJobs({
     release_npm: {
@@ -466,7 +402,7 @@ if (wf) {
           uses: "actions/setup-node@v4",
           with: {
             "node-version": "lts/*",
-            "registry-url": "https://registry.npmjs.org"
+            "registry-url": "https://registry.npmjs.org",
           },
         },
         {
