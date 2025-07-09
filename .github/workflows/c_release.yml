@@ -7,7 +7,7 @@ on:
       - main
   workflow_dispatch: {}
 jobs:
-  bump_version:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -16,6 +16,9 @@ jobs:
       version: ${{ steps.getver.outputs.version }}
     env:
       CI: "true"
+    defaults:
+      run:
+        working-directory: ./src/packages/ajithapackage
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,7 +44,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Release version: $VERSION"
   trigger_smithy_client:
-    needs: bump_version
+    needs: release
     permissions:
       contents: write
       id-token: write
@@ -49,7 +52,7 @@ jobs:
     with:
       version: ${{ needs.bump_version.outputs.version }}
   trigger_smithy_ssdk:
-    needs: bump_version
+    needs: release
     permissions:
       contents: write
       id-token: write

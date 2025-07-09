@@ -663,7 +663,7 @@ if (release) {
     workflowDispatch: {},
   });
   release.addJobs({
-    bump_version: {
+    release: {
       runsOn: ["ubuntu-latest"],
       permissions: {
         contents: JobPermission.WRITE,
@@ -673,6 +673,12 @@ if (release) {
         version: {
           stepId: "getver",
           outputName: "version",
+        },
+      },
+      defaults: {
+        run: {
+          workingDirectory:
+            "./src/packages/ajithapackage",
         },
       },
       env: {
@@ -717,7 +723,7 @@ if (release) {
       ],
     },
     trigger_smithy_client: {
-      needs: ["bump_version"],
+      needs: ["release"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
@@ -728,7 +734,7 @@ if (release) {
       },
     },
     trigger_smithy_ssdk: {
-      needs: ["bump_version"],
+      needs: ["release"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
