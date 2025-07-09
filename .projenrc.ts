@@ -320,7 +320,7 @@ if (wf) {
         contents: JobPermission.READ,
         idToken: JobPermission.WRITE,
       },
-      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+      if: "needs.release.outputs.latest_commit == github.sha",
       steps: [
         {
           uses: "actions/setup-node@v4",
@@ -379,7 +379,7 @@ if (wf) {
       permissions: {
         contents: JobPermission.WRITE,
       },
-      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+      if: "needs.release.outputs.latest_commit == github.sha",
       steps: [
         {
           name: "Checkout", // Add this step
@@ -611,7 +611,7 @@ if (wf1) {
         contents: JobPermission.READ,
         idToken: JobPermission.WRITE,
       },
-      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+      if: "needs.release.outputs.latest_commit == github.sha",
       steps: [
         {
           uses: "actions/setup-node@v4",
@@ -670,7 +670,7 @@ if (wf1) {
       permissions: {
         contents: JobPermission.WRITE,
       },
-      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+      if: "needs.release.outputs.latest_commit == github.sha",
       steps: [
         {
           name: "Checkout", // Add this step
