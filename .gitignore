@@ -51,5 +51,6 @@ tsconfig.json
 !/.github/workflows/release_ajithapackage.yml
 !/.github/workflows/release_smithy_ssdk.yml
 !/.github/workflows/release_smithy_client.yml
+!/.github/workflows/c_release.yml
 !/.github/workflows/release_ajithapackage2.yml
 !/.projenrc.ts

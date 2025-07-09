@@ -620,6 +620,89 @@ if (wf1) {
   });
 }
 
+const release = project.github?.addWorkflow("c_release");
+if (release) {
+  release.on({
+    push: { branches: ["release"] },
+    workflowDispatch: {},
+  });
+  release.addJobs({
+    bump_version: {
+      runsOn: ["ubuntu-latest"],
+      permissions: {
+        contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
+      },
+      outputs: {
+        version: {
+          stepId: "getver",
+          outputName: "version",
+        },
+      },
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v4",
+          with: { "fetch-depth": 0 },
+        },
+        {
+          name: "Set Git Identity",
+          run: [
+            "git config --global user.email 'github-actions@github.com'",
+            "git config --global user.name 'GitHub Actions'",
+          ].join("\n"),
+        },
+        {
+          name: "Run Projen Release",
+          run: "npx projen release",
+          workingDirectory: "packages/projen-core",
+        },
+        {
+          name: "Read Version from releasetag.txt",
+          id: "getver",
+          run: [
+            "VERSION=$(cat dist/releasetag.txt | sed 's/^v//')",
+            'echo "version=$VERSION" >> $GITHUB_OUTPUT',
+            'echo "Release version: $VERSION"',
+          ].join("\n"),
+        },
+      ],
+    },
+    trigger_projen_utils: {
+      needs: ["bump_version"],
+      permissions: {
+        contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
+      },
+      uses: "./.github/workflows/projen-utils-release.yaml",
+      with: {
+        version: "${{ needs.bump_version.outputs.version }}",
+      },
+    },
+    trigger_smithy_client: {
+      needs: ["bump_version"],
+      permissions: {
+        contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
+      },
+      uses: "./.github/workflows/smithy-client-release.yaml",
+      with: {
+        version: "${{ needs.bump_version.outputs.version }}",
+      },
+    },
+    trigger_smithy_ssdk: {
+      needs: ["bump_version"],
+      permissions: {
+        contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
+      },
+      uses: "./.github/workflows/smithy-ssdk-release.yaml",
+      with: {
+        version: "${{ needs.bump_version.outputs.version }}",
+      },
+    },
+  });
+}
 const package2 = new typescript.TypeScriptProject({
   ...projectMetadata,
   name: "ajithapackage2",
