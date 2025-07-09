@@ -675,6 +675,9 @@ if (release) {
           outputName: "version",
         },
       },
+      env: {
+        CI: "true",
+      },
       steps: [
         {
           name: "Checkout",
