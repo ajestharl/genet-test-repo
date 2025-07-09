@@ -6,6 +6,12 @@ on:
     branches:
       - main
   workflow_dispatch: {}
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Version to release
 jobs:
   release:
     runs-on: ubuntu-latest

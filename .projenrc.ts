@@ -222,6 +222,15 @@ if (wf) {
   wf.on({
     push: { branches: ["main"] },
     workflowDispatch: {},
+    workflowCall: {
+      inputs: {
+        version: {
+          required: true,
+          type: "string",
+          description: "Version to release"
+        }
+      }
+    }
   });
   wf.addJobs({
     release: {
@@ -432,6 +441,15 @@ if (wf1) {
   wf1.on({
     push: { branches: ["main"] },
     workflowDispatch: {},
+    workflowCall: {
+      inputs: {
+        version: {
+          required: true,
+          type: "string",
+          description: "Version to release"
+        }
+      }
+    }
   });
   wf1.addJobs({
     release: {
