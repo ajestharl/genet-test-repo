@@ -320,7 +320,7 @@ if (wf) {
         contents: JobPermission.READ,
         idToken: JobPermission.WRITE,
       },
-      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+      if: "needs.release.outputs.latest_commit == github.sha",
       steps: [
         {
           uses: "actions/setup-node@v4",
@@ -379,7 +379,7 @@ if (wf) {
       permissions: {
         contents: JobPermission.WRITE,
       },
-      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+      if: "needs.release.outputs.latest_commit == github.sha",
       steps: [
         {
           name: "Checkout", // Add this step
@@ -461,44 +461,125 @@ if (wf1) {
           run: "yarn install --check-files --frozen-lockfile",
           workingDirectory: "./",
         },
+        // {
+        //   name: "Check for Changes and Create Release Tag",
+        //   id: "release_check",
+        //   run: [
+        //     "mkdir -p dist",
+        //     "PACKAGE_NAME=$(node -p \"require('./package.json').name\")",
+        //     "CURRENT_VERSION=$(npm view $PACKAGE_NAME version 2>/dev/null || echo '0.0.0')",
+        //     "LAST_COMMIT=$(git rev-list --tags --max-count=1)",
+        //     'if [ -z "$LAST_COMMIT" ] || [ -n "$(git diff $LAST_COMMIT..HEAD -- .)" ]; then',
+        //     "  NEXT_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')",
+        //     '  echo "v$NEXT_VERSION" > dist/releasetag.txt',
+        //     '  echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT',
+        //     '  echo "has_changes=true" >> $GITHUB_OUTPUT',
+        //     '  echo "Changes detected. Next version will be v$NEXT_VERSION"',
+        //     "else",
+        //     '  echo "No changes detected since last tag"',
+        //     '  echo "has_changes=false" >> $GITHUB_OUTPUT',
+        //     "fi",
+        //   ].join("\n"),
+        // },
+
+        // {
+        //   name: "Check if Tag Exists",
+        //   id: "check_tag_exists",
+        //   if: "steps.release_check.outputs.has_changes == 'true'",
+        //   run: [
+        //     "TAG=$(cat dist/releasetag.txt)",
+        //     'if [ ! -z "$TAG" ] && git ls-remote -q --exit-code --tags origin $TAG; then',
+        //     '  echo "exists=true" >> $GITHUB_OUTPUT',
+        //     "else",
+        //     '  echo "exists=false" >> $GITHUB_OUTPUT',
+        //     "fi",
+        //   ].join("\n"),
+        // },
+        // {
+        //   name: "Create Tag",
+        //   if: "steps.release_check.outputs.has_changes == 'true' && steps.check_tag_exists.outputs.exists == 'false'",
+        //   run: [
+        //     "TAG=$(cat dist/releasetag.txt)",
+        //     "git config user.name github-actions",
+        //     "git config user.email github-actions@github.com",
+        //     'git tag "$TAG"',
+        //     'git push origin "$TAG"',
+        //   ].join("\n"),
+        // },
         {
-          name: "Determine Next Version",
-          id: "next_version",
+          name: "Check for Changes and Determine Version",
+          id: "version_check",
           run: [
+            "set -e",
+            "mkdir -p dist",
+            "PACKAGE_DIR=$(pwd)",
             "PACKAGE_NAME=$(node -p \"require('./package.json').name\")",
             "CURRENT_VERSION=$(npm view $PACKAGE_NAME version 2>/dev/null || echo '0.0.0')",
             "NEXT_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')",
+            'TAG="v$NEXT_VERSION"',
+            'echo "Package $PACKAGE_NAME current version: $CURRENT_VERSION"',
             'echo "Next version will be: $NEXT_VERSION"',
             'echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT',
-          ].join(" && "),
+            'echo "has_changes=true" >> $GITHUB_OUTPUT',
+            'echo "$TAG" > dist/releasetag.txt',
+          ].join("\n"),
         },
         {
-          name: "Check if Tag Exists",
-          id: "check_tag_exists",
+          name: "Create Tag",
+          if: "steps.version_check.outputs.has_changes == 'true'",
           run: [
-            'TAG="v${{ steps.next_version.outputs.version }}"',
-            'echo "Checking for tag: $TAG"',
-            'if git rev-parse "$TAG" >/dev/null 2>&1; then',
-            '  echo "Tag exists=true"',
-            '  echo "exists=true" >> $GITHUB_OUTPUT',
-            "else",
-            '  echo "Tag exists=false"',
-            '  echo "exists=false" >> $GITHUB_OUTPUT',
+            "set -ex",
+            "if [ ! -f dist/releasetag.txt ]; then",
+            '  echo "Error: dist/releasetag.txt not found"',
+            "  exit 1",
             "fi",
-            'echo "Output value:"',
-            "cat $GITHUB_OUTPUT",
+            "TAG=$(cat dist/releasetag.txt)",
+            'echo "Creating tag: $TAG"',
+            "git config user.name github-actions",
+            "git config user.email github-actions@github.com",
+            'git tag "$TAG"',
+            'git push origin "$TAG"',
           ].join("\n"),
         },
 
-        {
-          name: "Create Tag",
-          if: "steps.check_tag_exists.outputs.exists == 'false'",
-          run: [
-            'VERSION="${{ steps.next_version.outputs.version }}"',
-            'git tag "v$VERSION"',
-            'git push origin "v$VERSION"',
-          ].join("\n"),
-        },
+        // {
+        //   name: "Determine Next Version",
+        //   id: "next_version",
+        //   run: [
+        //     "PACKAGE_NAME=$(node -p \"require('./package.json').name\")",
+        //     "CURRENT_VERSION=$(npm view $PACKAGE_NAME version 2>/dev/null || echo '0.0.0')",
+        //     "NEXT_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')",
+        //     'echo "Next version will be: $NEXT_VERSION"',
+        //     'echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT',
+        //   ].join(" && "),
+        // },
+        // {
+        //   name: "Check if Tag Exists",
+        //   id: "check_tag_exists",
+        //   run: [
+        //     'TAG="v${{ steps.next_version.outputs.version }}"',
+        //     'echo "Checking for tag: $TAG"',
+        //     'if git rev-parse "$TAG" >/dev/null 2>&1; then',
+        //     '  echo "Tag exists=true"',
+        //     '  echo "exists=true" >> $GITHUB_OUTPUT',
+        //     "else",
+        //     '  echo "Tag exists=false"',
+        //     '  echo "exists=false" >> $GITHUB_OUTPUT',
+        //     "fi",
+        //     'echo "Output value:"',
+        //     "cat $GITHUB_OUTPUT",
+        //   ].join("\n"),
+        // },
+
+        // {
+        //   name: "Create Tag",
+        //   if: "steps.check_tag_exists.outputs.exists == 'false'",
+        //   run: [
+        //     'VERSION="${{ steps.next_version.outputs.version }}"',
+        //     'git tag "v$VERSION"',
+        //     'git push origin "v$VERSION"',
+        //   ].join("\n"),
+        // },
         {
           name: "Check for new commits",
           id: "git_remote",
@@ -530,7 +611,7 @@ if (wf1) {
         contents: JobPermission.READ,
         idToken: JobPermission.WRITE,
       },
-      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+      if: "needs.release.outputs.latest_commit == github.sha",
       steps: [
         {
           uses: "actions/setup-node@v4",
@@ -589,7 +670,7 @@ if (wf1) {
       permissions: {
         contents: JobPermission.WRITE,
       },
-      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+      if: "needs.release.outputs.latest_commit == github.sha",
       steps: [
         {
           name: "Checkout", // Add this step
