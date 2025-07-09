@@ -10,12 +10,12 @@ jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       id-token: write
     outputs:
       latest_commit: ${{ steps.git_remote.outputs.latest_commit }}
-      next_version: ${{ steps.next_version.outputs.version }}
-      tag_exists: ${{ steps.check_tag_exists.outputs.exists }}
+      version: ${{ steps.get_version.outputs.version }}
+      should_publish: ${{ steps.check_npm.outputs.should_publish }}
     env:
       CI: "true"
     defaults:
@@ -33,45 +33,34 @@ jobs:
       - name: Install Dependencies
         run: yarn install --check-files --frozen-lockfile
         working-directory: ./
-      - name: Check for Changes and Determine Version
-        id: version_check
+      - name: Get version from releasetag.txt
+        id: get_version
         run: |-
-          set -e
-          mkdir -p dist
-          PACKAGE_DIR=$(pwd)
-          PACKAGE_NAME=$(node -p "require('./package.json').name")
-          CURRENT_VERSION=$(npm view $PACKAGE_NAME version 2>/dev/null || echo '0.0.0')
-          NEXT_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
-          TAG="v$NEXT_VERSION"
-          echo "Package $PACKAGE_NAME current version: $CURRENT_VERSION"
-          echo "Next version will be: $NEXT_VERSION"
-          echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
-          echo "has_changes=true" >> $GITHUB_OUTPUT
-          echo "$TAG" > dist/releasetag.txt
-      - name: Create Tag
-        if: steps.version_check.outputs.has_changes == 'true'
+          VERSION=$(cat ../../../../../../../dist/releasetag.txt | sed 's/^v//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      - name: Check if already published to npm
+        id: check_npm
         run: |-
-          set -ex
-          if [ ! -f dist/releasetag.txt ]; then
-            echo "Error: dist/releasetag.txt not found"
-            exit 1
+          PKG_NAME=$(node -p "require('./package.json').name")
+          VERSION="${{ steps.get_version.outputs.version }}"
+          if npm view "$PKG_NAME@$VERSION" > /dev/null 2>&1; then
+            echo "already published"
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_publish=true" >> $GITHUB_OUTPUT
           fi
-          TAG=$(cat dist/releasetag.txt)
-          echo "Creating tag: $TAG"
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git tag "$TAG"
-          git push origin "$TAG"
       - name: Check for new commits
         id: git_remote
         run: echo "latest_commit=${{ github.sha }}" >> $GITHUB_OUTPUT
       - name: Pack Artifact
+        if: steps.check_npm.outputs.should_publish == 'true'
         run: yarn pack --filename smithy-client.tgz
       - name: Upload Artifact
+        if: steps.check_npm.outputs.should_publish == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: build-artifact
-          path: ./src/packages/my-api/build/smithy/source/typescript-client-codegen
+          path: ./src/packages/my-api/build/smithy/source/typescript-client-codegen/smithy-client.tgz
           overwrite: true
   release_npm:
     name: Publish to NPM
@@ -80,7 +69,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha
+    if: needs.release.outputs.should_publish == 'true' && needs.release.outputs.latest_commit == github.sha
     steps:
       - uses: actions/setup-node@v4
         with:
@@ -94,7 +83,7 @@ jobs:
       - name: Extract smithy-client.tgz
         run: mkdir repo && tar -xzf ./dist/smithy-client.tgz -C repo --strip-components=1
       - name: Update Version
-        run: 'VERSION="${{ needs.release.outputs.next_version }}" && sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json && echo "Updated version to $VERSION" && cat package.json | grep version'
+        run: 'VERSION="${{ needs.release.outputs.version }}" && sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json && echo "Updated version to $VERSION" && cat package.json | grep version'
         working-directory: ./repo
       - name: Remove prepack script
         run: jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json
@@ -112,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    if: needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha
+    if: needs.release.outputs.should_publish == 'true' && needs.release.outputs.latest_commit == github.sha
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -126,4 +115,4 @@ jobs:
       - name: GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: 'VERSION="${{ needs.release.outputs.next_version }}" && echo "Creating release for version: v$VERSION" && gh release create "v$VERSION" --title "v$VERSION" --notes "Automated release for CLIENT" ./dist/smithy-client.tgz'
+        run: 'VERSION="v${{ needs.release.outputs.version }}" && echo "Creating release for version: $VERSION" && gh release create "$VERSION" --title "$VERSION" --notes "Automated release for Smithy client" ./dist/smithy-client.tgz || echo "Release may already exist"'
