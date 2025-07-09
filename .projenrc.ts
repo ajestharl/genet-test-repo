@@ -656,14 +656,14 @@ if (wf1) {
   });
 }
 
-const release = project.github?.addWorkflow("c_release");
+const release = project.github?.addWorkflow("c_release_workflow");
 if (release) {
   release.on({
     push: { branches: ["main"] },
     workflowDispatch: {},
   });
   release.addJobs({
-    release: {
+    bump_version: {
       runsOn: ["ubuntu-latest"],
       permissions: {
         contents: JobPermission.WRITE,
@@ -723,7 +723,7 @@ if (release) {
       ],
     },
     trigger_smithy_client: {
-      needs: ["release"],
+      needs: ["bump_version"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
@@ -734,7 +734,7 @@ if (release) {
       },
     },
     trigger_smithy_ssdk: {
-      needs: ["release"],
+      needs: ["bump_version"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
