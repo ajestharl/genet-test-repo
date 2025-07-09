@@ -23,6 +23,13 @@ jobs:
         run: |-
           git config --global user.email 'github-actions@github.com'
           git config --global user.name 'GitHub Actions'
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Install Dependencies
+        run: yarn install --check-files --frozen-lockfile
+        working-directory: ./
       - name: Run Projen Release
         run: npx projen release
         working-directory: ./

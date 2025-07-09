@@ -227,10 +227,10 @@ if (wf) {
         version: {
           required: true,
           type: "string",
-          description: "Version to release"
-        }
-      }
-    }
+          description: "Version to release",
+        },
+      },
+    },
   });
   wf.addJobs({
     release: {
@@ -446,10 +446,10 @@ if (wf1) {
         version: {
           required: true,
           type: "string",
-          description: "Version to release"
-        }
-      }
-    }
+          description: "Version to release",
+        },
+      },
+    },
   });
   wf1.addJobs({
     release: {
@@ -687,6 +687,16 @@ if (release) {
             "git config --global user.email 'github-actions@github.com'",
             "git config --global user.name 'GitHub Actions'",
           ].join("\n"),
+        },
+        {
+          name: "Setup Node.js",
+          uses: "actions/setup-node@v4",
+          with: { "node-version": "lts/*" },
+        },
+        {
+          name: "Install Dependencies",
+          run: "yarn install --check-files --frozen-lockfile",
+          workingDirectory: "./",
         },
         {
           name: "Run Projen Release",
