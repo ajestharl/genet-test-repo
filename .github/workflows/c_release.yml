@@ -34,7 +34,6 @@ jobs:
         working-directory: ./
       - name: Run Projen Release
         run: npx projen release
-        working-directory: ./
       - name: Read Version from releasetag.txt
         id: getver
         run: |-
