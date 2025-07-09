@@ -38,6 +38,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
         working-directory: ./
+      - name: Set Version
+        id: next_version
+        run: echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
       - name: release
         run: npx projen release
       - name: Check if version has already been tagged
