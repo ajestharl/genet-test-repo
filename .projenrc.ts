@@ -753,6 +753,11 @@ if (wf1) {
           workingDirectory: "./",
         },
         {
+          name: "Run projen",
+          run: "npx projen",
+          workingDirectory: "./",
+        },
+        {
           name: "Get version from releasetag.txt",
           id: "get_version",
           run: [

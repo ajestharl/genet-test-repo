@@ -2,6 +2,7 @@
     "name": "my-service-client",
     "description": "my-service-client client",
     "version": "0.0.1",
+    
     "scripts": {
         "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
         "build:cjs": "tsc -p tsconfig.cjs.json",
