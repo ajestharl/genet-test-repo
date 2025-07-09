@@ -179,13 +179,31 @@ export const createPackage = (config: PackageConfig) => {
     bundledDeps: config.bundledDeps,
     docgen: false,
     packageName: config.name,
-    release: true,
     releaseToNpm: true,
     publishToPypi: {
       distName: config.name,
       module: config.name,
     },
     workflowNodeVersion: "lts/*",
+    release: true,
+    releaseWorkflowSetupSteps: [
+      {
+        name: "Set Version",
+        run: 'echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT',
+        id: "next_version",
+      },
+    ],
+    buildWorkflowTriggers: {
+      workflowCall: {
+        inputs: {
+          version: {
+            required: true,
+            type: "string",
+            description: "Version to release",
+          },
+        },
+      },
+    },
   });
   addTestTargets(tsProject);
   addPrettierConfig(tsProject);
@@ -667,17 +685,6 @@ if (release) {
           ].join("\n"),
         },
       ],
-    },
-    trigger_projen_utils: {
-      needs: ["bump_version"],
-      permissions: {
-        contents: JobPermission.WRITE,
-        idToken: JobPermission.WRITE,
-      },
-      uses: "./.github/workflows/release_ajithapackage.yml",
-      with: {
-        version: "${{ needs.bump_version.outputs.version }}",
-      },
     },
     trigger_smithy_client: {
       needs: ["bump_version"],

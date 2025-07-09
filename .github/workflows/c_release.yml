@@ -32,14 +32,6 @@ jobs:
           VERSION=$(cat dist/releasetag.txt | sed 's/^v//')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Release version: $VERSION"
-  trigger_projen_utils:
-    needs: bump_version
-    permissions:
-      contents: write
-      id-token: write
-    uses: ./.github/workflows/release_ajithapackage.yml
-    with:
-      version: ${{ needs.bump_version.outputs.version }}
   trigger_smithy_client:
     needs: bump_version
     permissions:
