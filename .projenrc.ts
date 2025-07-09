@@ -674,7 +674,7 @@ if (release) {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
-      uses: "./.github/workflows/projen-utils-release.yaml",
+      uses: "./.github/workflows/release_ajithapackage.yaml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },
@@ -685,7 +685,7 @@ if (release) {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
-      uses: "./.github/workflows/smithy-client-release.yaml",
+      uses: "./.github/workflows/release_smithy_client.yaml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },
@@ -696,7 +696,7 @@ if (release) {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
-      uses: "./.github/workflows/smithy-ssdk-release.yaml",
+      uses: "./.github/workflows/release_smithy_ssdk.yaml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },

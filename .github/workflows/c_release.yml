@@ -37,7 +37,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    uses: ./.github/workflows/projen-utils-release.yaml
+    uses: ./.github/workflows/release_ajithapackage.yaml
     with:
       version: ${{ needs.bump_version.outputs.version }}
   trigger_smithy_client:
@@ -45,7 +45,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    uses: ./.github/workflows/smithy-client-release.yaml
+    uses: ./.github/workflows/release_smithy_client.yaml
     with:
       version: ${{ needs.bump_version.outputs.version }}
   trigger_smithy_ssdk:
@@ -53,6 +53,6 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    uses: ./.github/workflows/smithy-ssdk-release.yaml
+    uses: ./.github/workflows/release_smithy_ssdk.yaml
     with:
       version: ${{ needs.bump_version.outputs.version }}
