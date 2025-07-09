@@ -36,6 +36,7 @@ jobs:
       - name: Check for Changes and Determine Version
         id: version_check
         run: |-
+          set -e
           mkdir -p dist
           PACKAGE_DIR=$(pwd)
           PACKAGE_NAME=$(node -p "require('./package.json').name")
@@ -45,7 +46,6 @@ jobs:
           if git ls-remote -q --exit-code --tags origin $TAG >/dev/null 2>&1; then
             TAG_COMMIT=$(git rev-list -n 1 $TAG 2>/dev/null || echo '')
             if [ ! -z "$TAG_COMMIT" ]; then
-              # Check if the commit that created this tag modified this package
               if git diff-tree --no-commit-id --name-only -r $TAG_COMMIT | grep -q "$PACKAGE_DIR"; then
                 echo "Tag $TAG exists and belongs to this package"
                 echo "has_changes=false" >> $GITHUB_OUTPUT
@@ -53,24 +53,34 @@ jobs:
                 echo "Tag $TAG exists but belongs to different package"
                 echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
                 echo "has_changes=true" >> $GITHUB_OUTPUT
-                echo "v$NEXT_VERSION" > dist/releasetag.txt
+                echo "$TAG" > dist/releasetag.txt
               fi
             else
               echo "Tag exists but cannot determine ownership"
               echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
               echo "has_changes=true" >> $GITHUB_OUTPUT
-              echo "v$NEXT_VERSION" > dist/releasetag.txt
+              echo "$TAG" > dist/releasetag.txt
             fi
           else
             echo "Tag $TAG does not exist"
             echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "v$NEXT_VERSION" > dist/releasetag.txt
+            echo "$TAG" > dist/releasetag.txt
           fi
+          echo "Final outputs:"
+          cat $GITHUB_OUTPUT
+          echo "Release tag file contents:"
+          cat dist/releasetag.txt || echo "File not found"
       - name: Create Tag
         if: steps.version_check.outputs.has_changes == 'true'
         run: |-
+          set -ex
+          if [ ! -f dist/releasetag.txt ]; then
+            echo "Error: dist/releasetag.txt not found"
+            exit 1
+          fi
           TAG=$(cat dist/releasetag.txt)
+          echo "Creating tag: $TAG"
           git config user.name github-actions
           git config user.email github-actions@github.com
           git tag "$TAG"
