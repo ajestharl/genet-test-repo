@@ -37,15 +37,17 @@ jobs:
         id: release_check
         run: |-
           mkdir -p dist
-          if git log --oneline -1 | grep -qv "chore(release):"; then
-            PACKAGE_NAME=$(node -p "require('./package.json').name")
-            CURRENT_VERSION=$(npm view $PACKAGE_NAME version 2>/dev/null || echo '0.0.0')
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          CURRENT_VERSION=$(npm view $PACKAGE_NAME version 2>/dev/null || echo '0.0.0')
+          LAST_COMMIT=$(git rev-list --tags --max-count=1)
+          if [ -z "$LAST_COMMIT" ] || [ -n "$(git diff $LAST_COMMIT..HEAD -- .)" ]; then
             NEXT_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
             echo "v$NEXT_VERSION" > dist/releasetag.txt
             echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
             echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected. Next version will be v$NEXT_VERSION"
           else
-            echo "No changes detected"
+            echo "No changes detected since last tag"
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
       - name: Check if Tag Exists
