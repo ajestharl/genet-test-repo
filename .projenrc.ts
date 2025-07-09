@@ -756,7 +756,7 @@ if (wf1) {
           name: "Get version from releasetag.txt",
           id: "get_version",
           run: [
-            "VERSION=$(cat ../../../../../../../dist/releasetag.txt | sed 's/^v//')",
+            "VERSION=$(cat ./dist/releasetag.txt | sed 's/^v//')",
             'echo "version=$VERSION" >> $GITHUB_OUTPUT',
           ].join("\n"),
         },
