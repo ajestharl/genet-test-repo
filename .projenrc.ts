@@ -691,7 +691,7 @@ if (release) {
         {
           name: "Run Projen Release",
           run: "npx projen release",
-          workingDirectory: "packages/projen-core",
+          workingDirectory: "packages/ajithapackage",
         },
         {
           name: "Read Version from releasetag.txt",

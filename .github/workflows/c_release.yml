@@ -25,7 +25,7 @@ jobs:
           git config --global user.name 'GitHub Actions'
       - name: Run Projen Release
         run: npx projen release
-        working-directory: packages/projen-core
+        working-directory: packages/ajithapackage
       - name: Read Version from releasetag.txt
         id: getver
         run: |-
