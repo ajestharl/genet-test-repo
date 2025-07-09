@@ -4,7 +4,7 @@ name: c_release
 on:
   push:
     branches:
-      - release
+      - main
   workflow_dispatch: {}
 jobs:
   bump_version:

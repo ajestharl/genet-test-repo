@@ -659,7 +659,7 @@ if (wf1) {
 const release = project.github?.addWorkflow("c_release");
 if (release) {
   release.on({
-    push: { branches: ["release"] },
+    push: { branches: ["main"] },
     workflowDispatch: {},
   });
   release.addJobs({
