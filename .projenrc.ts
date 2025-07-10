@@ -983,7 +983,7 @@ if (central) {
         {
           name: "Run Projen Release (ajithapackage1)",
           run: "npx projen release",
-          workingDirectory: "./",
+          workingDirectory: "src/packages/ajithapackage1",
         },
         {
           name: "Read Version",
