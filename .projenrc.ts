@@ -985,6 +985,11 @@ aj1?.on({
         type: "string",
       },
     },
+    secrets: {
+      NPM_TOKEN: {
+        required: true
+      }
+    }
   },
 });
 aj1?.addJobs({
@@ -1242,9 +1247,7 @@ if (central) {
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },
-      secrets: {
-        NPM_TOKEN: "${{ secrets.TOKEN }}",
-      }
+      secrets: "inherit",
     },
 
     release_ajithapackage2: {
