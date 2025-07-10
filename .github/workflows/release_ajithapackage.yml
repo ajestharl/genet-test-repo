@@ -47,5 +47,6 @@ jobs:
           overwrite: true
       - name: Publish to NPM
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN_SMITHY }}
+          NPM_REGISTRY: registry.npmjs.org
         run: npx -p publib publib-npm --version ${{ inputs.version }}
