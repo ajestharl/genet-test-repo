@@ -1057,7 +1057,7 @@ aj1?.addJobs({
           "DEBUG=* npx -p publib publib-npm --version ${{ inputs.version }}",
         ].join("\n"),
         env: {
-          NPM_TOKEN: "${{ secrets.NPM_TOKEN_SMITHY }}",
+          NPM_TOKEN: "${{ secrets.NPM_TOKEN }}",
           NPM_REGISTRY: "https://registry.npmjs.org",
         },
       },
