@@ -253,6 +253,9 @@ if (wf) {
         },
         {
           name: "who am i",
+          env: {
+            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+          },
           run: "npm whoami",
         },
         {
