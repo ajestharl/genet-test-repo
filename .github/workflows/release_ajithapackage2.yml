@@ -27,7 +27,7 @@ jobs:
       - name: Compile
         run: npx projen compile
       - name: Build JS package
-        run: npx projen package:js
+        run: npx projen package
       - name: Backup artifact permissions
         run: cd dist && getfacl -R . > permissions-backup.acl
         continue-on-error: true

@@ -193,19 +193,15 @@ export const createPackage = (config: PackageConfig) => {
   tsProject.package.file.addOverride("private", false);
   tsProject.addTask("release", {
     steps: [
-      // 1. Get current version from NPM
       {
         exec: `CURRENT=$(npm view ${config.name} version 2>/dev/null || echo '0.0.0') && echo $CURRENT > .version.tmp`,
       },
-      // 2. Bump patch version manually
       {
         exec: `VERSION=$(awk -F. '{$NF+=1; print $1"."$2"."$3}' .version.tmp) && echo $VERSION > .version.bumped`,
       },
-      // 3. Create git tag
       {
         exec: `TAG=v$(cat .version.bumped) && git tag $TAG && git push origin $TAG`,
       },
-      // 4. Write releasetag.txt
       {
         exec: "mkdir -p dist && echo v$(cat .version.bumped) > dist/releasetag.txt",
       },
@@ -1058,7 +1054,7 @@ aj1?.addJobs({
         run: [
           'echo "🔍 Checking NPM_TOKEN length (for debug only): ${#NPM_TOKEN}"',
           'echo "📦 Publishing version: $VERSION"',
-          'DEBUG=* npx -p publib@latest publib-npm',
+          "DEBUG=* npx -p publib@latest publib-npm",
         ].join("\n"),
       },
     ],
@@ -1104,7 +1100,6 @@ aj1?.addJobs({
   },
 });
 
-// Custom child workflow for ajithapackage2
 const aj2 = project.github?.addWorkflow("release_ajithapackage2");
 aj2?.on({
   workflowCall: {
@@ -1145,7 +1140,7 @@ aj2?.addJobs({
       },
       {
         name: "Build JS package",
-        run: "npx projen package:js",
+        run: "npx projen package",
       },
       {
         name: "Backup artifact permissions",
@@ -1344,5 +1339,17 @@ package2.addTask("release", {
     },
   ],
 });
+// package2.addTask("package:js", {
+//   steps: [
+//     { spawn: "compile" },
+//     { spawn: "test" },
+//     {
+//       exec: "mkdir -p dist/js && cp package.json README.md dist/js/",
+//     },
+//     {
+//       exec: "cd dist/js && npm pack",
+//     },
+//   ],
+// });
 
 project.synth();
