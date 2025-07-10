@@ -1050,7 +1050,6 @@ aj1?.addJobs({
         name: "Publish to NPM",
         env: {
           NPM_TOKEN: "${{ secrets.TOKEN }}",
-          NPM_REGISTRY: "https://registry.npmjs.org",
         },
         run: [
           'echo "Checking NPM_TOKEN length: ${#NPM_TOKEN}"',
@@ -1131,6 +1130,21 @@ aj2?.addJobs({
         with: { "fetch-depth": 0 },
       },
       {
+        name: "Set Git identity",
+        run: [
+          'git config user.name "github-actions"',
+          'git config user.email "github-actions@github.com"',
+        ].join("\n"),
+      },
+      {
+        name: "Setup Node.js",
+        uses: "actions/setup-node@v4",
+        with: {
+          "node-version": "lts/*",
+          "registry-url": "https://registry.npmjs.org",
+        },
+      },
+      {
         name: "Install dependencies",
         run: "yarn install --check-files --frozen-lockfile",
         workingDirectory: ".",
@@ -1164,7 +1178,6 @@ aj2?.addJobs({
       {
         name: "Release",
         env: {
-          NPM_REGISTRY: "registry.npmjs.org",
           NPM_TOKEN: "${{ secrets.TOKEN }}",
         },
         run: [

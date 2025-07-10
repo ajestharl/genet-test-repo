@@ -51,7 +51,6 @@ jobs:
       - name: Publish to NPM
         env:
           NPM_TOKEN: ${{ secrets.TOKEN }}
-          NPM_REGISTRY: https://registry.npmjs.org
         run: |-
           echo "Checking NPM_TOKEN length: ${#NPM_TOKEN}"
           echo "Publishing version: ${{ inputs.version }}"

@@ -21,6 +21,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Set Git identity
+        run: |-
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          registry-url: https://registry.npmjs.org
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
         working-directory: .
@@ -41,7 +50,6 @@ jobs:
         run: jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json
       - name: Release
         env:
-          NPM_REGISTRY: registry.npmjs.org
           NPM_TOKEN: ${{ secrets.TOKEN }}
         run: |-
           echo "Checking NPM_TOKEN length: ${#NPM_TOKEN}"
