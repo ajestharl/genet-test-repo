@@ -1165,7 +1165,7 @@ aj2?.addJobs({
         env: {
           NPM_DIST_TAG: "latest",
           NPM_REGISTRY: "registry.npmjs.org",
-          NPM_TOKEN: "${{ secrets.NPM_TOKEN }}",
+          NPM_TOKEN: "${{ secrets.TOKEN }}",
         },
         run: "npx -p publib@latest publib-npm",
       },
