@@ -49,7 +49,7 @@ jobs:
           overwrite: true
       - name: Publish to NPM
         env:
-          NPM_TOKEN: ${{ secrets.TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.TOKEN }}
           NPM_REGISTRY: https://registry.npmjs.org
         run: |-
           echo "🔍 Checking NPM_TOKEN length (for debug only): ${#NPM_TOKEN}"

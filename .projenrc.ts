@@ -1048,7 +1048,7 @@ aj1?.addJobs({
       {
         name: "Publish to NPM",
         env: {
-          NPM_TOKEN: "${{ secrets.TOKEN }}",
+          NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
           NPM_REGISTRY: "https://registry.npmjs.org",
         },
         run: [
