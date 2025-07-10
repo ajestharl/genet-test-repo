@@ -1036,11 +1036,6 @@ aj1?.addJobs({
         run: "npx projen package:js",
       },
       {
-        name: "Read version",
-        id: "read_version",
-        run: "echo \"version=$(cat dist/releasetag.txt | sed 's/^v//')\" >> $GITHUB_OUTPUT",
-      },
-      {
         name: "Backup artifact permissions",
         run: "cd dist && getfacl -R . > permissions-backup.acl",
         continueOnError: true,
@@ -1056,10 +1051,14 @@ aj1?.addJobs({
       },
       {
         name: "Publish to NPM",
-        run: "npx -p publib publib-npm --version ${{ inputs.version }}",
+        run: [
+          'echo "🔍 Checking NPM_TOKEN length (for debug only): ${#NPM_TOKEN}"',
+          'echo "📦 Publishing version: ${{ inputs.version }}"',
+          "DEBUG=* npx -p publib publib-npm --version ${{ inputs.version }}",
+        ].join("\n"),
         env: {
           NPM_TOKEN: "${{ secrets.NPM_TOKEN_SMITHY }}",
-          NPM_REGISTRY: "registry.npmjs.org",
+          NPM_REGISTRY: "https://registry.npmjs.org",
         },
       },
     ],
@@ -1097,18 +1096,9 @@ aj1?.addJobs({
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
         },
         run: `
-          TAG=$(cat dist/releasetag.txt)
-          errout=$(mktemp)
-          gh release create "$TAG" \
-            -F dist/changelog.md \
-            -t "$TAG" \
-            --target $GITHUB_SHA 2> $errout || true
-          exitcode=$?
-          if [ $exitcode -ne 0 ] && ! grep -q "Release.tag_name already exists" $errout; then
-            cat $errout
-            exit $exitcode
-          fi
-        `,
+        TAG="v\${{ inputs.version }}"
+        gh release create "$TAG" -F dist/changelog.md -t "$TAG" --target $GITHUB_SHA || echo "Release might already exist"
+      `,
       },
     ],
   },
