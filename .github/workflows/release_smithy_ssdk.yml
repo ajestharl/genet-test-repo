@@ -41,7 +41,7 @@ jobs:
         working-directory: repo
       - name: Publish to npm
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN_SMITHY }}
+          NODE_AUTH_TOKEN: ${{ secrets.TOKEN }}
         run: npm publish --access public
         working-directory: repo
   release_github:
