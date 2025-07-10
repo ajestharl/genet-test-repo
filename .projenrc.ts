@@ -252,6 +252,10 @@ if (wf) {
           },
         },
         {
+          name: "who am i",
+          run: "npm whoami",
+        },
+        {
           name: "Install dependencies",
           run: "yarn install --check-files --frozen-lockfile",
         },

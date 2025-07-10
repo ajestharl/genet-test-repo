@@ -23,6 +23,8 @@ jobs:
         with:
           node-version: lts/*
           registry-url: https://registry.npmjs.org
+      - name: who am i
+        run: npm whoami
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
       - name: Build SSDK
