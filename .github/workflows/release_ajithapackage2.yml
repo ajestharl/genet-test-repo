@@ -45,3 +45,33 @@ jobs:
           NPM_REGISTRY: registry.npmjs.org
           NPM_TOKEN: ${{ secrets.TOKEN }}
         run: npx -p publib@latest publib-npm
+  release_github:
+    name: Publish GitHub Release
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: always() && needs.release.result == 'success'
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ajithapackage2-artifact
+          path: dist
+      - name: Restore build artifact permissions
+        run: cd dist && setfacl --restore=permissions-backup.acl
+        continue-on-error: true
+      - name: GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: "
+
+          \        TAG=\"v${{ inputs.version }}\"
+
+          \        gh release create \"$TAG\" -F dist/changelog.md -t \"$TAG\" --target $GITHUB_SHA || echo \"Release might already exist\"
+
+          \      "

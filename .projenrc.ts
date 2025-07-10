@@ -1048,12 +1048,12 @@ aj1?.addJobs({
       {
         name: "Publish to NPM",
         env: {
-          NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+          NPM_TOKEN: "${{ secrets.TOKEN }}",
           NPM_REGISTRY: "https://registry.npmjs.org",
         },
         run: [
-          'echo "🔍 Checking NPM_TOKEN length (for debug only): ${#NPM_TOKEN}"',
-          'echo "📦 Publishing version: $VERSION"',
+          'echo "Checking NPM_TOKEN length (for debug only): ${#NPM_TOKEN}"',
+          'echo "Publishing version: $VERSION"',
           "DEBUG=* npx -p publib@latest publib-npm",
         ].join("\n"),
       },
@@ -1168,6 +1168,45 @@ aj2?.addJobs({
           NPM_TOKEN: "${{ secrets.TOKEN }}",
         },
         run: "npx -p publib@latest publib-npm",
+      },
+    ],
+  },
+  release_github: {
+    name: "Publish GitHub Release",
+    needs: ["release"],
+    runsOn: ["ubuntu-latest"],
+    permissions: {
+      contents: JobPermission.WRITE,
+    },
+    if: "always() && needs.release.result == 'success'",
+    steps: [
+      {
+        name: "Setup Node.js",
+        uses: "actions/setup-node@v4",
+        with: { "node-version": "lts/*" },
+      },
+      {
+        name: "Download artifact",
+        uses: "actions/download-artifact@v4",
+        with: {
+          name: "ajithapackage2-artifact",
+          path: "dist",
+        },
+      },
+      {
+        name: "Restore build artifact permissions",
+        run: "cd dist && setfacl --restore=permissions-backup.acl",
+        continueOnError: true,
+      },
+      {
+        name: "GitHub Release",
+        env: {
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+        },
+        run: `
+        TAG="v\${{ inputs.version }}"
+        gh release create "$TAG" -F dist/changelog.md -t "$TAG" --target $GITHUB_SHA || echo "Release might already exist"
+      `,
       },
     ],
   },
