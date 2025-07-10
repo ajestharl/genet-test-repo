@@ -162,19 +162,16 @@
       "name": "release",
       "steps": [
         {
-          "exec": "npx projen bump"
+          "exec": "CURRENT=$(npm view ajithapackage version 2>/dev/null || echo '0.0.0') && echo $CURRENT > .version.tmp"
         },
         {
-          "exec": "git commit -am \"chore: bump version\" || echo \"No changes to commit\""
+          "exec": "VERSION=$(awk -F. '{$NF+=1; print $1\".\"$2\".\"$3}' .version.tmp) && echo $VERSION > .version.bumped"
         },
         {
-          "exec": "git tag v$(node -p \"require('./package.json').version\")"
+          "exec": "TAG=v$(cat .version.bumped) && git tag $TAG && git push origin $TAG"
         },
         {
-          "exec": "mkdir -p dist"
-        },
-        {
-          "exec": "echo \"v$(node -p \\\"require('./package.json').version\\\")\" > dist/releasetag.txt"
+          "exec": "mkdir -p dist && echo v$(cat .version.bumped) > dist/releasetag.txt"
         }
       ]
     },

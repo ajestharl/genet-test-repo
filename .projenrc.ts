@@ -193,14 +193,21 @@ export const createPackage = (config: PackageConfig) => {
   tsProject.package.file.addOverride("private", false);
   tsProject.addTask("release", {
     steps: [
-      { exec: "npx projen bump" },
+      // 1. Get current version from NPM
       {
-        exec: 'git commit -am "chore: bump version" || echo "No changes to commit"',
+        exec: `CURRENT=$(npm view ${config.name} version 2>/dev/null || echo '0.0.0') && echo $CURRENT > .version.tmp`,
       },
-      { exec: "git tag v$(node -p \"require('./package.json').version\")" },
-      { exec: "mkdir -p dist" },
+      // 2. Bump patch version manually
       {
-        exec: 'echo "v$(node -p \\"require(\'./package.json\').version\\")" > dist/releasetag.txt',
+        exec: `VERSION=$(awk -F. '{$NF+=1; print $1"."$2"."$3}' .version.tmp) && echo $VERSION > .version.bumped`,
+      },
+      // 3. Create git tag
+      {
+        exec: `TAG=v$(cat .version.bumped) && git tag $TAG && git push origin $TAG`,
+      },
+      // 4. Write releasetag.txt
+      {
+        exec: "mkdir -p dist && echo v$(cat .version.bumped) > dist/releasetag.txt",
       },
     ],
   });
@@ -976,7 +983,7 @@ if (central) {
         {
           name: "Run Projen Release (ajithapackage1)",
           run: "npx projen release",
-          workingDirectory: "src/packages/ajithapackage1",
+          workingDirectory: "./",
         },
         {
           name: "Read Version",
