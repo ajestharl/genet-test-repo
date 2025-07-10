@@ -22,7 +22,7 @@ jobs:
         run: yarn install --check-files --frozen-lockfile
       - name: Build JS package
         run: npx projen package:js
-        working-directory: src/packages/ajithapackage1
+        working-directory: ./
       - name: Publish to NPM
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

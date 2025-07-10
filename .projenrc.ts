@@ -888,7 +888,7 @@ aj1?.addJobs({
       {
         name: "Build JS package",
         run: "npx projen package:js",
-        workingDirectory: "src/packages/ajithapackage1",
+        workingDirectory: "./",
       },
       {
         name: "Publish to NPM",
