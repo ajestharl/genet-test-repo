@@ -207,7 +207,9 @@ export const createPackage = (config: PackageConfig) => {
       },
     ],
   });
-
+  tsProject.package.addField("publishConfig", {
+    access: "public",
+  });
   return tsProject;
 };
 
@@ -325,7 +327,6 @@ if (wf) {
     },
   });
 }
-
 
 // Smithy Client
 const wf1 = project.github?.addWorkflow("release_smithy_client");
@@ -843,7 +844,9 @@ addTestTargets(package2);
 addPrettierConfig(package2);
 configureMarkDownLinting(package2);
 package2.package.file.addOverride("private", false);
-
+package2.package.addField("publishConfig", {
+  access: "public",
+});
 package2.addTask("release", {
   steps: [
     { exec: "npx projen bump" },
