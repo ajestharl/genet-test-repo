@@ -1016,6 +1016,7 @@ aj1?.addJobs({
         uses: "actions/setup-node@v4",
         with: {
           "node-version": "lts/*",
+          "registry-url": "https://registry.npmjs.org",
         },
       },
       {
@@ -1052,9 +1053,9 @@ aj1?.addJobs({
           NPM_REGISTRY: "https://registry.npmjs.org",
         },
         run: [
-          'echo "Checking NPM_TOKEN length (for debug only): ${#NPM_TOKEN}"',
-          'echo "Publishing version: $VERSION"',
-          "DEBUG=* npx -p publib@latest publib-npm",
+          'echo "Checking NPM_TOKEN length: ${#NPM_TOKEN}"',
+          'echo "Publishing version: ${{ inputs.version }}"',
+          "DEBUG=* npx -p publib publib-npm --version ${{ inputs.version }}",
         ].join("\n"),
       },
     ],
@@ -1163,11 +1164,14 @@ aj2?.addJobs({
       {
         name: "Release",
         env: {
-          NPM_DIST_TAG: "latest",
           NPM_REGISTRY: "registry.npmjs.org",
           NPM_TOKEN: "${{ secrets.TOKEN }}",
         },
-        run: "npx -p publib@latest publib-npm",
+        run: [
+          'echo "Checking NPM_TOKEN length: ${#NPM_TOKEN}"',
+          'echo "Publishing version: ${{ inputs.version }}"',
+          "DEBUG=* npx -p publib publib-npm --version ${{ inputs.version }}",
+        ].join("\n"),
       },
     ],
   },

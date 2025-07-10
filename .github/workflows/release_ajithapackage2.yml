@@ -41,10 +41,12 @@ jobs:
         run: jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json
       - name: Release
         env:
-          NPM_DIST_TAG: latest
           NPM_REGISTRY: registry.npmjs.org
           NPM_TOKEN: ${{ secrets.TOKEN }}
-        run: npx -p publib@latest publib-npm
+        run: |-
+          echo "Checking NPM_TOKEN length: ${#NPM_TOKEN}"
+          echo "Publishing version: ${{ inputs.version }}"
+          DEBUG=* npx -p publib publib-npm --version ${{ inputs.version }}
   release_github:
     name: Publish GitHub Release
     needs: release
