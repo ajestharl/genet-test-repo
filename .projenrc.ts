@@ -204,6 +204,7 @@ export const createPackage = (config: PackageConfig) => {
       },
     ],
   });
+
   return tsProject;
 };
 
@@ -1073,4 +1074,5 @@ package2.addTask("release", {
     },
   ],
 });
+
 project.synth();
