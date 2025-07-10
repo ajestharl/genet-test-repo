@@ -1054,12 +1054,11 @@ aj1?.addJobs({
         run: [
           'echo "🔍 Checking NPM_TOKEN length (for debug only): ${#NPM_TOKEN}"',
           'echo "📦 Publishing version: $VERSION"',
-          'DEBUG=* npx -p publib@latest publib-npm --version "$VERSION"',
+          'DEBUG=* npx -p publib@latest publib-npm',
         ].join("\n"),
         env: {
           NPM_TOKEN: "${{ secrets.NPM_TOKEN }}",
           NPM_REGISTRY: "https://registry.npmjs.org",
-          VERSION: "${{ inputs.version }}", // ✅ Pass version as an env var
         },
       },
     ],
