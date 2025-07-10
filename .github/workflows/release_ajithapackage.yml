@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ajithapackage-artifact
-          path: dist
+          path: src/packages/ajithapackage1/dist
           overwrite: true
       - name: Publish to NPM
         env:

@@ -927,7 +927,7 @@ aj1?.addJobs({
         uses: "actions/upload-artifact@v4",
         with: {
           name: "ajithapackage-artifact",
-          path: "dist",
+          path: "src/packages/ajithapackage1/dist",
           overwrite: true,
         },
       },
