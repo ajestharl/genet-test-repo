@@ -13,17 +13,38 @@ jobs:
     permissions:
       contents: write
       id-token: write
+    defaults:
+      run:
+        working-directory: src/packages/ajithapackage1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Set Git identity
+        run: |-
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
+        working-directory: .
       - name: Compile
         run: npx projen compile
       - name: Build JS package
         run: npx projen package:js
+      - name: Backup artifact permissions
+        run: cd dist && getfacl -R . > permissions-backup.acl
+        continue-on-error: true
+      - name: Upload JS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ajithapackage-artifact
+          path: dist
+          overwrite: true
       - name: Publish to NPM
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

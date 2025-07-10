@@ -875,6 +875,11 @@ aj1?.addJobs({
       contents: JobPermission.WRITE,
       idToken: JobPermission.WRITE,
     },
+    defaults: {
+      run: {
+        workingDirectory: "src/packages/ajithapackage1",
+      },
+    },
     steps: [
       {
         name: "Checkout",
@@ -882,8 +887,23 @@ aj1?.addJobs({
         with: { "fetch-depth": 0 },
       },
       {
+        name: "Set Git identity",
+        run: [
+          'git config user.name "github-actions"',
+          'git config user.email "github-actions@github.com"',
+        ].join("\n"),
+      },
+      {
+        name: "Setup Node.js",
+        uses: "actions/setup-node@v4",
+        with: {
+          "node-version": "lts/*",
+        },
+      },
+      {
         name: "Install dependencies",
         run: "yarn install --check-files --frozen-lockfile",
+        workingDirectory: ".", // Root-level install
       },
       {
         name: "Compile",
@@ -892,6 +912,24 @@ aj1?.addJobs({
       {
         name: "Build JS package",
         run: "npx projen package:js",
+      },
+      // {
+      //   name: "Patch version",
+      //   run: `jq ".version=\\"\\${{ inputs.version }}\\"" package.json > package.tmp.json && mv package.tmp.json package.json`,
+      // },
+      {
+        name: "Backup artifact permissions",
+        run: "cd dist && getfacl -R . > permissions-backup.acl",
+        continueOnError: true,
+      },
+      {
+        name: "Upload JS artifact",
+        uses: "actions/upload-artifact@v4",
+        with: {
+          name: "ajithapackage-artifact",
+          path: "dist",
+          overwrite: true,
+        },
       },
       {
         name: "Publish to NPM",
@@ -923,6 +961,11 @@ aj2?.addJobs({
       contents: JobPermission.WRITE,
       idToken: JobPermission.WRITE,
     },
+    defaults: {
+      run: {
+        workingDirectory: "src/packages/ajithapackage2",
+      },
+    },
     steps: [
       {
         name: "Checkout",
@@ -932,6 +975,7 @@ aj2?.addJobs({
       {
         name: "Install dependencies",
         run: "yarn install --check-files --frozen-lockfile",
+        workingDirectory: ".",
       },
       {
         name: "Compile",
@@ -940,7 +984,28 @@ aj2?.addJobs({
       {
         name: "Build JS package",
         run: "npx projen package:js",
-        workingDirectory: "src/packages/ajithapackage2",
+      },
+      {
+        name: "Backup artifact permissions",
+        run: "cd dist && getfacl -R . > permissions-backup.acl",
+        continueOnError: true,
+      },
+      {
+        name: "Upload JS artifact",
+        uses: "actions/upload-artifact@v4",
+        with: {
+          name: "ajithapackage2-artifact",
+          path: "src/packages/ajithapackage2/dist",
+          overwrite: true,
+        },
+      },
+      // {
+      //   name: "Patch version",
+      //   run: `jq ".version=\\"${{ inputs.version }}\\"" package.json > package.tmp.json && mv package.tmp.json package.json`,
+      // },
+      {
+        name: "Remove prepack (optional)",
+        run: `jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json`,
       },
       {
         name: "Publish to NPM",

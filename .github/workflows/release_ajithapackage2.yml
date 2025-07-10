@@ -13,6 +13,9 @@ jobs:
     permissions:
       contents: write
       id-token: write
+    defaults:
+      run:
+        working-directory: src/packages/ajithapackage2
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,11 +23,22 @@ jobs:
           fetch-depth: 0
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
+        working-directory: .
       - name: Compile
         run: npx projen compile
       - name: Build JS package
         run: npx projen package:js
-        working-directory: src/packages/ajithapackage2
+      - name: Backup artifact permissions
+        run: cd dist && getfacl -R . > permissions-backup.acl
+        continue-on-error: true
+      - name: Upload JS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ajithapackage2-artifact
+          path: src/packages/ajithapackage2/dist
+          overwrite: true
+      - name: Remove prepack (optional)
+        run: jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json
       - name: Publish to NPM
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
