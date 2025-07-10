@@ -1052,7 +1052,7 @@ aj1?.addJobs({
       {
         name: "Publish to NPM",
         env: {
-          NPM_TOKEN: "${{ secrets.NPM_TOKEN }}",
+          NPM_TOKEN: "${{ secrets.TOKEN }}",
           NPM_REGISTRY: "https://registry.npmjs.org",
         },
         run: [
@@ -1173,7 +1173,7 @@ aj2?.addJobs({
         name: "Publish to NPM",
         run: "npx -p publib publib-npm --version ${{ inputs.version }}",
         env: {
-          NPM_TOKEN: "${{ secrets.NPM_TOKEN_SMITHY }}",
+          NPM_TOKEN: "${{ secrets.TOKEN }}",
           NPM_REGISTRY: "registry.npmjs.org",
         },
       },

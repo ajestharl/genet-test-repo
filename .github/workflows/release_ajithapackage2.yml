@@ -41,6 +41,6 @@ jobs:
         run: jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json
       - name: Publish to NPM
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN_SMITHY }}
+          NPM_TOKEN: ${{ secrets.TOKEN }}
           NPM_REGISTRY: registry.npmjs.org
         run: npx -p publib publib-npm --version ${{ inputs.version }}
