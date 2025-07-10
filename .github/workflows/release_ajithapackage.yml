@@ -13,6 +13,8 @@ jobs:
     permissions:
       contents: write
       id-token: write
+    outputs:
+      version: ${{ steps.read_version.outputs.version }}
     defaults:
       run:
         working-directory: src/packages/ajithapackage1
@@ -36,6 +38,9 @@ jobs:
         run: npx projen compile
       - name: Build JS package
         run: npx projen package:js
+      - name: Read version
+        id: read_version
+        run: echo "version=$(cat dist/releasetag.txt | sed 's/^v//')" >> $GITHUB_OUTPUT
       - name: Backup artifact permissions
         run: cd dist && getfacl -R . > permissions-backup.acl
         continue-on-error: true
@@ -50,3 +55,45 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN_SMITHY }}
           NPM_REGISTRY: registry.npmjs.org
         run: npx -p publib publib-npm --version ${{ inputs.version }}
+  release_github:
+    name: Publish GitHub Release
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: always() && needs.release.result == 'success'
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ajithapackage-artifact
+          path: dist
+      - name: Restore build artifact permissions
+        run: cd dist && setfacl --restore=permissions-backup.acl
+        continue-on-error: true
+      - name: GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: "
+
+          \          TAG=$(cat dist/releasetag.txt)
+
+          \          errout=$(mktemp)
+
+          \          gh release create \"$TAG\"             -F dist/changelog.md             -t \"$TAG\"             --target $GITHUB_SHA 2> $errout || true
+
+          \          exitcode=$?
+
+          \          if [ $exitcode -ne 0 ] && ! grep -q \"Release.tag_name already exists\" $errout; then
+
+          \            cat $errout
+
+          \            exit $exitcode
+
+          \          fi
+
+          \        "
