@@ -1044,6 +1044,34 @@ if (central) {
         version: "${{ needs.bump_version.outputs.version }}",
       },
     },
+
+    cleanup_failed_tag: {
+      if: "failure() && needs.bump_version.result == 'success'",
+      needs: ["bump_version"],
+      permissions: {
+        contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
+      },
+      runsOn: ["ubuntu-latest"],
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v4",
+          with: {
+            "fetch-depth": 0,
+          },
+        },
+        {
+          name: "Delete Git Tag",
+          run: [
+            "TAG=$(cat src/packages/ajithapackage1/dist/releasetag.txt)",
+            'echo "Deleting tag: $TAG"',
+            'git tag -d "$TAG" || true',
+            'git push origin ":refs/tags/$TAG" || true',
+          ].join("\n"),
+        },
+      ],
+    },
   });
 }
 if (central) {
