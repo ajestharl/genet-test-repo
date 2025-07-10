@@ -982,7 +982,7 @@ if (central) {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
-      uses: ".github/workflows/release_ajithapackage.yml",
+      uses: "./.github/workflows/release_ajithapackage.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },
@@ -994,7 +994,7 @@ if (central) {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
-      uses: ".github/workflows/release_ajithapackage2.yml",
+      uses: "./.github/workflows/release_ajithapackage2.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },
@@ -1006,7 +1006,7 @@ if (central) {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
-      uses: ".github/workflows/release_smithy_client.yml",
+      uses: "./.github/workflows/release_smithy_client.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },
@@ -1018,7 +1018,7 @@ if (central) {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
-      uses: ".github/workflows/release_smithy_ssdk.yml",
+      uses: "./.github/workflows/release_smithy_ssdk.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },
