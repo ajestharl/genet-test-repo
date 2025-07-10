@@ -886,9 +886,12 @@ aj1?.addJobs({
         run: "yarn install --check-files --frozen-lockfile",
       },
       {
+        name: "Compile",
+        run: "npx projen compile",
+      },
+      {
         name: "Build JS package",
         run: "npx projen package:js",
-        workingDirectory: "./",
       },
       {
         name: "Publish to NPM",
@@ -929,6 +932,10 @@ aj2?.addJobs({
       {
         name: "Install dependencies",
         run: "yarn install --check-files --frozen-lockfile",
+      },
+      {
+        name: "Compile",
+        run: "npx projen compile",
       },
       {
         name: "Build JS package",

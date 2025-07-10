@@ -20,6 +20,8 @@ jobs:
           fetch-depth: 0
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
+      - name: Compile
+        run: npx projen compile
       - name: Build JS package
         run: npx projen package:js
         working-directory: src/packages/ajithapackage2
