@@ -929,7 +929,7 @@ const central = project.github?.addWorkflow("central-release");
 
 if (central) {
   central.on({
-    push: { branches: ["main"] },
+    push: { branches: ["rel"] },
     workflowDispatch: {},
   });
 
