@@ -40,8 +40,6 @@ jobs:
     uses: ./.github/workflows/release_ajithapackage.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
-    secrets:
-      NPM_TOKEN: ${{ secrets.TOKEN }}
   release_ajithapackage2:
     needs: bump_version
     permissions:

@@ -7,9 +7,6 @@ on:
       version:
         required: true
         type: string
-    secrets:
-      npm_token:
-        required: true
 jobs:
   release:
     runs-on: ubuntu-latest
