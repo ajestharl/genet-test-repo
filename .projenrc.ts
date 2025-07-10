@@ -1247,7 +1247,9 @@ if (central) {
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },
-      secrets: "inherit",
+      secrets: {
+        NPM_TOKEN: "${{ secrets.TOKEN }}"
+      }
     },
 
     release_ajithapackage2: {
