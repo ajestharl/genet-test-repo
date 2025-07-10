@@ -158,6 +158,26 @@
       "name": "pre-compile",
       "description": "Prepare the project for compilation"
     },
+    "release": {
+      "name": "release",
+      "steps": [
+        {
+          "exec": "npx projen bump"
+        },
+        {
+          "exec": "git commit -am \"chore: bump version\" || echo \"No changes to commit\""
+        },
+        {
+          "exec": "git tag v$(node -p \"require('./package.json').version\")"
+        },
+        {
+          "exec": "mkdir -p dist"
+        },
+        {
+          "exec": "echo \"v$(node -p \\\"require('./package.json').version\\\")\" > dist/releasetag.txt"
+        }
+      ]
+    },
     "test": {
       "name": "test",
       "description": "Run tests",

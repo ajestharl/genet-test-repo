@@ -191,6 +191,19 @@ export const createPackage = (config: PackageConfig) => {
   addPrettierConfig(tsProject);
   configureMarkDownLinting(tsProject);
   tsProject.package.file.addOverride("private", false);
+  tsProject.addTask("release", {
+    steps: [
+      { exec: "npx projen bump" },
+      {
+        exec: 'git commit -am "chore: bump version" || echo "No changes to commit"',
+      },
+      { exec: "git tag v$(node -p \"require('./package.json').version\")" },
+      { exec: "mkdir -p dist" },
+      {
+        exec: 'echo "v$(node -p \\"require(\'./package.json\').version\\")" > dist/releasetag.txt',
+      },
+    ],
+  });
   return tsProject;
 };
 
@@ -1046,4 +1059,18 @@ addTestTargets(package2);
 addPrettierConfig(package2);
 configureMarkDownLinting(package2);
 package2.package.file.addOverride("private", false);
+
+package2.addTask("release", {
+  steps: [
+    { exec: "npx projen bump" },
+    {
+      exec: 'git commit -am "chore: bump version" || echo "No changes to commit"',
+    },
+    { exec: "git tag v$(node -p \"require('./package.json').version\")" },
+    { exec: "mkdir -p dist" },
+    {
+      exec: 'echo "v$(node -p \\"require(\'./package.json\').version\\")" > dist/releasetag.txt',
+    },
+  ],
+});
 project.synth();
