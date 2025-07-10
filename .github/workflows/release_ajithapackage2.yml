@@ -37,10 +37,11 @@ jobs:
           name: ajithapackage2-artifact
           path: src/packages/ajithapackage2/dist
           overwrite: true
-      - name: Remove prepack (optional)
+      - name: Remove prepack
         run: jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json
-      - name: Publish to NPM
+      - name: Release
         env:
-          NPM_TOKEN: ${{ secrets.TOKEN }}
+          NPM_DIST_TAG: latest
           NPM_REGISTRY: registry.npmjs.org
-        run: npx -p publib publib-npm --version ${{ inputs.version }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx -p publib@latest publib-npm

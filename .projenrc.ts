@@ -1156,21 +1156,18 @@ aj2?.addJobs({
           overwrite: true,
         },
       },
-      // {
-      //   name: "Patch version",
-      //   run: `jq ".version=\\"${{ inputs.version }}\\"" package.json > package.tmp.json && mv package.tmp.json package.json`,
-      // },
       {
-        name: "Remove prepack (optional)",
+        name: "Remove prepack",
         run: `jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json`,
       },
       {
-        name: "Publish to NPM",
-        run: "npx -p publib publib-npm --version ${{ inputs.version }}",
+        name: "Release",
         env: {
-          NPM_TOKEN: "${{ secrets.TOKEN }}",
+          NPM_DIST_TAG: "latest",
           NPM_REGISTRY: "registry.npmjs.org",
+          NPM_TOKEN: "${{ secrets.NPM_TOKEN }}",
         },
+        run: "npx -p publib@latest publib-npm",
       },
     ],
   },
