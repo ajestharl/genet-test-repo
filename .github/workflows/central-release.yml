@@ -40,6 +40,7 @@ jobs:
     uses: ./.github/workflows/release_ajithapackage.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
+    secrets: inherit
   release_ajithapackage2:
     needs: bump_version
     permissions:
@@ -48,6 +49,7 @@ jobs:
     uses: ./.github/workflows/release_ajithapackage2.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
+    secrets: inherit
   release_smithy_client:
     needs: bump_version
     permissions:
@@ -56,6 +58,7 @@ jobs:
     uses: ./.github/workflows/release_smithy_client.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
+    secrets: inherit
   release_smithy_ssdk:
     needs: bump_version
     permissions:
@@ -64,6 +67,26 @@ jobs:
     uses: ./.github/workflows/release_smithy_ssdk.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
+    secrets: inherit
+  finalize_release:
+    needs:
+      - release_ajithapackage
+      - release_ajithapackage2
+      - release_smithy_client
+      - release_smithy_ssdk
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Finalize Release
+        run: |-
+          echo "All child workflows have completed successfully."
+          echo "Performing final release tasks..."
   cleanup_failed_tag:
     needs: bump_version
     runs-on: ubuntu-latest

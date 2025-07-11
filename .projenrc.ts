@@ -237,6 +237,9 @@ if (wf) {
         contents: JobPermission.READ,
         idToken: JobPermission.WRITE,
       },
+      env: {
+        CI: "true",
+      },
       steps: [
         {
           name: "Checkout",
@@ -352,6 +355,9 @@ if (wf1) {
       permissions: {
         contents: JobPermission.READ,
         idToken: JobPermission.WRITE,
+      },
+      env: {
+        CI: "true",
       },
       steps: [
         {
@@ -763,6 +769,7 @@ if (central) {
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },
+      secrets: "inherit",
     },
 
     release_ajithapackage2: {
@@ -775,6 +782,7 @@ if (central) {
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },
+      secrets: "inherit",
     },
 
     release_smithy_client: {
@@ -787,6 +795,7 @@ if (central) {
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },
+      secrets: "inherit",
     },
 
     release_smithy_ssdk: {
@@ -799,8 +808,37 @@ if (central) {
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
       },
+      secrets: "inherit",
     },
-
+    finalize_release: {
+      needs: [
+        "release_ajithapackage",
+        "release_ajithapackage2",
+        "release_smithy_client",
+        "release_smithy_ssdk",
+      ],
+      runsOn: ["ubuntu-latest"],
+      permissions: {
+        contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
+      },
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v4",
+          with: { "fetch-depth": 0 },
+        },
+        {
+          name: "Finalize Release",
+          run: [
+            'echo "All child workflows have completed successfully."',
+            'echo "Performing final release tasks..."',
+            // Add any additional steps for finalizing the release
+            // For example, updating documentation, sending notifications, etc.
+          ].join("\n"),
+        },
+      ],
+    },
     cleanup_failed_tag: {
       if: "failure() && needs.bump_version.result == 'success'",
       needs: ["bump_version"],
@@ -867,17 +905,5 @@ package2.addTask("release", {
     },
   ],
 });
-// package2.addTask("package:js", {
-//   steps: [
-//     { spawn: "compile" },
-//     { spawn: "test" },
-//     {
-//       exec: "mkdir -p dist/js && cp package.json README.md dist/js/",
-//     },
-//     {
-//       exec: "cd dist/js && npm pack",
-//     },
-//   ],
-// });
 
 project.synth();
