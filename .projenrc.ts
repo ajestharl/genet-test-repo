@@ -843,17 +843,25 @@ if (central) {
             'git config --global user.name "GitHub Actions"',
           ].join("\n"),
         },
+        // {
+        //   name: "Run Projen Release (ajithapackage1)",
+        //   run: "npx projen release",
+        //   workingDirectory: "src/packages/ajithapackage1",
+        // },
         {
           name: "Run Projen Release (ajithapackage1)",
-          run: "npx projen release",
+          run: [
+            "VERSION=0.0.36",
+            'echo "Using version: $VERSION"',
+            "npx projen release --release-version $VERSION",
+          ].join(" && "),
           workingDirectory: "src/packages/ajithapackage1",
         },
         {
           name: "Read Version",
           id: "getver",
           run: [
-            // "VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')",
-            'VERSION="0.0.36"',
+            "VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')",
             'echo "version=$VERSION" >> $GITHUB_OUTPUT',
             'echo "Release version: $VERSION"',
           ].join("\n"),
