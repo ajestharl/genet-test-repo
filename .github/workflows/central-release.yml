@@ -98,25 +98,31 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           merge-multiple: true
-      - name: Publish packages to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.TOKEN }}
-          NPM_DIST_TAG: latest
+      - name: List downloaded artifacts
+        run: ls -la
+      - name: Extract packages
         run: |-
-          # List directory contents for debugging
-          ls -la
-
           packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)
-
-          # Verify package structure
+          for pkg in "${packages[@]}"; do
+            echo "Extracting $pkg..."
+            mkdir -p "$pkg"
+            tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }
+          done
+      - name: Verify package structure
+        run: |-
+          packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)
           for pkg in "${packages[@]}"; do
             echo "Checking $pkg..."
             [ -d "$pkg" ] || { echo "Error: Directory $pkg not found"; exit 1; }
             [ -f "$pkg/package.json" ] || { echo "Error: $pkg/package.json not found"; exit 1; }
             jq . "$pkg/package.json" > /dev/null || { echo "Error: Invalid package.json in $pkg"; exit 1; }
           done
-
-          # Publish packages
+      - name: Publish packages to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.TOKEN }}
+          NPM_DIST_TAG: latest
+        run: |-
+          packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)
           for pkg in "${packages[@]}"; do
             echo "Publishing $pkg"
             cd "$pkg" && npm publish --access public && cd .. || exit 1
