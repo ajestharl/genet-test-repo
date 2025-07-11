@@ -39,12 +39,12 @@ jobs:
         run: yarn install --check-files --frozen-lockfile
       - name: Build package
         run: yarn build
-        working-directory: ${{ inputs.packagePath }}
+        working-directory: ${{ inputs.package_path }}
       - name: Pack artifact
-        run: yarn pack --filename ${{ inputs.packageName }}.tgz
-        working-directory: ${{ inputs.packagePath }}
+        run: yarn pack --filename ${{ inputs.package_name }}.tgz
+        working-directory: ${{ inputs.package_name }}
       - name: Extract artifact
-        run: mkdir repo && tar -xzf ${{ inputs.packagePath }}/${{ inputs.packageName }}.tgz -C repo --strip-components=1
+        run: mkdir repo && tar -xzf ${{ inputs.package_path }}/${{ inputs.package_name }}.tgz -C repo --strip-components=1
       - name: Patch version
         run: jq '.version = "${{ inputs.version }}"' package.json > tmp.json && mv tmp.json package.json && cat package.json | grep version
         working-directory: repo
@@ -68,4 +68,4 @@ jobs:
       - name: GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "v${{ inputs.version }}" --title "v${{ inputs.version }}" --notes "Automated release for ${{ inputs.packageName }}" ${{ inputs.packagePath }}/${{ inputs.packageName }}.tgz
+        run: gh release create "v${{ inputs.version }}" --title "v${{ inputs.version }}" --notes "Automated release for ${{ inputs.package_name }}" ${{ inputs.package_path }}/${{ inputs.package_name }}.tgz

@@ -1039,18 +1039,18 @@ if (reusableWorkflow) {
         {
           name: "Build package",
           run: "yarn build",
-          workingDirectory: "${{ inputs.packagePath }}",
+          workingDirectory: "${{ inputs.package_path }}",
         },
         {
           name: "Pack artifact",
-          run: "yarn pack --filename ${{ inputs.packageName }}.tgz",
-          workingDirectory: "${{ inputs.packagePath }}",
+          run: "yarn pack --filename ${{ inputs.package_name }}.tgz",
+          workingDirectory: "${{ inputs.package_name }}",
         },
         {
           name: "Extract artifact",
           run: [
             "mkdir repo",
-            "tar -xzf ${{ inputs.packagePath }}/${{ inputs.packageName }}.tgz -C repo --strip-components=1",
+            "tar -xzf ${{ inputs.package_path }}/${{ inputs.package_name }}.tgz -C repo --strip-components=1",
           ].join(" && "),
         },
         {
@@ -1098,8 +1098,8 @@ if (reusableWorkflow) {
           run: [
             'gh release create "v${{ inputs.version }}"',
             '--title "v${{ inputs.version }}"',
-            '--notes "Automated release for ${{ inputs.packageName }}"',
-            "${{ inputs.packagePath }}/${{ inputs.packageName }}.tgz",
+            '--notes "Automated release for ${{ inputs.package_name }}"',
+            "${{ inputs.package_path }}/${{ inputs.package_name }}.tgz",
           ].join(" "),
         },
       ],
