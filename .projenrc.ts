@@ -1044,7 +1044,7 @@ if (reusableWorkflow) {
         {
           name: "Pack artifact",
           run: "yarn pack --filename ${{ inputs.package_name }}.tgz",
-          workingDirectory: "${{ inputs.package_name }}",
+          workingDirectory: "${{ inputs.package_path }}",
         },
         {
           name: "Extract artifact",

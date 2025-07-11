@@ -42,7 +42,7 @@ jobs:
         working-directory: ${{ inputs.package_path }}
       - name: Pack artifact
         run: yarn pack --filename ${{ inputs.package_name }}.tgz
-        working-directory: ${{ inputs.package_name }}
+        working-directory: ${{ inputs.package_path }}
       - name: Extract artifact
         run: mkdir repo && tar -xzf ${{ inputs.package_path }}/${{ inputs.package_name }}.tgz -C repo --strip-components=1
       - name: Patch version
