@@ -40,6 +40,8 @@ jobs:
     uses: ./.github/workflows/release_ajithapackage.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
+      packageName: ajithapackage
+      packagePath: src/packages/ajithapackage1
     secrets: inherit
   release_ajithapackage2:
     needs: bump_version
@@ -49,6 +51,8 @@ jobs:
     uses: ./.github/workflows/release_ajithapackage2.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
+      packageName: ajithapackage2
+      packagePath: src/packages/ajithapackage2
     secrets: inherit
   release_smithy_client:
     needs: bump_version
@@ -58,6 +62,8 @@ jobs:
     uses: ./.github/workflows/release_smithy_client.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
+      packageName: smithy-client
+      packagePath: src/packages/my-api/build/smithy/source/typescript-client-codegen
     secrets: inherit
   release_smithy_ssdk:
     needs: bump_version
@@ -67,6 +73,8 @@ jobs:
     uses: ./.github/workflows/release_smithy_ssdk.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
+      packageName: smithy-ssdk
+      packagePath: src/packages/my-api/build/smithy/source/typescript-ssdk-codegen
     secrets: inherit
   finalize_release:
     needs:

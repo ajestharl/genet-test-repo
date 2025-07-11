@@ -218,596 +218,596 @@ createPackage({
   outdir: "src/packages/ajithapackage1",
 });
 
-// Workflows
-// Smithy SSDK
-const wf = project.github?.addWorkflow("release_smithy_ssdk");
-if (wf) {
-  wf.on({
-    workflowCall: {
-      inputs: {
-        version: { required: true, type: "string" },
-      },
-    },
-  });
+// // Workflows
+// // Smithy SSDK
+// const wf = project.github?.addWorkflow("release_smithy_ssdk");
+// if (wf) {
+//   wf.on({
+//     workflowCall: {
+//       inputs: {
+//         version: { required: true, type: "string" },
+//       },
+//     },
+//   });
 
-  wf.addJobs({
-    release_npm: {
-      runsOn: ["ubuntu-latest"],
-      permissions: {
-        contents: JobPermission.READ,
-        idToken: JobPermission.WRITE,
-      },
-      env: {
-        CI: "true",
-      },
-      steps: [
-        {
-          name: "Checkout",
-          uses: "actions/checkout@v4",
-          with: { "fetch-depth": 0 },
-        },
-        {
-          name: "Setup Node.js",
-          uses: "actions/setup-node@v4",
-          with: {
-            "node-version": "lts/*",
-            "registry-url": "https://registry.npmjs.org",
-          },
-        },
-        {
-          name: "who am i",
-          env: {
-            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
-          },
-          run: "npm whoami",
-        },
-        {
-          name: "Install dependencies",
-          run: "yarn install --check-files --frozen-lockfile",
-        },
-        {
-          name: "Build SSDK",
-          run: "yarn build",
-          workingDirectory:
-            "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
-        },
-        {
-          name: "Pack artifact",
-          run: "yarn pack --filename smithy-ssdk.tgz",
-          workingDirectory:
-            "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
-        },
-        {
-          name: "Extract artifact",
-          run: [
-            "mkdir repo",
-            "tar -xzf src/packages/my-api/build/smithy/source/typescript-ssdk-codegen/smithy-ssdk.tgz -C repo --strip-components=1",
-          ].join(" && "),
-        },
-        {
-          name: "Patch version",
-          workingDirectory: "repo",
-          run: [
-            "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
-            "mv tmp.json package.json",
-            "cat package.json | grep version",
-          ].join(" && "),
-        },
-        {
-          name: "Remove prepack",
-          workingDirectory: "repo",
-          run: "jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
-        },
-        {
-          name: "Publish to npm",
-          workingDirectory: "repo",
-          env: {
-            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
-          },
-          run: "npm publish --access public",
-        },
-      ],
-    },
+//   wf.addJobs({
+//     release_npm: {
+//       runsOn: ["ubuntu-latest"],
+//       permissions: {
+//         contents: JobPermission.READ,
+//         idToken: JobPermission.WRITE,
+//       },
+//       env: {
+//         CI: "true",
+//       },
+//       steps: [
+//         {
+//           name: "Checkout",
+//           uses: "actions/checkout@v4",
+//           with: { "fetch-depth": 0 },
+//         },
+//         {
+//           name: "Setup Node.js",
+//           uses: "actions/setup-node@v4",
+//           with: {
+//             "node-version": "lts/*",
+//             "registry-url": "https://registry.npmjs.org",
+//           },
+//         },
+//         {
+//           name: "who am i",
+//           env: {
+//             NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+//           },
+//           run: "npm whoami",
+//         },
+//         {
+//           name: "Install dependencies",
+//           run: "yarn install --check-files --frozen-lockfile",
+//         },
+//         {
+//           name: "Build SSDK",
+//           run: "yarn build",
+//           workingDirectory:
+//             "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
+//         },
+//         {
+//           name: "Pack artifact",
+//           run: "yarn pack --filename smithy-ssdk.tgz",
+//           workingDirectory:
+//             "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
+//         },
+//         {
+//           name: "Extract artifact",
+//           run: [
+//             "mkdir repo",
+//             "tar -xzf src/packages/my-api/build/smithy/source/typescript-ssdk-codegen/smithy-ssdk.tgz -C repo --strip-components=1",
+//           ].join(" && "),
+//         },
+//         {
+//           name: "Patch version",
+//           workingDirectory: "repo",
+//           run: [
+//             "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
+//             "mv tmp.json package.json",
+//             "cat package.json | grep version",
+//           ].join(" && "),
+//         },
+//         {
+//           name: "Remove prepack",
+//           workingDirectory: "repo",
+//           run: "jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
+//         },
+//         {
+//           name: "Publish to npm",
+//           workingDirectory: "repo",
+//           env: {
+//             NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+//           },
+//           run: "npm publish --access public",
+//         },
+//       ],
+//     },
 
-    release_github: {
-      name: "Publish GitHub Release",
-      needs: ["release_npm"],
-      runsOn: ["ubuntu-latest"],
-      permissions: {
-        contents: JobPermission.WRITE,
-      },
-      steps: [
-        {
-          name: "Checkout",
-          uses: "actions/checkout@v4",
-        },
-        {
-          name: "GitHub release",
-          env: {
-            GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-          },
-          run: [
-            'gh release create "v${{ inputs.version }}"',
-            '--title "v${{ inputs.version }}"',
-            '--notes "Automated release for SSDK"',
-            "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen/smithy-ssdk.tgz",
-          ].join(" "),
-        },
-      ],
-    },
-  });
-}
+//     release_github: {
+//       name: "Publish GitHub Release",
+//       needs: ["release_npm"],
+//       runsOn: ["ubuntu-latest"],
+//       permissions: {
+//         contents: JobPermission.WRITE,
+//       },
+//       steps: [
+//         {
+//           name: "Checkout",
+//           uses: "actions/checkout@v4",
+//         },
+//         {
+//           name: "GitHub release",
+//           env: {
+//             GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+//           },
+//           run: [
+//             'gh release create "v${{ inputs.version }}"',
+//             '--title "v${{ inputs.version }}"',
+//             '--notes "Automated release for SSDK"',
+//             "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen/smithy-ssdk.tgz",
+//           ].join(" "),
+//         },
+//       ],
+//     },
+//   });
+// }
 
-// Smithy Client
-const wf1 = project.github?.addWorkflow("release_smithy_client");
-if (wf1) {
-  wf1.on({
-    workflowCall: {
-      inputs: {
-        version: { required: true, type: "string" },
-      },
-    },
-  });
+// // Smithy Client
+// const wf1 = project.github?.addWorkflow("release_smithy_client");
+// if (wf1) {
+//   wf1.on({
+//     workflowCall: {
+//       inputs: {
+//         version: { required: true, type: "string" },
+//       },
+//     },
+//   });
 
-  wf1.addJobs({
-    release_npm: {
-      runsOn: ["ubuntu-latest"],
-      permissions: {
-        contents: JobPermission.READ,
-        idToken: JobPermission.WRITE,
-      },
-      env: {
-        CI: "true",
-      },
-      steps: [
-        {
-          name: "Checkout",
-          uses: "actions/checkout@v4",
-        },
-        {
-          name: "Setup Node.js",
-          uses: "actions/setup-node@v4",
-          with: {
-            "node-version": "lts/*",
-            "registry-url": "https://registry.npmjs.org",
-          },
-        },
-        {
-          name: "Install dependencies",
-          run: "yarn install --check-files --frozen-lockfile",
-        },
-        {
-          name: "Build Client",
-          run: "yarn build",
-          workingDirectory:
-            "src/packages/my-api/build/smithy/source/typescript-client-codegen",
-        },
-        {
-          name: "Pack artifact",
-          run: "yarn pack --filename smithy-client.tgz",
-          workingDirectory:
-            "src/packages/my-api/build/smithy/source/typescript-client-codegen",
-        },
-        {
-          name: "Extract artifact",
-          run: [
-            "mkdir repo",
-            "tar -xzf src/packages/my-api/build/smithy/source/typescript-client-codegen/smithy-client.tgz -C repo --strip-components=1",
-          ].join(" && "),
-        },
-        {
-          name: "Patch version",
-          workingDirectory: "repo",
-          run: [
-            "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
-            "mv tmp.json package.json",
-            "cat package.json | grep version",
-          ].join(" && "),
-        },
-        {
-          name: "Remove prepack",
-          workingDirectory: "repo",
-          run: "jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
-        },
-        {
-          name: "Publish to npm",
-          workingDirectory: "repo",
-          env: {
-            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
-          },
-          run: "npm publish --access public",
-        },
-      ],
-    },
+//   wf1.addJobs({
+//     release_npm: {
+//       runsOn: ["ubuntu-latest"],
+//       permissions: {
+//         contents: JobPermission.READ,
+//         idToken: JobPermission.WRITE,
+//       },
+//       env: {
+//         CI: "true",
+//       },
+//       steps: [
+//         {
+//           name: "Checkout",
+//           uses: "actions/checkout@v4",
+//         },
+//         {
+//           name: "Setup Node.js",
+//           uses: "actions/setup-node@v4",
+//           with: {
+//             "node-version": "lts/*",
+//             "registry-url": "https://registry.npmjs.org",
+//           },
+//         },
+//         {
+//           name: "Install dependencies",
+//           run: "yarn install --check-files --frozen-lockfile",
+//         },
+//         {
+//           name: "Build Client",
+//           run: "yarn build",
+//           workingDirectory:
+//             "src/packages/my-api/build/smithy/source/typescript-client-codegen",
+//         },
+//         {
+//           name: "Pack artifact",
+//           run: "yarn pack --filename smithy-client.tgz",
+//           workingDirectory:
+//             "src/packages/my-api/build/smithy/source/typescript-client-codegen",
+//         },
+//         {
+//           name: "Extract artifact",
+//           run: [
+//             "mkdir repo",
+//             "tar -xzf src/packages/my-api/build/smithy/source/typescript-client-codegen/smithy-client.tgz -C repo --strip-components=1",
+//           ].join(" && "),
+//         },
+//         {
+//           name: "Patch version",
+//           workingDirectory: "repo",
+//           run: [
+//             "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
+//             "mv tmp.json package.json",
+//             "cat package.json | grep version",
+//           ].join(" && "),
+//         },
+//         {
+//           name: "Remove prepack",
+//           workingDirectory: "repo",
+//           run: "jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
+//         },
+//         {
+//           name: "Publish to npm",
+//           workingDirectory: "repo",
+//           env: {
+//             NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+//           },
+//           run: "npm publish --access public",
+//         },
+//       ],
+//     },
 
-    release_github: {
-      name: "Publish GitHub Release",
-      needs: ["release_npm"],
-      runsOn: ["ubuntu-latest"],
-      permissions: {
-        contents: JobPermission.WRITE,
-      },
-      steps: [
-        {
-          name: "Checkout",
-          uses: "actions/checkout@v4",
-        },
-        {
-          name: "GitHub release",
-          env: {
-            GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-          },
-          run: [
-            'gh release create "v${{ inputs.version }}"',
-            '--title "v${{ inputs.version }}"',
-            '--notes "Automated release for CLIENT"',
-            "src/packages/my-api/build/smithy/source/typescript-client-codegen/smithy-client.tgz",
-          ].join(" "),
-        },
-      ],
-    },
-  });
-}
+//     release_github: {
+//       name: "Publish GitHub Release",
+//       needs: ["release_npm"],
+//       runsOn: ["ubuntu-latest"],
+//       permissions: {
+//         contents: JobPermission.WRITE,
+//       },
+//       steps: [
+//         {
+//           name: "Checkout",
+//           uses: "actions/checkout@v4",
+//         },
+//         {
+//           name: "GitHub release",
+//           env: {
+//             GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+//           },
+//           run: [
+//             'gh release create "v${{ inputs.version }}"',
+//             '--title "v${{ inputs.version }}"',
+//             '--notes "Automated release for CLIENT"',
+//             "src/packages/my-api/build/smithy/source/typescript-client-codegen/smithy-client.tgz",
+//           ].join(" "),
+//         },
+//       ],
+//     },
+//   });
+// }
 
-const aj1 = project.github?.addWorkflow("release_ajithapackage");
-if (aj1) {
-  aj1.on({
-    workflowCall: {
-      inputs: {
-        version: { required: true, type: "string" },
-      },
-    },
-  });
+// const aj1 = project.github?.addWorkflow("release_ajithapackage");
+// if (aj1) {
+//   aj1.on({
+//     workflowCall: {
+//       inputs: {
+//         version: { required: true, type: "string" },
+//       },
+//     },
+//   });
 
-  aj1.addJobs({
-    release_npm: {
-      runsOn: ["ubuntu-latest"],
-      permissions: {
-        contents: JobPermission.READ,
-        idToken: JobPermission.WRITE,
-      },
-      env: {
-        CI: "true",
-      },
-      steps: [
-        {
-          name: "Checkout",
-          uses: "actions/checkout@v4",
-          with: { "fetch-depth": 0 },
-        },
-        {
-          name: "Setup Node.js",
-          uses: "actions/setup-node@v4",
-          with: {
-            "node-version": "lts/*",
-            "registry-url": "https://registry.npmjs.org",
-          },
-        },
-        {
-          name: "who am i",
-          env: {
-            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
-          },
-          run: "npm whoami",
-        },
-        {
-          name: "Install dependencies",
-          run: "yarn install --check-files --frozen-lockfile",
-        },
-        {
-          name: "Build SSDK",
-          run: "yarn build",
-          workingDirectory: "src/packages/ajithapackage1",
-        },
-        {
-          name: "Pack artifact",
-          run: "yarn pack --filename ajithapackage.tgz",
-          workingDirectory: "src/packages/ajithapackage1",
-        },
-        {
-          name: "Extract artifact",
-          run: [
-            "mkdir repo",
-            "tar -xzf src/packages/ajithapackage1/ajithapackage.tgz -C repo --strip-components=1",
-          ].join(" && "),
-        },
-        {
-          name: "Patch version",
-          workingDirectory: "repo",
-          run: [
-            "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
-            "mv tmp.json package.json",
-            "cat package.json | grep version",
-          ].join(" && "),
-        },
-        {
-          name: "Remove prepack",
-          workingDirectory: "repo",
-          run: "jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
-        },
-        {
-          name: "Publish to npm",
-          workingDirectory: "repo",
-          env: {
-            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
-          },
-          run: "npm publish --access public",
-        },
-      ],
-    },
-    release_github: {
-      name: "Publish GitHub Release",
-      needs: ["release_npm"],
-      runsOn: ["ubuntu-latest"],
-      permissions: {
-        contents: JobPermission.WRITE,
-      },
-      steps: [
-        {
-          name: "Checkout",
-          uses: "actions/checkout@v4",
-        },
-        {
-          name: "GitHub release",
-          env: {
-            GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-          },
-          run: [
-            'gh release create "v${{ inputs.version }}"',
-            '--title "v${{ inputs.version }}"',
-            '--notes "Automated release for SSDK"',
-            "src/packages/ajithapackage1/ajithapackage.tgz",
-          ].join(" "),
-        },
-      ],
-    },
-  });
-}
+//   aj1.addJobs({
+//     release_npm: {
+//       runsOn: ["ubuntu-latest"],
+//       permissions: {
+//         contents: JobPermission.READ,
+//         idToken: JobPermission.WRITE,
+//       },
+//       env: {
+//         CI: "true",
+//       },
+//       steps: [
+//         {
+//           name: "Checkout",
+//           uses: "actions/checkout@v4",
+//           with: { "fetch-depth": 0 },
+//         },
+//         {
+//           name: "Setup Node.js",
+//           uses: "actions/setup-node@v4",
+//           with: {
+//             "node-version": "lts/*",
+//             "registry-url": "https://registry.npmjs.org",
+//           },
+//         },
+//         {
+//           name: "who am i",
+//           env: {
+//             NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+//           },
+//           run: "npm whoami",
+//         },
+//         {
+//           name: "Install dependencies",
+//           run: "yarn install --check-files --frozen-lockfile",
+//         },
+//         {
+//           name: "Build ajithapackage1",
+//           run: "yarn build",
+//           workingDirectory: "src/packages/ajithapackage1",
+//         },
+//         {
+//           name: "Pack artifact",
+//           run: "yarn pack --filename ajithapackage.tgz",
+//           workingDirectory: "src/packages/ajithapackage1",
+//         },
+//         {
+//           name: "Extract artifact",
+//           run: [
+//             "mkdir repo",
+//             "tar -xzf src/packages/ajithapackage1/ajithapackage.tgz -C repo --strip-components=1",
+//           ].join(" && "),
+//         },
+//         {
+//           name: "Patch version",
+//           workingDirectory: "repo",
+//           run: [
+//             "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
+//             "mv tmp.json package.json",
+//             "cat package.json | grep version",
+//           ].join(" && "),
+//         },
+//         {
+//           name: "Remove prepack",
+//           workingDirectory: "repo",
+//           run: "jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
+//         },
+//         {
+//           name: "Publish to npm",
+//           workingDirectory: "repo",
+//           env: {
+//             NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+//           },
+//           run: "npm publish --access public",
+//         },
+//       ],
+//     },
+//     release_github: {
+//       name: "Publish GitHub Release",
+//       needs: ["release_npm"],
+//       runsOn: ["ubuntu-latest"],
+//       permissions: {
+//         contents: JobPermission.WRITE,
+//       },
+//       steps: [
+//         {
+//           name: "Checkout",
+//           uses: "actions/checkout@v4",
+//         },
+//         {
+//           name: "GitHub release",
+//           env: {
+//             GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+//           },
+//           run: [
+//             'gh release create "v${{ inputs.version }}"',
+//             '--title "v${{ inputs.version }}"',
+//             '--notes "Automated release for SSDK"',
+//             "src/packages/ajithapackage1/ajithapackage.tgz",
+//           ].join(" "),
+//         },
+//       ],
+//     },
+//   });
+// }
 
-const aj2 = project.github?.addWorkflow("release_ajithapackage2");
-if (aj2) {
-  aj2.on({
-    workflowCall: {
-      inputs: {
-        version: { required: true, type: "string" },
-      },
-    },
-  });
-
-  aj2.addJobs({
-    release_npm: {
-      runsOn: ["ubuntu-latest"],
-      permissions: {
-        contents: JobPermission.READ,
-        idToken: JobPermission.WRITE,
-      },
-      env: {
-        CI: "true",
-      },
-      steps: [
-        {
-          name: "Checkout",
-          uses: "actions/checkout@v4",
-          with: { "fetch-depth": 0 },
-        },
-        {
-          name: "Setup Node.js",
-          uses: "actions/setup-node@v4",
-          with: {
-            "node-version": "lts/*",
-            "registry-url": "https://registry.npmjs.org",
-          },
-        },
-        {
-          name: "who am i",
-          env: {
-            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
-          },
-          run: "npm whoami",
-        },
-        {
-          name: "Install dependencies",
-          run: "yarn install --check-files --frozen-lockfile",
-        },
-        {
-          name: "Build SSDK",
-          run: "yarn build",
-          workingDirectory: "src/packages/ajithapackage2",
-        },
-        {
-          name: "Pack artifact",
-          run: "yarn pack --filename ajithapackage2.tgz",
-          workingDirectory: "src/packages/ajithapackage2",
-        },
-        {
-          name: "Extract artifact",
-          run: [
-            "mkdir repo",
-            "tar -xzf src/packages/ajithapackage2/ajithapackage2.tgz -C repo --strip-components=1",
-          ].join(" && "),
-        },
-        {
-          name: "Patch version",
-          workingDirectory: "repo",
-          run: [
-            "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
-            "mv tmp.json package.json",
-            "cat package.json | grep version",
-          ].join(" && "),
-        },
-        {
-          name: "Remove prepack",
-          workingDirectory: "repo",
-          run: "jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
-        },
-        {
-          name: "Publish to npm",
-          workingDirectory: "repo",
-          env: {
-            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
-          },
-          run: "npm publish --access public",
-        },
-      ],
-    },
-    release_github: {
-      name: "Publish GitHub Release",
-      needs: ["release_npm"],
-      runsOn: ["ubuntu-latest"],
-      permissions: {
-        contents: JobPermission.WRITE,
-      },
-      steps: [
-        {
-          name: "Checkout",
-          uses: "actions/checkout@v4",
-        },
-        {
-          name: "GitHub release",
-          env: {
-            GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-          },
-          run: [
-            'gh release create "v${{ inputs.version }}"',
-            '--title "v${{ inputs.version }}"',
-            '--notes "Automated release for SSDK"',
-            "src/packages/ajithapackage2/ajithapackage2.tgz",
-          ].join(" "),
-        },
-      ],
-    },
-  });
-}
-
-// // Projen ajithapackage2
 // const aj2 = project.github?.addWorkflow("release_ajithapackage2");
-// aj2?.on({
-//   workflowCall: {
-//     inputs: {
-//       version: {
-//         required: true,
-//         type: "string",
+// if (aj2) {
+//   aj2.on({
+//     workflowCall: {
+//       inputs: {
+//         version: { required: true, type: "string" },
 //       },
 //     },
-//   },
-// });
-// aj2?.addJobs({
-//   release: {
-//     runsOn: ["ubuntu-latest"],
-//     permissions: {
-//       contents: JobPermission.WRITE,
-//       idToken: JobPermission.WRITE,
+//   });
+
+//   aj2.addJobs({
+//     release_npm: {
+//       runsOn: ["ubuntu-latest"],
+//       permissions: {
+//         contents: JobPermission.READ,
+//         idToken: JobPermission.WRITE,
+//       },
+//       env: {
+//         CI: "true",
+//       },
+//       steps: [
+//         {
+//           name: "Checkout",
+//           uses: "actions/checkout@v4",
+//           with: { "fetch-depth": 0 },
+//         },
+//         {
+//           name: "Setup Node.js",
+//           uses: "actions/setup-node@v4",
+//           with: {
+//             "node-version": "lts/*",
+//             "registry-url": "https://registry.npmjs.org",
+//           },
+//         },
+//         {
+//           name: "who am i",
+//           env: {
+//             NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+//           },
+//           run: "npm whoami",
+//         },
+//         {
+//           name: "Install dependencies",
+//           run: "yarn install --check-files --frozen-lockfile",
+//         },
+//         {
+//           name: "Build ajithapackage2",
+//           run: "yarn build",
+//           workingDirectory: "src/packages/ajithapackage2",
+//         },
+//         {
+//           name: "Pack artifact",
+//           run: "yarn pack --filename ajithapackage2.tgz",
+//           workingDirectory: "src/packages/ajithapackage2",
+//         },
+//         {
+//           name: "Extract artifact",
+//           run: [
+//             "mkdir repo",
+//             "tar -xzf src/packages/ajithapackage2/ajithapackage2.tgz -C repo --strip-components=1",
+//           ].join(" && "),
+//         },
+//         {
+//           name: "Patch version",
+//           workingDirectory: "repo",
+//           run: [
+//             "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
+//             "mv tmp.json package.json",
+//             "cat package.json | grep version",
+//           ].join(" && "),
+//         },
+//         {
+//           name: "Remove prepack",
+//           workingDirectory: "repo",
+//           run: "jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
+//         },
+//         {
+//           name: "Publish to npm",
+//           workingDirectory: "repo",
+//           env: {
+//             NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+//           },
+//           run: "npm publish --access public",
+//         },
+//       ],
 //     },
-//     defaults: {
-//       run: {
-//         workingDirectory: "src/packages/ajithapackage2",
+//     release_github: {
+//       name: "Publish GitHub Release",
+//       needs: ["release_npm"],
+//       runsOn: ["ubuntu-latest"],
+//       permissions: {
+//         contents: JobPermission.WRITE,
 //       },
+//       steps: [
+//         {
+//           name: "Checkout",
+//           uses: "actions/checkout@v4",
+//         },
+//         {
+//           name: "GitHub release",
+//           env: {
+//             GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+//           },
+//           run: [
+//             'gh release create "v${{ inputs.version }}"',
+//             '--title "v${{ inputs.version }}"',
+//             '--notes "Automated release for SSDK"',
+//             "src/packages/ajithapackage2/ajithapackage2.tgz",
+//           ].join(" "),
+//         },
+//       ],
 //     },
-//     steps: [
-//       {
-//         name: "Checkout",
-//         uses: "actions/checkout@v4",
-//         with: { "fetch-depth": 0 },
-//       },
-//       {
-//         name: "Set Git identity",
-//         run: [
-//           'git config user.name "github-actions"',
-//           'git config user.email "github-actions@github.com"',
-//         ].join("\n"),
-//       },
-//       {
-//         name: "Setup Node.js",
-//         uses: "actions/setup-node@v4",
-//         with: {
-//           "node-version": "lts/*",
-//           "registry-url": "https://registry.npmjs.org",
-//         },
-//       },
-//       {
-//         name: "Install dependencies",
-//         run: "yarn install --check-files --frozen-lockfile",
-//         workingDirectory: ".",
-//       },
-//       {
-//         name: "Compile",
-//         run: "npx projen compile",
-//       },
-//       {
-//         name: "Build JS package",
-//         run: "npx projen package",
-//       },
-//       {
-//         name: "Backup artifact permissions",
-//         run: "cd dist && getfacl -R . > permissions-backup.acl",
-//         continueOnError: true,
-//       },
-//       {
-//         name: "Upload JS artifact",
-//         uses: "actions/upload-artifact@v4",
-//         with: {
-//           name: "ajithapackage2-artifact",
-//           path: "src/packages/ajithapackage2/dist",
-//           overwrite: true,
-//         },
-//       },
-//       {
-//         name: "Remove prepack",
-//         run: `jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json`,
-//       },
-//       {
-//         name: "Release",
-//         env: {
-//           NPM_TOKEN: "${{ secrets.TOKEN }}",
-//         },
-//         run: [
-//           'echo "Checking NPM_TOKEN length: ${#NPM_TOKEN}"',
-//           'echo "Publishing version: ${{ inputs.version }}"',
-//           "DEBUG=* npx -p publib publib-npm --version ${{ inputs.version }}",
-//         ].join("\n"),
-//       },
-//     ],
-//   },
-//   release_github: {
-//     name: "Publish GitHub Release",
-//     needs: ["release"],
-//     runsOn: ["ubuntu-latest"],
-//     permissions: {
-//       contents: JobPermission.WRITE,
-//     },
-//     if: "always() && needs.release.result == 'success'",
-//     steps: [
-//       {
-//         name: "Setup Node.js",
-//         uses: "actions/setup-node@v4",
-//         with: { "node-version": "lts/*" },
-//       },
-//       {
-//         name: "Download artifact",
-//         uses: "actions/download-artifact@v4",
-//         with: {
-//           name: "ajithapackage2-artifact",
-//           path: "dist",
-//         },
-//       },
-//       {
-//         name: "Restore build artifact permissions",
-//         run: "cd dist && setfacl --restore=permissions-backup.acl",
-//         continueOnError: true,
-//       },
-//       {
-//         name: "GitHub Release",
-//         env: {
-//           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-//         },
-//         run: `
-//         TAG="v\${{ inputs.version }}"
-//         gh release create "$TAG" -F dist/changelog.md -t "$TAG" --target $GITHUB_SHA || echo "Release might already exist"
-//       `,
-//       },
-//     ],
-//   },
-// });
+//   });
+// }
+
+// // // Projen ajithapackage2
+// // const aj2 = project.github?.addWorkflow("release_ajithapackage2");
+// // aj2?.on({
+// //   workflowCall: {
+// //     inputs: {
+// //       version: {
+// //         required: true,
+// //         type: "string",
+// //       },
+// //     },
+// //   },
+// // });
+// // aj2?.addJobs({
+// //   release: {
+// //     runsOn: ["ubuntu-latest"],
+// //     permissions: {
+// //       contents: JobPermission.WRITE,
+// //       idToken: JobPermission.WRITE,
+// //     },
+// //     defaults: {
+// //       run: {
+// //         workingDirectory: "src/packages/ajithapackage2",
+// //       },
+// //     },
+// //     steps: [
+// //       {
+// //         name: "Checkout",
+// //         uses: "actions/checkout@v4",
+// //         with: { "fetch-depth": 0 },
+// //       },
+// //       {
+// //         name: "Set Git identity",
+// //         run: [
+// //           'git config user.name "github-actions"',
+// //           'git config user.email "github-actions@github.com"',
+// //         ].join("\n"),
+// //       },
+// //       {
+// //         name: "Setup Node.js",
+// //         uses: "actions/setup-node@v4",
+// //         with: {
+// //           "node-version": "lts/*",
+// //           "registry-url": "https://registry.npmjs.org",
+// //         },
+// //       },
+// //       {
+// //         name: "Install dependencies",
+// //         run: "yarn install --check-files --frozen-lockfile",
+// //         workingDirectory: ".",
+// //       },
+// //       {
+// //         name: "Compile",
+// //         run: "npx projen compile",
+// //       },
+// //       {
+// //         name: "Build JS package",
+// //         run: "npx projen package",
+// //       },
+// //       {
+// //         name: "Backup artifact permissions",
+// //         run: "cd dist && getfacl -R . > permissions-backup.acl",
+// //         continueOnError: true,
+// //       },
+// //       {
+// //         name: "Upload JS artifact",
+// //         uses: "actions/upload-artifact@v4",
+// //         with: {
+// //           name: "ajithapackage2-artifact",
+// //           path: "src/packages/ajithapackage2/dist",
+// //           overwrite: true,
+// //         },
+// //       },
+// //       {
+// //         name: "Remove prepack",
+// //         run: `jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json`,
+// //       },
+// //       {
+// //         name: "Release",
+// //         env: {
+// //           NPM_TOKEN: "${{ secrets.TOKEN }}",
+// //         },
+// //         run: [
+// //           'echo "Checking NPM_TOKEN length: ${#NPM_TOKEN}"',
+// //           'echo "Publishing version: ${{ inputs.version }}"',
+// //           "DEBUG=* npx -p publib publib-npm --version ${{ inputs.version }}",
+// //         ].join("\n"),
+// //       },
+// //     ],
+// //   },
+// //   release_github: {
+// //     name: "Publish GitHub Release",
+// //     needs: ["release"],
+// //     runsOn: ["ubuntu-latest"],
+// //     permissions: {
+// //       contents: JobPermission.WRITE,
+// //     },
+// //     if: "always() && needs.release.result == 'success'",
+// //     steps: [
+// //       {
+// //         name: "Setup Node.js",
+// //         uses: "actions/setup-node@v4",
+// //         with: { "node-version": "lts/*" },
+// //       },
+// //       {
+// //         name: "Download artifact",
+// //         uses: "actions/download-artifact@v4",
+// //         with: {
+// //           name: "ajithapackage2-artifact",
+// //           path: "dist",
+// //         },
+// //       },
+// //       {
+// //         name: "Restore build artifact permissions",
+// //         run: "cd dist && setfacl --restore=permissions-backup.acl",
+// //         continueOnError: true,
+// //       },
+// //       {
+// //         name: "GitHub Release",
+// //         env: {
+// //           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+// //         },
+// //         run: `
+// //         TAG="v\${{ inputs.version }}"
+// //         gh release create "$TAG" -F dist/changelog.md -t "$TAG" --target $GITHUB_SHA || echo "Release might already exist"
+// //       `,
+// //       },
+// //     ],
+// //   },
+// // });
 
 const central = project.github?.addWorkflow("central-release");
 
@@ -869,6 +869,8 @@ if (central) {
       uses: "./.github/workflows/release_ajithapackage.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
+        packageName: "ajithapackage",
+        packagePath: "src/packages/ajithapackage1",
       },
       secrets: "inherit",
     },
@@ -882,6 +884,8 @@ if (central) {
       uses: "./.github/workflows/release_ajithapackage2.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
+        packageName: "ajithapackage2",
+        packagePath: "src/packages/ajithapackage2",
       },
       secrets: "inherit",
     },
@@ -895,6 +899,9 @@ if (central) {
       uses: "./.github/workflows/release_smithy_client.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
+        packageName: "smithy-client",
+        packagePath:
+          "src/packages/my-api/build/smithy/source/typescript-client-codegen",
       },
       secrets: "inherit",
     },
@@ -908,6 +915,9 @@ if (central) {
       uses: "./.github/workflows/release_smithy_ssdk.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
+        packageName: "smithy-ssdk",
+        packagePath:
+          "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
       },
       secrets: "inherit",
     },
@@ -973,6 +983,126 @@ if (central) {
   central.file?.addOverride("concurrency", {
     group: "release",
     "cancel-in-progress": false,
+  });
+}
+
+// reusable workflow
+const reusableWorkflow = project.github?.addWorkflow("release_package");
+
+if (reusableWorkflow) {
+  reusableWorkflow.on({
+    workflowCall: {
+      inputs: {
+        version: { required: true, type: "string" },
+        packageName: { required: true, type: "string" },
+        packagePath: { required: true, type: "string" },
+      },
+    },
+  });
+
+  reusableWorkflow.addJobs({
+    release_npm: {
+      runsOn: ["ubuntu-latest"],
+      permissions: {
+        contents: JobPermission.READ,
+        idToken: JobPermission.WRITE,
+      },
+      env: {
+        CI: "true",
+      },
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v4",
+          with: { "fetch-depth": 0 },
+        },
+        {
+          name: "Setup Node.js",
+          uses: "actions/setup-node@v4",
+          with: {
+            "node-version": "lts/*",
+            "registry-url": "https://registry.npmjs.org",
+          },
+        },
+        {
+          name: "who am i",
+          env: {
+            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+          },
+          run: "npm whoami",
+        },
+        {
+          name: "Install dependencies",
+          run: "yarn install --check-files --frozen-lockfile",
+        },
+        {
+          name: "Build package",
+          run: "yarn build",
+          workingDirectory: "${{ inputs.packagePath }}",
+        },
+        {
+          name: "Pack artifact",
+          run: "yarn pack --filename ${{ inputs.packageName }}.tgz",
+          workingDirectory: "${{ inputs.packagePath }}",
+        },
+        {
+          name: "Extract artifact",
+          run: [
+            "mkdir repo",
+            "tar -xzf ${{ inputs.packagePath }}/${{ inputs.packageName }}.tgz -C repo --strip-components=1",
+          ].join(" && "),
+        },
+        {
+          name: "Patch version",
+          workingDirectory: "repo",
+          run: [
+            "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
+            "mv tmp.json package.json",
+            "cat package.json | grep version",
+          ].join(" && "),
+        },
+        {
+          name: "Remove prepack",
+          workingDirectory: "repo",
+          run: "jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
+        },
+        {
+          name: "Publish to npm",
+          workingDirectory: "repo",
+          env: {
+            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+          },
+          run: "npm publish --access public",
+        },
+      ],
+    },
+
+    release_github: {
+      name: "Publish GitHub Release",
+      needs: ["release_npm"],
+      runsOn: ["ubuntu-latest"],
+      permissions: {
+        contents: JobPermission.WRITE,
+      },
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v4",
+        },
+        {
+          name: "GitHub release",
+          env: {
+            GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+          },
+          run: [
+            'gh release create "v${{ inputs.version }}"',
+            '--title "v${{ inputs.version }}"',
+            '--notes "Automated release for ${{ inputs.packageName }}"',
+            "${{ inputs.packagePath }}/${{ inputs.packageName }}.tgz",
+          ].join(" "),
+        },
+      ],
+    },
   });
 }
 

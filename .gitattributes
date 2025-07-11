@@ -8,10 +8,7 @@
 /.github/workflows/build.yml linguist-generated
 /.github/workflows/central-release.yml linguist-generated
 /.github/workflows/pull-request-lint.yml linguist-generated
-/.github/workflows/release_ajithapackage.yml linguist-generated
-/.github/workflows/release_ajithapackage2.yml linguist-generated
-/.github/workflows/release_smithy_client.yml linguist-generated
-/.github/workflows/release_smithy_ssdk.yml linguist-generated
+/.github/workflows/release_package.yml linguist-generated
 /.github/workflows/upgrade.yml linguist-generated
 /.gitignore linguist-generated
 /.npmignore linguist-generated
