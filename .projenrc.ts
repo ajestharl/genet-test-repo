@@ -925,6 +925,7 @@ if (central) {
 
     npm_release: {
       needs: [
+        "bump_version", // Added this explicitly
         "release_ajithapackage",
         "release_ajithapackage2",
         "release_smithy_client",
@@ -962,6 +963,8 @@ if (central) {
           name: "Extract packages",
           run: [
             "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
+            'version="${{ needs.bump_version.outputs.version }}"', // Get the version from bump_version
+            'echo "Using version: $version"',
             'for pkg in "${packages[@]}"; do',
             '  echo "Extracting $pkg..."',
             '  mkdir -p "$pkg"',
@@ -970,49 +973,46 @@ if (central) {
           ].join("\n"),
         },
         {
-          name: "Verify package structure",
+          name: "Verify package structure and versions",
           run: [
+            'version="${{ needs.bump_version.outputs.version }}"',
             "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
             'for pkg in "${packages[@]}"; do',
             '  echo "Checking $pkg..."',
             '  [ -d "$pkg" ] || { echo "Error: Directory $pkg not found"; exit 1; }',
             '  [ -f "$pkg/package.json" ] || { echo "Error: $pkg/package.json not found"; exit 1; }',
-            '  jq . "$pkg/package.json" > /dev/null || { echo "Error: Invalid package.json in $pkg"; exit 1; }',
+            '  pkg_version=$(jq -r .version "$pkg/package.json")',
+            '  echo "$pkg version: $pkg_version"',
+            '  [ "$pkg_version" = "$version" ] || { echo "Version mismatch in $pkg. Expected $version, got $pkg_version"; exit 1; }',
             "done",
           ].join("\n"),
         },
         {
           name: "Publish packages to npm",
-          id: "publish", // Add ID to reference in outputs
+          id: "publish",
           env: {
             NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
           },
           run: [
-            "# Array to track successfully published packages",
             "published=()",
-            "",
-            "# Rollback function to unpublish in case of failure",
+            'version="${{ needs.bump_version.outputs.version }}"',
             "rollback() {",
             '  echo "Error during publishing, rolling back..."',
-            '  version="${{ needs.bump_version.outputs.version }}"',
             '  for pkg in "${published[@]}"; do',
             '    echo "Unpublishing $pkg@$version"',
             '    npm unpublish "$pkg@$version" --force || echo "Failed to unpublish $pkg"',
             "  done",
-            '  echo "publishing_failed=true" >> $GITHUB_OUTPUT', // Signal failure for tag cleanup
+            '  echo "publishing_failed=true" >> $GITHUB_OUTPUT',
             "  exit 1",
             "}",
-            "",
-            "# Set trap for error handling",
             "trap rollback ERR",
-            "",
             "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
             'for pkg in "${packages[@]}"; do',
-            '  echo "Publishing $pkg"',
+            '  echo "Publishing $pkg@$version"',
             '  cd "$pkg"',
             "  if npm publish --access public; then",
             '    published+=("$pkg")',
-            '    echo "Successfully published $pkg"',
+            '    echo "Successfully published $pkg@$version"',
             "    cd ..",
             "  else",
             '    echo "Failed to publish $pkg"',
@@ -1020,12 +1020,10 @@ if (central) {
             "    rollback",
             "  fi",
             "done",
-            "",
             'echo "All packages published successfully"',
-            'echo "publishing_failed=false" >> $GITHUB_OUTPUT', // Signal success
+            'echo "publishing_failed=false" >> $GITHUB_OUTPUT',
           ].join("\n"),
         },
-
         {
           name: "Finalize Release",
           run: [
@@ -1037,6 +1035,7 @@ if (central) {
         },
       ],
     },
+
     github_release: {
       needs: ["npm_release", "bump_version"],
       runsOn: ["ubuntu-latest"],

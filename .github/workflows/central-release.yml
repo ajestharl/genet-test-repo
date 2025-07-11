@@ -75,6 +75,7 @@ jobs:
     secrets: inherit
   npm_release:
     needs:
+      - bump_version
       - release_ajithapackage
       - release_ajithapackage2
       - release_smithy_client
@@ -100,32 +101,34 @@ jobs:
       - name: Extract packages
         run: |-
           packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)
+          version="${{ needs.bump_version.outputs.version }}"
+          echo "Using version: $version"
           for pkg in "${packages[@]}"; do
             echo "Extracting $pkg..."
             mkdir -p "$pkg"
             tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }
           done
-      - name: Verify package structure
+      - name: Verify package structure and versions
         run: |-
+          version="${{ needs.bump_version.outputs.version }}"
           packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)
           for pkg in "${packages[@]}"; do
             echo "Checking $pkg..."
             [ -d "$pkg" ] || { echo "Error: Directory $pkg not found"; exit 1; }
             [ -f "$pkg/package.json" ] || { echo "Error: $pkg/package.json not found"; exit 1; }
-            jq . "$pkg/package.json" > /dev/null || { echo "Error: Invalid package.json in $pkg"; exit 1; }
+            pkg_version=$(jq -r .version "$pkg/package.json")
+            echo "$pkg version: $pkg_version"
+            [ "$pkg_version" = "$version" ] || { echo "Version mismatch in $pkg. Expected $version, got $pkg_version"; exit 1; }
           done
       - name: Publish packages to npm
         id: publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.TOKEN }}
         run: |-
-          # Array to track successfully published packages
           published=()
-
-          # Rollback function to unpublish in case of failure
+          version="${{ needs.bump_version.outputs.version }}"
           rollback() {
             echo "Error during publishing, rolling back..."
-            version="${{ needs.bump_version.outputs.version }}"
             for pkg in "${published[@]}"; do
               echo "Unpublishing $pkg@$version"
               npm unpublish "$pkg@$version" --force || echo "Failed to unpublish $pkg"
@@ -133,17 +136,14 @@ jobs:
             echo "publishing_failed=true" >> $GITHUB_OUTPUT
             exit 1
           }
-
-          # Set trap for error handling
           trap rollback ERR
-
           packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)
           for pkg in "${packages[@]}"; do
-            echo "Publishing $pkg"
+            echo "Publishing $pkg@$version"
             cd "$pkg"
             if npm publish --access public; then
               published+=("$pkg")
-              echo "Successfully published $pkg"
+              echo "Successfully published $pkg@$version"
               cd ..
             else
               echo "Failed to publish $pkg"
@@ -151,7 +151,6 @@ jobs:
               rollback
             fi
           done
-
           echo "All packages published successfully"
           echo "publishing_failed=false" >> $GITHUB_OUTPUT
       - name: Finalize Release
