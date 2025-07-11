@@ -1047,6 +1047,24 @@ if (reusableWorkflow) {
           workingDirectory: "${{ inputs.package_path }}",
         },
         {
+          name: "Backup artifact permissions",
+          workingDirectory: "${{ inputs.package_path }}",
+          run: [
+            "mkdir -p dist",
+            "cp ${{ inputs.package_name }}.tgz dist/",
+            "cd dist && getfacl -R . > permissions-backup.acl",
+          ].join("&&"),
+        },
+        {
+          name: "Upload artifact",
+          uses: "actions/upload-artifact@v4.4.0",
+          with: {
+            name: "${{ inputs.package_name }}-artifact",
+            path: "${{ inputs.package_path }}/dist",
+            overwrite: true,
+          },
+        },
+        {
           name: "Extract artifact",
           run: [
             "mkdir repo",

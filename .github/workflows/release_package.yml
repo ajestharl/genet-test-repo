@@ -43,6 +43,15 @@ jobs:
       - name: Pack artifact
         run: yarn pack --filename ${{ inputs.package_name }}.tgz
         working-directory: ${{ inputs.package_path }}
+      - name: Backup artifact permissions
+        run: mkdir -p dist&&cp ${{ inputs.package_name }}.tgz dist/&&cd dist && getfacl -R . > permissions-backup.acl
+        working-directory: ${{ inputs.package_path }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4.4.0
+        with:
+          name: ${{ inputs.package_name }}-artifact
+          path: ${{ inputs.package_path }}/dist
+          overwrite: true
       - name: Extract artifact
         run: mkdir repo && tar -xzf ${{ inputs.package_path }}/${{ inputs.package_name }}.tgz -C repo --strip-components=1
       - name: Patch version
