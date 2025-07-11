@@ -922,7 +922,7 @@ if (central) {
       secrets: "inherit",
     },
 
-    finalize_release: {
+    npm_release: {
       needs: [
         "release_ajithapackage",
         "release_ajithapackage2",
@@ -934,23 +934,86 @@ if (central) {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
+      env: {
+        CI: "true",
+      },
       steps: [
         {
-          name: "Checkout",
-          uses: "actions/checkout@v4",
-          with: { "fetch-depth": 0 },
+          name: "Setup Node.js",
+          uses: "actions/setup-node@v4",
+          with: {
+            "node-version": "lts/*",
+            "registry-url": "https://registry.npmjs.org",
+          },
+        },
+        {
+          name: "Download all artifacts",
+          uses: "actions/download-artifact@v4",
+          with: {
+            "merge-multiple": true,
+          },
+        },
+        {
+          name: "Publish packages to npm",
+          env: {
+            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+          },
+          run: [
+            "for dir in */; do",
+            "  cd $dir",
+            "  npm publish --access public",
+            "  cd ..",
+            "done",
+          ].join("\n"),
         },
         {
           name: "Finalize Release",
           run: [
             'echo "All child workflows have completed successfully."',
-            'echo "Performing final release tasks..."',
+            'echo "All packages are published to NPM"',
             // Add any additional steps for finalizing the release
             // For example, updating documentation, sending notifications, etc.
           ].join("\n"),
         },
       ],
     },
+    github_release: {
+      needs: ["publish_packages", "bump_version"],
+      runsOn: ["ubuntu-latest"],
+      permissions: {
+        contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
+      },
+      env: {
+        CI: "true",
+      },
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v4",
+        },
+        {
+          name: "Download all artifacts",
+          uses: "actions/download-artifact@v4",
+          with: {
+            "merge-multiple": true,
+          },
+        },
+        {
+          name: "Create GitHub Release",
+          env: {
+            GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+          },
+          run: [
+            'gh release create "v${{ needs.bump_version.outputs.version }}"',
+            '--title "v${{ needs.bump_version.outputs.version }}"',
+            '--notes "Automated release for all packages"',
+            "*.tgz",
+          ].join(" "),
+        },
+      ],
+    },
+
     cleanup_failed_tag: {
       if: "failure() && needs.bump_version.result == 'success'",
       needs: ["bump_version"],
@@ -1056,6 +1119,18 @@ if (reusableWorkflow) {
           ].join("&&"),
         },
         {
+          name: "Prepare for publishing",
+          run: [
+            "cd dist",
+            "tar -xzf ${{ inputs.package_name }}.tgz --strip-components=1",
+            "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
+            "mv tmp.json package.json",
+            "jq 'del(.scripts.prepack)' package.json > tmp.json",
+            "mv tmp.json package.json",
+          ].join(" && "),
+          workingDirectory: "${{ inputs.package_path }}",
+        },
+        {
           name: "Upload artifact",
           uses: "actions/upload-artifact@v4.4.0",
           with: {
@@ -1064,64 +1139,64 @@ if (reusableWorkflow) {
             overwrite: true,
           },
         },
-        {
-          name: "Extract artifact",
-          run: [
-            "mkdir repo",
-            "tar -xzf ${{ inputs.package_path }}/${{ inputs.package_name }}.tgz -C repo --strip-components=1",
-          ].join(" && "),
-        },
-        {
-          name: "Patch version",
-          workingDirectory: "repo",
-          run: [
-            "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
-            "mv tmp.json package.json",
-            "cat package.json | grep version",
-          ].join(" && "),
-        },
-        {
-          name: "Remove prepack",
-          workingDirectory: "repo",
-          run: "jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
-        },
-        {
-          name: "Publish to npm",
-          workingDirectory: "repo",
-          env: {
-            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
-          },
-          run: "npm publish --access public",
-        },
+        // {
+        //   name: "Extract artifact",
+        //   run: [
+        //     "mkdir repo",
+        //     "tar -xzf ${{ inputs.package_path }}/${{ inputs.package_name }}.tgz -C repo --strip-components=1",
+        //   ].join(" && "),
+        // },
+        // {
+        //   name: "Patch version",
+        //   workingDirectory: "repo",
+        //   run: [
+        //     "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
+        //     "mv tmp.json package.json",
+        //     "cat package.json | grep version",
+        //   ].join(" && "),
+        // },
+        // {
+        //   name: "Remove prepack",
+        //   workingDirectory: "repo",
+        //   run: "jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
+        // },
+        // {
+        //   name: "Publish to npm",
+        //   workingDirectory: "repo",
+        //   env: {
+        //     NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+        //   },
+        //   run: "npm publish --access public",
+        // },
       ],
     },
 
-    release_github: {
-      name: "Publish GitHub Release",
-      needs: ["release_npm"],
-      runsOn: ["ubuntu-latest"],
-      permissions: {
-        contents: JobPermission.WRITE,
-      },
-      steps: [
-        {
-          name: "Checkout",
-          uses: "actions/checkout@v4",
-        },
-        {
-          name: "GitHub release",
-          env: {
-            GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-          },
-          run: [
-            'gh release create "v${{ inputs.version }}"',
-            '--title "v${{ inputs.version }}"',
-            '--notes "Automated release for ${{ inputs.package_name }}"',
-            "${{ inputs.package_path }}/${{ inputs.package_name }}.tgz",
-          ].join(" "),
-        },
-      ],
-    },
+    // release_github: {
+    //   name: "Publish GitHub Release",
+    //   needs: ["release_npm"],
+    //   runsOn: ["ubuntu-latest"],
+    //   permissions: {
+    //     contents: JobPermission.WRITE,
+    //   },
+    //   steps: [
+    //     {
+    //       name: "Checkout",
+    //       uses: "actions/checkout@v4",
+    //     },
+    //     {
+    //       name: "GitHub release",
+    //       env: {
+    //         GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+    //       },
+    //       run: [
+    //         'gh release create "v${{ inputs.version }}"',
+    //         '--title "v${{ inputs.version }}"',
+    //         '--notes "Automated release for ${{ inputs.package_name }}"',
+    //         "${{ inputs.package_path }}/${{ inputs.package_name }}.tgz",
+    //       ].join(" "),
+    //     },
+    //   ],
+    // },
   });
 }
 

@@ -46,35 +46,12 @@ jobs:
       - name: Backup artifact permissions
         run: mkdir -p dist&&cp ${{ inputs.package_name }}.tgz dist/&&cd dist && getfacl -R . > permissions-backup.acl
         working-directory: ${{ inputs.package_path }}
+      - name: Prepare for publishing
+        run: cd dist && tar -xzf ${{ inputs.package_name }}.tgz --strip-components=1 && jq '.version = "${{ inputs.version }}"' package.json > tmp.json && mv tmp.json package.json && jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json
+        working-directory: ${{ inputs.package_path }}
       - name: Upload artifact
         uses: actions/upload-artifact@v4.4.0
         with:
           name: ${{ inputs.package_name }}-artifact
           path: ${{ inputs.package_path }}/dist
           overwrite: true
-      - name: Extract artifact
-        run: mkdir repo && tar -xzf ${{ inputs.package_path }}/${{ inputs.package_name }}.tgz -C repo --strip-components=1
-      - name: Patch version
-        run: jq '.version = "${{ inputs.version }}"' package.json > tmp.json && mv tmp.json package.json && cat package.json | grep version
-        working-directory: repo
-      - name: Remove prepack
-        run: jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json
-        working-directory: repo
-      - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.TOKEN }}
-        run: npm publish --access public
-        working-directory: repo
-  release_github:
-    name: Publish GitHub Release
-    needs: release_npm
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: GitHub release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "v${{ inputs.version }}" --title "v${{ inputs.version }}" --notes "Automated release for ${{ inputs.package_name }}" ${{ inputs.package_path }}/${{ inputs.package_name }}.tgz
