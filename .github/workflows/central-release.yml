@@ -113,7 +113,7 @@ jobs:
           echo "All packages are published to NPM"
   github_release:
     needs:
-      - publish_packages
+      - npm_release
       - bump_version
     runs-on: ubuntu-latest
     permissions:

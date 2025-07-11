@@ -978,7 +978,7 @@ if (central) {
       ],
     },
     github_release: {
-      needs: ["publish_packages", "bump_version"],
+      needs: ["npm_release", "bump_version"],
       runsOn: ["ubuntu-latest"],
       permissions: {
         contents: JobPermission.WRITE,
