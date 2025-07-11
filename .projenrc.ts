@@ -925,7 +925,7 @@ if (central) {
 
     npm_release: {
       needs: [
-        "bump_version", // Added this explicitly
+        "bump_version",
         "release_ajithapackage",
         "release_ajithapackage2",
         "release_smithy_client",
@@ -963,27 +963,10 @@ if (central) {
           name: "Extract packages",
           run: [
             "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
-            'version="${{ needs.bump_version.outputs.version }}"', // Get the version from bump_version
-            'echo "Using version: $version"',
             'for pkg in "${packages[@]}"; do',
             '  echo "Extracting $pkg..."',
             '  mkdir -p "$pkg"',
             '  tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }',
-            "done",
-          ].join("\n"),
-        },
-        {
-          name: "Verify package structure and versions",
-          run: [
-            'version="${{ needs.bump_version.outputs.version }}"',
-            "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
-            'for pkg in "${packages[@]}"; do',
-            '  echo "Checking $pkg..."',
-            '  [ -d "$pkg" ] || { echo "Error: Directory $pkg not found"; exit 1; }',
-            '  [ -f "$pkg/package.json" ] || { echo "Error: $pkg/package.json not found"; exit 1; }',
-            '  pkg_version=$(jq -r .version "$pkg/package.json")',
-            '  echo "$pkg version: $pkg_version"',
-            '  [ "$pkg_version" = "$version" ] || { echo "Version mismatch in $pkg. Expected $version, got $pkg_version"; exit 1; }',
             "done",
           ].join("\n"),
         },
@@ -1010,7 +993,7 @@ if (central) {
             'for pkg in "${packages[@]}"; do',
             '  echo "Publishing $pkg@$version"',
             '  cd "$pkg"',
-            "  if npm publish --access public; then",
+            '  if npm publish --access public --new-version "$version"; then', // Use --new-version flag
             '    published+=("$pkg")',
             '    echo "Successfully published $pkg@$version"',
             "    cd ..",
@@ -1035,6 +1018,119 @@ if (central) {
         },
       ],
     },
+
+    // npm_release: {
+    //   needs: [
+    //     "bump_version", // Added this explicitly
+    //     "release_ajithapackage",
+    //     "release_ajithapackage2",
+    //     "release_smithy_client",
+    //     "release_smithy_ssdk",
+    //   ],
+    //   runsOn: ["ubuntu-latest"],
+    //   permissions: {
+    //     contents: JobPermission.WRITE,
+    //     idToken: JobPermission.WRITE,
+    //   },
+    //   env: {
+    //     CI: "true",
+    //   },
+    //   steps: [
+    //     {
+    //       name: "Setup Node.js",
+    //       uses: "actions/setup-node@v4",
+    //       with: {
+    //         "node-version": "lts/*",
+    //         "registry-url": "https://registry.npmjs.org",
+    //       },
+    //     },
+    //     {
+    //       name: "Download artifacts",
+    //       uses: "actions/download-artifact@v4",
+    //       with: {
+    //         "merge-multiple": true,
+    //       },
+    //     },
+    //     {
+    //       name: "List downloaded artifacts",
+    //       run: "ls -la",
+    //     },
+    //     {
+    //       name: "Extract packages",
+    //       run: [
+    //         "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
+    //         'version="${{ needs.bump_version.outputs.version }}"', // Get the version from bump_version
+    //         'echo "Using version: $version"',
+    //         'for pkg in "${packages[@]}"; do',
+    //         '  echo "Extracting $pkg..."',
+    //         '  mkdir -p "$pkg"',
+    //         '  tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }',
+    //         "done",
+    //       ].join("\n"),
+    //     },
+    //     {
+    //       name: "Verify package structure and versions",
+    //       run: [
+    //         'version="${{ needs.bump_version.outputs.version }}"',
+    //         "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
+    //         'for pkg in "${packages[@]}"; do',
+    //         '  echo "Checking $pkg..."',
+    //         '  [ -d "$pkg" ] || { echo "Error: Directory $pkg not found"; exit 1; }',
+    //         '  [ -f "$pkg/package.json" ] || { echo "Error: $pkg/package.json not found"; exit 1; }',
+    //         '  pkg_version=$(jq -r .version "$pkg/package.json")',
+    //         '  echo "$pkg version: $pkg_version"',
+    //         '  [ "$pkg_version" = "$version" ] || { echo "Version mismatch in $pkg. Expected $version, got $pkg_version"; exit 1; }',
+    //         "done",
+    //       ].join("\n"),
+    //     },
+    //     {
+    //       name: "Publish packages to npm",
+    //       id: "publish",
+    //       env: {
+    //         NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+    //       },
+    //       run: [
+    //         "published=()",
+    //         'version="${{ needs.bump_version.outputs.version }}"',
+    //         "rollback() {",
+    //         '  echo "Error during publishing, rolling back..."',
+    //         '  for pkg in "${published[@]}"; do',
+    //         '    echo "Unpublishing $pkg@$version"',
+    //         '    npm unpublish "$pkg@$version" --force || echo "Failed to unpublish $pkg"',
+    //         "  done",
+    //         '  echo "publishing_failed=true" >> $GITHUB_OUTPUT',
+    //         "  exit 1",
+    //         "}",
+    //         "trap rollback ERR",
+    //         "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
+    //         'for pkg in "${packages[@]}"; do',
+    //         '  echo "Publishing $pkg@$version"',
+    //         '  cd "$pkg"',
+    //         "  if npm publish --access public; then",
+    //         '    published+=("$pkg")',
+    //         '    echo "Successfully published $pkg@$version"',
+    //         "    cd ..",
+    //         "  else",
+    //         '    echo "Failed to publish $pkg"',
+    //         "    cd ..",
+    //         "    rollback",
+    //         "  fi",
+    //         "done",
+    //         'echo "All packages published successfully"',
+    //         'echo "publishing_failed=false" >> $GITHUB_OUTPUT',
+    //       ].join("\n"),
+    //     },
+    //     {
+    //       name: "Finalize Release",
+    //       run: [
+    //         'echo "All child workflows have completed successfully."',
+    //         'echo "All packages are published to NPM"',
+    //         // Add any additional steps for finalizing the release
+    //         // For example, updating documentation, sending notifications, etc.
+    //       ].join("\n"),
+    //     },
+    //   ],
+    // },
 
     github_release: {
       needs: ["npm_release", "bump_version"],
