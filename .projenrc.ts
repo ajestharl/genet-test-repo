@@ -849,19 +849,11 @@ if (central) {
         //   workingDirectory: "src/packages/ajithapackage1",
         // },
         {
-          name: "Run Projen Release (ajithapackage1)",
-          run: [
-            "VERSION=0.0.36",
-            'echo "Using version: $VERSION"',
-            "npx projen release --release-version $VERSION",
-          ].join(" && "),
-          workingDirectory: "src/packages/ajithapackage1",
-        },
-        {
           name: "Read Version",
           id: "getver",
           run: [
-            "VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')",
+            // "VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')",
+            'VERSION="0.0.36"',
             'echo "version=$VERSION" >> $GITHUB_OUTPUT',
             'echo "Release version: $VERSION"',
           ].join("\n"),
