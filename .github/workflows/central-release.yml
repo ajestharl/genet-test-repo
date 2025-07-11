@@ -37,7 +37,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    uses: ./.github/workflows/release_ajithapackage.yml
+    uses: ./.github/workflows/release_package.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
       packageName: ajithapackage
@@ -48,7 +48,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    uses: ./.github/workflows/release_ajithapackage2.yml
+    uses: ./.github/workflows/release_package.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
       packageName: ajithapackage2
@@ -59,7 +59,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    uses: ./.github/workflows/release_smithy_client.yml
+    uses: ./.github/workflows/release_package.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
       packageName: smithy-client
@@ -70,7 +70,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    uses: ./.github/workflows/release_smithy_ssdk.yml
+    uses: ./.github/workflows/release_package.yml
     with:
       version: ${{ needs.bump_version.outputs.version }}
       packageName: smithy-ssdk
