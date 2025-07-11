@@ -869,8 +869,8 @@ if (central) {
       uses: "./.github/workflows/release_package.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
-        packageName: "ajithapackage",
-        packagePath: "src/packages/ajithapackage1",
+        package_name: "ajithapackage",
+        package_path: "src/packages/ajithapackage1",
       },
       secrets: "inherit",
     },
@@ -884,8 +884,8 @@ if (central) {
       uses: "./.github/workflows/release_package.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
-        packageName: "ajithapackage2",
-        packagePath: "src/packages/ajithapackage2",
+        package_name: "ajithapackage2",
+        package_path: "src/packages/ajithapackage2",
       },
       secrets: "inherit",
     },
@@ -899,8 +899,8 @@ if (central) {
       uses: "./.github/workflows/release_package.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
-        packageName: "smithy-client",
-        packagePath:
+        package_name: "smithy-client",
+        package_path:
           "src/packages/my-api/build/smithy/source/typescript-client-codegen",
       },
       secrets: "inherit",
@@ -915,12 +915,13 @@ if (central) {
       uses: "./.github/workflows/release_package.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
-        packageName: "smithy-ssdk",
-        packagePath:
+        package_name: "smithy-ssdk",
+        package_path:
           "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
       },
       secrets: "inherit",
     },
+
     finalize_release: {
       needs: [
         "release_ajithapackage",
