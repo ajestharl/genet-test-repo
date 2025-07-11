@@ -982,16 +982,46 @@ if (central) {
         },
         {
           name: "Publish packages to npm",
+          id: "publish", // Add ID to reference in outputs
           env: {
             NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
-            NPM_DIST_TAG: "latest",
           },
           run: [
+            "# Array to track successfully published packages",
+            "published=()",
+            "",
+            "# Rollback function to unpublish in case of failure",
+            "rollback() {",
+            '  echo "Error during publishing, rolling back..."',
+            '  version="${{ needs.bump_version.outputs.version }}"',
+            '  for pkg in "${published[@]}"; do',
+            '    echo "Unpublishing $pkg@$version"',
+            '    npm unpublish "$pkg@$version" --force || echo "Failed to unpublish $pkg"',
+            "  done",
+            '  echo "publishing_failed=true" >> $GITHUB_OUTPUT', // Signal failure for tag cleanup
+            "  exit 1",
+            "}",
+            "",
+            "# Set trap for error handling",
+            "trap rollback ERR",
+            "",
             "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
             'for pkg in "${packages[@]}"; do',
             '  echo "Publishing $pkg"',
-            '  cd "$pkg" && npm publish --access public && cd .. || exit 1',
+            '  cd "$pkg"',
+            "  if npm publish --access public; then",
+            '    published+=("$pkg")',
+            '    echo "Successfully published $pkg"',
+            "    cd ..",
+            "  else",
+            '    echo "Failed to publish $pkg"',
+            "    cd ..",
+            "    rollback",
+            "  fi",
             "done",
+            "",
+            'echo "All packages published successfully"',
+            'echo "publishing_failed=false" >> $GITHUB_OUTPUT', // Signal success
           ].join("\n"),
         },
 
@@ -1044,8 +1074,8 @@ if (central) {
     },
 
     cleanup_failed_tag: {
-      if: "failure() && needs.bump_version.result == 'success'",
-      needs: ["bump_version"],
+      if: "failure() && (needs.bump_version.result == 'success' || needs.npm_release.outputs.publishing_failed == 'true')",
+      needs: ["bump_version", "npm_release"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
@@ -1199,33 +1229,6 @@ if (reusableWorkflow) {
         // },
       ],
     },
-
-    // release_github: {
-    //   name: "Publish GitHub Release",
-    //   needs: ["release_npm"],
-    //   runsOn: ["ubuntu-latest"],
-    //   permissions: {
-    //     contents: JobPermission.WRITE,
-    //   },
-    //   steps: [
-    //     {
-    //       name: "Checkout",
-    //       uses: "actions/checkout@v4",
-    //     },
-    //     {
-    //       name: "GitHub release",
-    //       env: {
-    //         GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-    //       },
-    //       run: [
-    //         'gh release create "v${{ inputs.version }}"',
-    //         '--title "v${{ inputs.version }}"',
-    //         '--notes "Automated release for ${{ inputs.package_name }}"',
-    //         "${{ inputs.package_path }}/${{ inputs.package_name }}.tgz",
-    //       ].join(" "),
-    //     },
-    //   ],
-    // },
   });
 }
 
