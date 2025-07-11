@@ -449,134 +449,249 @@ if (wf1) {
   });
 }
 
-// Projen ajithapackage
 const aj1 = project.github?.addWorkflow("release_ajithapackage");
-aj1?.on({
-  workflowCall: {
-    inputs: {
-      version: {
-        required: true,
-        type: "string",
+if (aj1) {
+  aj1.on({
+    workflowCall: {
+      inputs: {
+        version: { required: true, type: "string" },
       },
     },
-  },
-});
-aj1?.addJobs({
-  release: {
-    runsOn: ["ubuntu-latest"],
-    permissions: {
-      contents: JobPermission.WRITE,
-      idToken: JobPermission.WRITE,
+  });
+
+  aj1.addJobs({
+    release_npm: {
+      runsOn: ["ubuntu-latest"],
+      permissions: {
+        contents: JobPermission.READ,
+        idToken: JobPermission.WRITE,
+      },
+      env: {
+        CI: "true",
+      },
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v4",
+          with: { "fetch-depth": 0 },
+        },
+        {
+          name: "Setup Node.js",
+          uses: "actions/setup-node@v4",
+          with: {
+            "node-version": "lts/*",
+            "registry-url": "https://registry.npmjs.org",
+          },
+        },
+        {
+          name: "who am i",
+          env: {
+            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+          },
+          run: "npm whoami",
+        },
+        {
+          name: "Install dependencies",
+          run: "yarn install --check-files --frozen-lockfile",
+        },
+        {
+          name: "Build SSDK",
+          run: "yarn build",
+          workingDirectory: "src/packages/ajithapackage1",
+        },
+        {
+          name: "Pack artifact",
+          run: "yarn pack --filename ajithapackage.tgz",
+          workingDirectory: "src/packages/ajithapackage1",
+        },
+        {
+          name: "Extract artifact",
+          run: [
+            "mkdir repo",
+            "tar -xzf src/packages/ajithapackage1/ajithapackage.tgz -C repo --strip-components=1",
+          ].join(" && "),
+        },
+        {
+          name: "Patch version",
+          workingDirectory: "repo",
+          run: [
+            "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
+            "mv tmp.json package.json",
+            "cat package.json | grep version",
+          ].join(" && "),
+        },
+        {
+          name: "Remove prepack",
+          workingDirectory: "repo",
+          run: "jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
+        },
+        {
+          name: "Publish to npm",
+          workingDirectory: "repo",
+          env: {
+            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+          },
+          run: "npm publish --access public",
+        },
+      ],
     },
-    outputs: {
-      version: { stepId: "read_version", outputName: "version" },
+    release_github: {
+      name: "Publish GitHub Release",
+      needs: ["release_npm"],
+      runsOn: ["ubuntu-latest"],
+      permissions: {
+        contents: JobPermission.WRITE,
+      },
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v4",
+        },
+        {
+          name: "GitHub release",
+          env: {
+            GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+          },
+          run: [
+            'gh release create "v${{ inputs.version }}"',
+            '--title "v${{ inputs.version }}"',
+            '--notes "Automated release for SSDK"',
+            "src/packages/ajithapackage1/ajithapackage.tgz",
+          ].join(" "),
+        },
+      ],
     },
-    defaults: {
-      run: {
-        workingDirectory: "src/packages/ajithapackage1",
-      },
-    },
-    steps: [
-      {
-        name: "Checkout",
-        uses: "actions/checkout@v4",
-        with: { "fetch-depth": 0 },
-      },
-      {
-        name: "Set Git identity",
-        run: [
-          'git config user.name "github-actions"',
-          'git config user.email "github-actions@github.com"',
-        ].join("\n"),
-      },
-      {
-        name: "Setup Node.js",
-        uses: "actions/setup-node@v4",
-        with: {
-          "node-version": "lts/*",
-          "registry-url": "https://registry.npmjs.org",
-        },
-      },
-      {
-        name: "Install dependencies",
-        run: "yarn install --check-files --frozen-lockfile",
-        workingDirectory: ".",
-      },
-      {
-        name: "Compile",
-        run: "npx projen compile",
-      },
-      {
-        name: "Build JS package",
-        run: "npx projen package:js",
-      },
-      {
-        name: "Backup artifact permissions",
-        run: "cd dist && getfacl -R . > permissions-backup.acl",
-        continueOnError: true,
-      },
-      {
-        name: "Upload JS artifact",
-        uses: "actions/upload-artifact@v4",
-        with: {
-          name: "ajithapackage-artifact",
-          path: "src/packages/ajithapackage1/dist",
-          overwrite: true,
-        },
-      },
-      {
-        name: "Publish to NPM",
-        env: {
-          NPM_TOKEN: "${{ secrets.TOKEN }}",
-        },
-        run: [
-          'echo "Checking NPM_TOKEN length: ${#NPM_TOKEN}"',
-          'echo "Publishing version: ${{ inputs.version }}"',
-          "DEBUG=* npx -p publib publib-npm --version ${{ inputs.version }}",
-        ].join("\n"),
-      },
-    ],
-  },
-  release_github: {
-    name: "Publish GitHub Release",
-    needs: ["release"],
-    runsOn: ["ubuntu-latest"],
-    permissions: {
-      contents: JobPermission.WRITE,
-    },
-    if: "always() && needs.release.result == 'success'",
-    steps: [
-      {
-        name: "Setup Node.js",
-        uses: "actions/setup-node@v4",
-        with: { "node-version": "lts/*" },
-      },
-      {
-        name: "Download artifact",
-        uses: "actions/download-artifact@v4",
-        with: {
-          name: "ajithapackage-artifact",
-          path: "dist",
-        },
-      },
-      {
-        name: "Restore build artifact permissions",
-        run: "cd dist && setfacl --restore=permissions-backup.acl",
-        continueOnError: true,
-      },
-      {
-        name: "GitHub Release",
-        env: {
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-        },
-        run: `
-        TAG="v\${{ inputs.version }}"
-        gh release create "$TAG" -F dist/changelog.md -t "$TAG" --target $GITHUB_SHA || echo "Release might already exist"
-      `,
-      },
-    ],
-  },
-});
+  });
+}
+
+// // Projen ajithapackage
+// const aj1 = project.github?.addWorkflow("release_ajithapackage");
+// aj1?.on({
+//   workflowCall: {
+//     inputs: {
+//       version: {
+//         required: true,
+//         type: "string",
+//       },
+//     },
+//   },
+// });
+// aj1?.addJobs({
+//   release: {
+//     runsOn: ["ubuntu-latest"],
+//     permissions: {
+//       contents: JobPermission.WRITE,
+//       idToken: JobPermission.WRITE,
+//     },
+//     outputs: {
+//       version: { stepId: "read_version", outputName: "version" },
+//     },
+//     defaults: {
+//       run: {
+//         workingDirectory: "src/packages/ajithapackage1",
+//       },
+//     },
+//     steps: [
+//       {
+//         name: "Checkout",
+//         uses: "actions/checkout@v4",
+//         with: { "fetch-depth": 0 },
+//       },
+//       {
+//         name: "Set Git identity",
+//         run: [
+//           'git config user.name "github-actions"',
+//           'git config user.email "github-actions@github.com"',
+//         ].join("\n"),
+//       },
+//       {
+//         name: "Setup Node.js",
+//         uses: "actions/setup-node@v4",
+//         with: {
+//           "node-version": "lts/*",
+//           "registry-url": "https://registry.npmjs.org",
+//         },
+//       },
+//       {
+//         name: "Install dependencies",
+//         run: "yarn install --check-files --frozen-lockfile",
+//         workingDirectory: ".",
+//       },
+//       {
+//         name: "Compile",
+//         run: "npx projen compile",
+//       },
+//       {
+//         name: "Build JS package",
+//         run: "npx projen package:js",
+//       },
+//       {
+//         name: "Backup artifact permissions",
+//         run: "cd dist && getfacl -R . > permissions-backup.acl",
+//         continueOnError: true,
+//       },
+//       {
+//         name: "Upload JS artifact",
+//         uses: "actions/upload-artifact@v4",
+//         with: {
+//           name: "ajithapackage-artifact",
+//           path: "src/packages/ajithapackage1/dist",
+//           overwrite: true,
+//         },
+//       },
+//       {
+//         name: "Publish to NPM",
+//         env: {
+//           NPM_TOKEN: "${{ secrets.TOKEN }}",
+//         },
+//         run: [
+//           'echo "Checking NPM_TOKEN length: ${#NPM_TOKEN}"',
+//           'echo "Publishing version: ${{ inputs.version }}"',
+//           "DEBUG=* npx -p publib publib-npm --version ${{ inputs.version }}",
+//         ].join("\n"),
+//       },
+//     ],
+//   },
+//   release_github: {
+//     name: "Publish GitHub Release",
+//     needs: ["release"],
+//     runsOn: ["ubuntu-latest"],
+//     permissions: {
+//       contents: JobPermission.WRITE,
+//     },
+//     if: "always() && needs.release.result == 'success'",
+//     steps: [
+//       {
+//         name: "Setup Node.js",
+//         uses: "actions/setup-node@v4",
+//         with: { "node-version": "lts/*" },
+//       },
+//       {
+//         name: "Download artifact",
+//         uses: "actions/download-artifact@v4",
+//         with: {
+//           name: "ajithapackage-artifact",
+//           path: "dist",
+//         },
+//       },
+//       {
+//         name: "Restore build artifact permissions",
+//         run: "cd dist && setfacl --restore=permissions-backup.acl",
+//         continueOnError: true,
+//       },
+//       {
+//         name: "GitHub Release",
+//         env: {
+//           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+//         },
+//         run: `
+//         TAG="v\${{ inputs.version }}"
+//         gh release create "$TAG" -F dist/changelog.md -t "$TAG" --target $GITHUB_SHA || echo "Release might already exist"
+//       `,
+//       },
+//     ],
+//   },
+// });
 
 // Projen ajithapackage2
 const aj2 = project.github?.addWorkflow("release_ajithapackage2");
