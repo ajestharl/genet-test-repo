@@ -947,7 +947,7 @@ if (central) {
           },
         },
         {
-          name: "Download all artifacts",
+          name: "Download artifacts",
           uses: "actions/download-artifact@v4",
           with: {
             "merge-multiple": true,
@@ -957,15 +957,30 @@ if (central) {
           name: "Publish packages to npm",
           env: {
             NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
+            NPM_DIST_TAG: "latest",
           },
           run: [
-            "for dir in */; do",
-            "  cd $dir",
-            "  npm publish --access public",
-            "  cd ..",
+            "# List directory contents for debugging",
+            "ls -la",
+            "",
+            "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
+            "",
+            "# Verify package structure",
+            'for pkg in "${packages[@]}"; do',
+            '  echo "Checking $pkg..."',
+            '  [ -d "$pkg" ] || { echo "Error: Directory $pkg not found"; exit 1; }',
+            '  [ -f "$pkg/package.json" ] || { echo "Error: $pkg/package.json not found"; exit 1; }',
+            '  jq . "$pkg/package.json" > /dev/null || { echo "Error: Invalid package.json in $pkg"; exit 1; }',
+            "done",
+            "",
+            "# Publish packages",
+            'for pkg in "${packages[@]}"; do',
+            '  echo "Publishing $pkg"',
+            '  cd "$pkg" && npm publish --access public && cd .. || exit 1',
             "done",
           ].join("\n"),
         },
+
         {
           name: "Finalize Release",
           run: [
@@ -1065,7 +1080,7 @@ if (reusableWorkflow) {
   });
 
   reusableWorkflow.addJobs({
-    release_npm: {
+    build_artifacts: {
       runsOn: ["ubuntu-latest"],
       permissions: {
         contents: JobPermission.READ,
