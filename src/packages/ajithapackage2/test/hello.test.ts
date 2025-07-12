@@ -13,7 +13,6 @@ describe('displayBooks', () => {
   it('displays books in numbered format', async () => {
     const mockBooks = ['Book 1', 'Book 2', 'Book 3'];
     const mockListBooks = jest.fn().mockResolvedValue(mockBooks);
-
     await displayBooks({ listBooks: mockListBooks });
 
     expect(consoleSpy).toHaveBeenCalledWith('\nAvailable books:');
