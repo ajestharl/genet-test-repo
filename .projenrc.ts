@@ -959,7 +959,7 @@ if (central) {
           name: "List downloaded artifacts",
           run: "ls -la",
         },
-        
+
         {
           name: "Extract packages",
           run: [
@@ -968,6 +968,20 @@ if (central) {
             '  echo "Extracting $pkg..."',
             '  mkdir -p "$pkg"',
             '  tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }',
+            "done",
+          ].join("\n"),
+        },
+        {
+          name: "Patch version in each package",
+          run: [
+            'version="${{ needs.bump_version.outputs.version }}"',
+            "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
+            'for pkg in "${packages[@]}"; do',
+            '  echo "Patching version in $pkg/package.json"',
+            '  cd "$pkg"',
+            "  jq --arg ver \"$version\" '.version = $ver' package.json > tmp.json && mv tmp.json package.json",
+            "  cat package.json | grep version",
+            "  cd ..",
             "done",
           ].join("\n"),
         },
