@@ -26,7 +26,7 @@ jobs:
       - name: Read Version
         id: getver
         run: |-
-          VERSION="0.0.36"
+          VERSION="0.0.37"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Release version: $VERSION"
   release_ajithapackage:
@@ -106,31 +106,17 @@ jobs:
             mkdir -p "$pkg"
             tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }
           done
-      - name: Patch projen packages
+      - name: Patch version and Remove prepack in each package
         run: |-
           version="${{ needs.bump_version.outputs.version }}"
-          packages=(ajithapackage ajithapackage2)
+          packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)
           for pkg in "${packages[@]}"; do
             echo "Patching version in $pkg/package.json"
             cd "$pkg"
             jq --arg ver "$version" '.version = $ver' package.json > tmp.json && mv tmp.json package.json
+            jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json
             cat package.json | grep version
-            cd - > /dev/null
-          done
-      - name: Patch Smithy packages
-        run: |-
-          version="${{ needs.bump_version.outputs.version }}"
-          declare -A paths=(
-            [smithy-client]="src/packages/my-api/build/smithy/source/typescript-client-codegen"
-            [smithy-ssdk]="src/packages/my-api/build/smithy/source/typescript-ssdk-codegen"
-          )
-          for pkg in "${!paths[@]}"; do
-            path="${paths[$pkg]}"
-            echo "Patching version in $path/package.json"
-            cd "$path"
-            jq --arg ver "$version" '.version = $ver' package.json > tmp.json && mv tmp.json package.json
-            cat package.json | grep version
-            cd - > /dev/null
+            cd ..
           done
       - name: Publish packages to npm
         id: publish
