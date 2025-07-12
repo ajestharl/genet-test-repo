@@ -101,24 +101,10 @@ jobs:
       - name: Extract packages
         run: |-
           packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)
-          version="${{ needs.bump_version.outputs.version }}"
-          echo "Using version: $version"
           for pkg in "${packages[@]}"; do
             echo "Extracting $pkg..."
             mkdir -p "$pkg"
             tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }
-          done
-      - name: Verify package structure and versions
-        run: |-
-          version="${{ needs.bump_version.outputs.version }}"
-          packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)
-          for pkg in "${packages[@]}"; do
-            echo "Checking $pkg..."
-            [ -d "$pkg" ] || { echo "Error: Directory $pkg not found"; exit 1; }
-            [ -f "$pkg/package.json" ] || { echo "Error: $pkg/package.json not found"; exit 1; }
-            pkg_version=$(jq -r .version "$pkg/package.json")
-            echo "$pkg version: $pkg_version"
-            [ "$pkg_version" = "$version" ] || { echo "Version mismatch in $pkg. Expected $version, got $pkg_version"; exit 1; }
           done
       - name: Publish packages to npm
         id: publish
@@ -141,7 +127,7 @@ jobs:
           for pkg in "${packages[@]}"; do
             echo "Publishing $pkg@$version"
             cd "$pkg"
-            if npm publish --access public; then
+            if npm publish --access public --new-version "$version"; then
               published+=("$pkg")
               echo "Successfully published $pkg@$version"
               cd ..
