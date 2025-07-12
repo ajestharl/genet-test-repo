@@ -1361,6 +1361,7 @@ package2.package.file.addOverride("private", false);
 package2.package.addField("publishConfig", {
   access: "public",
 });
+package2.addDeps("commander@^11.0.0");
 package2.addTask("release", {
   steps: [
     { exec: "npx projen bump" },
