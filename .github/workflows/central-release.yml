@@ -106,16 +106,31 @@ jobs:
             mkdir -p "$pkg"
             tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }
           done
-      - name: Patch version in each package
+      - name: Patch projen packages
         run: |-
           version="${{ needs.bump_version.outputs.version }}"
-          packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)
+          packages=(ajithapackage ajithapackage2)
           for pkg in "${packages[@]}"; do
             echo "Patching version in $pkg/package.json"
             cd "$pkg"
             jq --arg ver "$version" '.version = $ver' package.json > tmp.json && mv tmp.json package.json
             cat package.json | grep version
-            cd ..
+            cd - > /dev/null
+          done
+      - name: Patch Smithy packages
+        run: |-
+          version="${{ needs.bump_version.outputs.version }}"
+          declare -A paths=(
+            [smithy-client]="src/packages/my-api/build/smithy/source/typescript-client-codegen"
+            [smithy-ssdk]="src/packages/my-api/build/smithy/source/typescript-ssdk-codegen"
+          )
+          for pkg in "${!paths[@]}"; do
+            path="${paths[$pkg]}"
+            echo "Patching version in $path/package.json"
+            cd "$path"
+            jq --arg ver "$version" '.version = $ver' package.json > tmp.json && mv tmp.json package.json
+            cat package.json | grep version
+            cd - > /dev/null
           done
       - name: Publish packages to npm
         id: publish
