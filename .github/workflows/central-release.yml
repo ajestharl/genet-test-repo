@@ -138,7 +138,7 @@ jobs:
           for pkg in "${packages[@]}"; do
             echo "Publishing $pkg@$version"
             cd "$pkg"
-            if npm publish --access public --new-version "$version"; then
+            if npm publish --access public; then
               published+=("$pkg")
               echo "Successfully published $pkg@$version"
               cd ..

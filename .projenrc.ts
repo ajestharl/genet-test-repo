@@ -1008,7 +1008,7 @@ if (central) {
             'for pkg in "${packages[@]}"; do',
             '  echo "Publishing $pkg@$version"',
             '  cd "$pkg"',
-            '  if npm publish --access public --new-version "$version"; then', // Use --new-version flag
+            '  if npm publish --access public; then', // Use --new-version flag
             '    published+=("$pkg")',
             '    echo "Successfully published $pkg@$version"',
             "    cd ..",
