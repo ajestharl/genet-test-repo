@@ -4,6 +4,9 @@
     "type": "git",
     "url": "https://github.com/ajestharl/genet-test-repo.git"
   },
+  "bin": {
+    "ajithapackage2": "lib/cli.js"
+  },
   "scripts": {
     "accept": "npx projen accept",
     "build": "npx projen build",

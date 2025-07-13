@@ -843,17 +843,17 @@ if (central) {
             'git config --global user.name "GitHub Actions"',
           ].join("\n"),
         },
-        // {
-        //   name: "Run Projen Release (ajithapackage1)",
-        //   run: "npx projen release",
-        //   workingDirectory: "src/packages/ajithapackage1",
-        // },
+        {
+          name: "Run Projen Release (ajithapackage1)",
+          run: "npx projen release",
+          workingDirectory: "src/packages/ajithapackage1",
+        },
         {
           name: "Read Version",
           id: "getver",
           run: [
-            // "VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')",
-            'VERSION="0.0.38"',
+            "VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')",
+            // 'VERSION="0.0.38"',
             'echo "version=$VERSION" >> $GITHUB_OUTPUT',
             'echo "Release version: $VERSION"',
           ].join("\n"),
@@ -1374,6 +1374,9 @@ package2.addTask("release", {
       exec: 'echo "v$(node -p \\"require(\'./package.json\').version\\")" > dist/releasetag.txt',
     },
   ],
+});
+package2.package.addBin({
+  ajithapackage2: "lib/cli.js",
 });
 
 project.synth();
