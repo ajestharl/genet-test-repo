@@ -239,6 +239,7 @@ if (central) {
           outputName: "version",
         },
       },
+      
       steps: [
         {
           name: "Checkout",
