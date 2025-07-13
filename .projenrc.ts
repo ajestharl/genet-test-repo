@@ -853,7 +853,7 @@ if (central) {
           id: "getver",
           run: [
             // "VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')",
-            'VERSION="0.0.37"',
+            'VERSION="0.0.38"',
             'echo "version=$VERSION" >> $GITHUB_OUTPUT',
             'echo "Release version: $VERSION"',
           ].join("\n"),
