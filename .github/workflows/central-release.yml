@@ -98,7 +98,6 @@ jobs:
       version: ${{ needs.bump_version.outputs.version }}
       package_name: smithy-ssdk
       package_path: src/packages/my-api/build/smithy/source/typescript-ssdk-codegen
-    secrets: inherit
   npm_release:
     needs:
       - bump_version
@@ -205,12 +204,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create "v${{ needs.bump_version.outputs.version }}" --title "v${{ needs.bump_version.outputs.version }}" --notes "Automated release for all packages" *.tgz
   cleanup_failed_tag:
-    needs: github_release
+    needs:
+      - github_release
+      - npm_release
+      - bump_version
+      - release_ajithapackage
+      - release_ajithapackage2
+      - release_smithy_client
+      - release_smithy_ssdk
     runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
-    if: failure() && (needs.bump_version.result == 'success' || needs.npm_release.outputs.publishing_failed == 'true')
+    if: failure()
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -218,10 +224,14 @@ jobs:
           fetch-depth: 0
       - name: Delete Git Tag
         run: |-
-          TAG=$(cat src/packages/ajithapackage1/dist/releasetag.txt)
-          echo "Deleting tag: $TAG"
-          git tag -d "$TAG" || true
-          git push origin ":refs/tags/$TAG" || true
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo '')
+          if [ ! -z "$LATEST_TAG" ]; then
+            echo "Deleting tag: $LATEST_TAG"
+            git tag -d "$LATEST_TAG" || true
+            git push origin ":refs/tags/$LATEST_TAG" || true
+          else
+            echo "No tags found to cleanup"
+          fi
 concurrency:
   group: release
   cancel-in-progress: false

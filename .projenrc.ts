@@ -219,13 +219,11 @@ createPackage({
 });
 
 const central = project.github?.addWorkflow("central-release");
-
 if (central) {
   central.on({
     push: { branches: ["rel"] },
     workflowDispatch: {},
   });
-
   central.addJobs({
     bump_version: {
       runsOn: ["ubuntu-latest"],
@@ -372,7 +370,7 @@ if (central) {
         package_path:
           "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
       },
-      secrets: "inherit",
+      // secrets: "inherit", uncomment later
     },
 
     npm_release: {
@@ -412,7 +410,6 @@ if (central) {
           name: "List downloaded artifacts",
           run: "ls -la",
         },
-
         {
           name: "Extract packages",
           run: [
@@ -485,7 +482,6 @@ if (central) {
         },
       ],
     },
-
     github_release: {
       if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
       needs: ["npm_release", "bump_version"],
@@ -523,10 +519,17 @@ if (central) {
         },
       ],
     },
-
     cleanup_failed_tag: {
-      if: "failure() && (needs.bump_version.result == 'success' || needs.npm_release.outputs.publishing_failed == 'true')",
-      needs: ["github_release"],
+      if: "failure()",
+      needs: [
+        "github_release",
+        "npm_release",
+        "bump_version",
+        "release_ajithapackage",
+        "release_ajithapackage2",
+        "release_smithy_client",
+        "release_smithy_ssdk",
+      ],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
@@ -543,10 +546,14 @@ if (central) {
         {
           name: "Delete Git Tag",
           run: [
-            "TAG=$(cat src/packages/ajithapackage1/dist/releasetag.txt)",
-            'echo "Deleting tag: $TAG"',
-            'git tag -d "$TAG" || true',
-            'git push origin ":refs/tags/$TAG" || true',
+            "LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo '')",
+            'if [ ! -z "$LATEST_TAG" ]; then',
+            '  echo "Deleting tag: $LATEST_TAG"',
+            '  git tag -d "$LATEST_TAG" || true',
+            '  git push origin ":refs/tags/$LATEST_TAG" || true',
+            "else",
+            '  echo "No tags found to cleanup"',
+            "fi",
           ].join("\n"),
         },
       ],
@@ -560,7 +567,6 @@ if (central) {
   });
 }
 
-// reusable workflow
 const reusableWorkflow = project.github?.addWorkflow("release_package");
 
 if (reusableWorkflow) {
