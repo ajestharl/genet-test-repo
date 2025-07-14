@@ -4,7 +4,7 @@ name: central-release
 on:
   push:
     branches:
-      - main
+      - rel
   workflow_dispatch: {}
 jobs:
   bump_version:
