@@ -32,8 +32,20 @@ jobs:
           VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Release version: $VERSION"
+      - name: Check if version has already been tagged
+        id: check_tag_exists
+        run: |-
+          TAG=$(cat src/packages/ajithapackage1/dist/releasetag.txt)
+          ([ ! -z "$TAG" ] && git ls-remote -q --exit-code --tags origin $TAG && (echo "exists=true" >> $GITHUB_OUTPUT)) || (echo "exists=false" >> $GITHUB_OUTPUT)
+          cat $GITHUB_OUTPUT
+      - name: Check for new commits
+        id: git_remote
+        run: |-
+          echo "latest_commit=$(git ls-remote origin -h refs/heads/main | cut -f1)" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
   release_ajithapackage:
     needs: bump_version
+    if: needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha
     permissions:
       contents: write
       id-token: write
@@ -45,6 +57,7 @@ jobs:
     secrets: inherit
   release_ajithapackage2:
     needs: bump_version
+    if: needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha
     permissions:
       contents: write
       id-token: write
@@ -56,6 +69,7 @@ jobs:
     secrets: inherit
   release_smithy_client:
     needs: bump_version
+    if: needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha
     permissions:
       contents: write
       id-token: write
@@ -67,6 +81,7 @@ jobs:
     secrets: inherit
   release_smithy_ssdk:
     needs: bump_version
+    if: needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha
     permissions:
       contents: write
       id-token: write
@@ -89,6 +104,7 @@ jobs:
       id-token: write
     env:
       CI: "true"
+    if: needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha
     steps:
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -168,6 +184,7 @@ jobs:
       id-token: write
     env:
       CI: "true"
+    if: needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha
     steps:
       - name: Checkout
         uses: actions/checkout@v4

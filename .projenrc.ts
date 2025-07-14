@@ -239,7 +239,7 @@ if (central) {
           outputName: "version",
         },
       },
-      
+
       steps: [
         {
           name: "Checkout",
@@ -267,10 +267,28 @@ if (central) {
             'echo "Release version: $VERSION"',
           ].join("\n"),
         },
+        {
+          name: "Check if version has already been tagged",
+          id: "check_tag_exists",
+          run: [
+            "TAG=$(cat src/packages/ajithapackage1/dist/releasetag.txt)",
+            '([ ! -z "$TAG" ] && git ls-remote -q --exit-code --tags origin $TAG && (echo "exists=true" >> $GITHUB_OUTPUT)) || (echo "exists=false" >> $GITHUB_OUTPUT)',
+            "cat $GITHUB_OUTPUT",
+          ].join("\n"),
+        },
+        {
+          name: "Check for new commits",
+          id: "git_remote",
+          run: [
+            'echo "latest_commit=$(git ls-remote origin -h refs/heads/main | cut -f1)" >> $GITHUB_OUTPUT',
+            "cat $GITHUB_OUTPUT",
+          ].join("\n"),
+        },
       ],
     },
 
     release_ajithapackage: {
+      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
       needs: ["bump_version"],
       permissions: {
         contents: JobPermission.WRITE,
@@ -286,6 +304,7 @@ if (central) {
     },
 
     release_ajithapackage2: {
+      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
       needs: ["bump_version"],
       permissions: {
         contents: JobPermission.WRITE,
@@ -301,6 +320,7 @@ if (central) {
     },
 
     release_smithy_client: {
+      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
       needs: ["bump_version"],
       permissions: {
         contents: JobPermission.WRITE,
@@ -317,6 +337,7 @@ if (central) {
     },
 
     release_smithy_ssdk: {
+      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
       needs: ["bump_version"],
       permissions: {
         contents: JobPermission.WRITE,
@@ -348,6 +369,7 @@ if (central) {
       env: {
         CI: "true",
       },
+      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
       steps: [
         {
           name: "Setup Node.js",
@@ -418,7 +440,7 @@ if (central) {
             'for pkg in "${packages[@]}"; do',
             '  echo "Publishing $pkg@$version"',
             '  cd "$pkg"',
-            "  if npm publish --access public; then", // Use --new-version flag
+            "  if npm publish --access public; then",
             '    published+=("$pkg")',
             '    echo "Successfully published $pkg@$version"',
             "    cd ..",
@@ -443,6 +465,7 @@ if (central) {
     },
 
     github_release: {
+      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
       needs: ["npm_release", "bump_version"],
       runsOn: ["ubuntu-latest"],
       permissions: {
