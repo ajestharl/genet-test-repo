@@ -302,7 +302,7 @@ if (central) {
           name: "Check for new commits",
           id: "git_remote",
           run: [
-            'echo "latest_commit=$(git ls-remote origin -h refs/heads/main | cut -f1)" >> $GITHUB_OUTPUT',
+            'echo "latest_commit=$(git ls-remote origin -h ${{ github.ref }} | cut -f1)" >> $GITHUB_OUTPUT',
             "cat $GITHUB_OUTPUT",
           ].join("\n"),
         },
