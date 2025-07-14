@@ -254,6 +254,29 @@ if (central) {
           ].join("\n"),
         },
         {
+          name: "Get Next Version",
+          id: "next_version",
+          run: [
+            "cd src/packages/ajithapackage1",
+            "CURRENT=$(npm view ajithapackage version 2>/dev/null || echo '0.0.0')",
+            "echo $CURRENT > .version.tmp",
+            'NEXT_VERSION=$(awk -F. \'{$NF+=1; print $1"."$2"."$3}\' .version.tmp)',
+            'echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT',
+            'echo "Next version would be: $NEXT_VERSION"',
+          ].join(" && "),
+        },
+        // Check if tag exists before creating it
+        {
+          name: "Check if version has already been tagged",
+          id: "check_tag_exists",
+          run: [
+            'TAG="v${{ steps.next_version.outputs.next_version }}"',
+            'echo "Checking for tag: $TAG"',
+            '(git ls-remote -q --exit-code --tags origin $TAG && echo "exists=true" >> $GITHUB_OUTPUT) || echo "exists=false" >> $GITHUB_OUTPUT',
+            "cat $GITHUB_OUTPUT",
+          ].join("\n"),
+        },
+        {
           name: "Run Projen Release (ajithapackage1)",
           run: "npx projen release",
           workingDirectory: "src/packages/ajithapackage1",
@@ -265,15 +288,6 @@ if (central) {
             "VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')",
             'echo "version=$VERSION" >> $GITHUB_OUTPUT',
             'echo "Release version: $VERSION"',
-          ].join("\n"),
-        },
-        {
-          name: "Check if version has already been tagged",
-          id: "check_tag_exists",
-          run: [
-            "TAG=$(cat src/packages/ajithapackage1/dist/releasetag.txt)",
-            '([ ! -z "$TAG" ] && git ls-remote -q --exit-code --tags origin $TAG && (echo "exists=true" >> $GITHUB_OUTPUT)) || (echo "exists=false" >> $GITHUB_OUTPUT)',
-            "cat $GITHUB_OUTPUT",
           ].join("\n"),
         },
         {
