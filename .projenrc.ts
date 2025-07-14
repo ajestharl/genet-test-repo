@@ -238,6 +238,14 @@ if (central) {
           stepId: "getver",
           outputName: "version",
         },
+        tag_exists: {
+          stepId: "check_tag_exists",
+          outputName: "exists",
+        },
+        latest_commit: {
+          stepId: "git_remote",
+          outputName: "latest_commit",
+        },
       },
 
       steps: [
