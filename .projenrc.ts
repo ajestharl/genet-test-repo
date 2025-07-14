@@ -247,7 +247,6 @@ if (central) {
           outputName: "latest_commit",
         },
       },
-
       steps: [
         {
           name: "Checkout",
@@ -273,7 +272,6 @@ if (central) {
             'echo "Next version would be: $NEXT_VERSION"',
           ].join(" && "),
         },
-        // Check if tag exists before creating it
         {
           name: "Check if version has already been tagged",
           id: "check_tag_exists",
@@ -286,12 +284,14 @@ if (central) {
         },
         {
           name: "Run Projen Release (ajithapackage1)",
+          if: "steps.check_tag_exists.outputs.exists != 'true'",
           run: "npx projen release",
           workingDirectory: "src/packages/ajithapackage1",
         },
         {
           name: "Read Version",
           id: "getver",
+          if: "steps.check_tag_exists.outputs.exists != 'true'",
           run: [
             "VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')",
             'echo "version=$VERSION" >> $GITHUB_OUTPUT',

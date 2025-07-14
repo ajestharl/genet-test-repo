@@ -36,10 +36,12 @@ jobs:
           (git ls-remote -q --exit-code --tags origin $TAG && echo "exists=true" >> $GITHUB_OUTPUT) || echo "exists=false" >> $GITHUB_OUTPUT
           cat $GITHUB_OUTPUT
       - name: Run Projen Release (ajithapackage1)
+        if: steps.check_tag_exists.outputs.exists != 'true'
         run: npx projen release
         working-directory: src/packages/ajithapackage1
       - name: Read Version
         id: getver
+        if: steps.check_tag_exists.outputs.exists != 'true'
         run: |-
           VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
