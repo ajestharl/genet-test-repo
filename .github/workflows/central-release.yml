@@ -205,9 +205,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create "v${{ needs.bump_version.outputs.version }}" --title "v${{ needs.bump_version.outputs.version }}" --notes "Automated release for all packages" *.tgz
   cleanup_failed_tag:
-    needs:
-      - bump_version
-      - npm_release
+    needs: github_release
     runs-on: ubuntu-latest
     permissions:
       contents: write

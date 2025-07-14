@@ -526,7 +526,7 @@ if (central) {
 
     cleanup_failed_tag: {
       if: "failure() && (needs.bump_version.result == 'success' || needs.npm_release.outputs.publishing_failed == 'true')",
-      needs: ["bump_version", "npm_release"],
+      needs: ["github_release"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
