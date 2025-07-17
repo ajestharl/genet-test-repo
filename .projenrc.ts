@@ -370,7 +370,7 @@ if (central) {
         package_path:
           "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
       },
-      // secrets: "inherit", uncomment later
+      secrets: "inherit",
     },
 
     npm_release: {
