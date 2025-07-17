@@ -179,8 +179,8 @@ export const createPackage = (config: PackageConfig) => {
     bundledDeps: config.bundledDeps,
     docgen: false,
     packageName: config.name,
-    release: true,
-    releaseToNpm: true,
+    release: false,
+    releaseToNpm: false,
     publishToPypi: {
       distName: config.name,
       module: config.name,
@@ -191,6 +191,25 @@ export const createPackage = (config: PackageConfig) => {
   addPrettierConfig(tsProject);
   configureMarkDownLinting(tsProject);
   tsProject.package.file.addOverride("private", false);
+  tsProject.addTask("release", {
+    steps: [
+      {
+        exec: `CURRENT=$(npm view ${config.name} version 2>/dev/null || echo '0.0.0') && echo $CURRENT > .version.tmp`,
+      },
+      {
+        exec: `VERSION=$(awk -F. '{$NF+=1; print $1"."$2"."$3}' .version.tmp) && echo $VERSION > .version.bumped`,
+      },
+      {
+        exec: `TAG=v$(cat .version.bumped) && git tag $TAG && git push origin $TAG`,
+      },
+      {
+        exec: "mkdir -p dist && echo v$(cat .version.bumped) > dist/releasetag.txt",
+      },
+    ],
+  });
+  tsProject.package.addField("publishConfig", {
+    access: "public",
+  });
   return tsProject;
 };
 
@@ -199,40 +218,31 @@ createPackage({
   outdir: "src/packages/ajithapackage1",
 });
 
-const wf = project.github?.addWorkflow("release_smithy_ssdk");
-if (wf) {
-  wf.on({
-    push: { branches: ["main"] },
+const central = project.github?.addWorkflow("central-release");
+if (central) {
+  central.on({
+    push: { branches: ["rel"] },
     workflowDispatch: {},
   });
-  wf.addJobs({
-    release: {
+  central.addJobs({
+    bump_version: {
       runsOn: ["ubuntu-latest"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
       outputs: {
-        latest_commit: {
-          stepId: "git_remote",
-          outputName: "latest_commit",
-        },
-        next_version: {
-          stepId: "next_version",
+        version: {
+          stepId: "getver",
           outputName: "version",
         },
         tag_exists: {
           stepId: "check_tag_exists",
           outputName: "exists",
         },
-      },
-      env: {
-        CI: "true",
-      },
-      defaults: {
-        run: {
-          workingDirectory:
-            "./src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
+        latest_commit: {
+          stepId: "git_remote",
+          outputName: "latest_commit",
         },
       },
       steps: [
@@ -242,87 +252,147 @@ if (wf) {
           with: { "fetch-depth": 0 },
         },
         {
-          name: "Setup Node.js",
-          uses: "actions/setup-node@v4",
-          with: { "node-version": "lts/*" },
+          name: "Set Git Identity",
+          run: [
+            'git config --global user.email "github-actions@github.com"',
+            'git config --global user.name "GitHub Actions"',
+          ].join("\n"),
         },
         {
-          name: "Install Dependencies",
-          run: "yarn install --check-files --frozen-lockfile",
-          workingDirectory: "./",
-        },
-        {
-          name: "Determine Next Version",
+          name: "Get Next Version",
           id: "next_version",
           run: [
-            "PACKAGE_NAME=$(node -p \"require('./package.json').name\")",
-            "CURRENT_VERSION=$(npm view $PACKAGE_NAME version 2>/dev/null || echo '0.0.0')",
-            "NEXT_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')",
-            'echo "Next version will be: $NEXT_VERSION"',
-            'echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT',
+            "cd src/packages/ajithapackage1",
+            "CURRENT=$(npm view ajithapackage version 2>/dev/null || echo '0.0.0')",
+            "echo $CURRENT > .version.tmp",
+            'NEXT_VERSION=$(awk -F. \'{$NF+=1; print $1"."$2"."$3}\' .version.tmp)',
+            'echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT',
+            'echo "Next version would be: $NEXT_VERSION"',
           ].join(" && "),
         },
         {
-          name: "Check if Tag Exists",
+          name: "Check if version has already been tagged",
           id: "check_tag_exists",
           run: [
-            'TAG="v${{ steps.next_version.outputs.version }}"',
+            'TAG="v${{ steps.next_version.outputs.next_version }}"',
             'echo "Checking for tag: $TAG"',
-            'if git rev-parse "$TAG" >/dev/null 2>&1; then',
-            '  echo "Tag exists=true"',
-            '  echo "exists=true" >> $GITHUB_OUTPUT',
-            "else",
-            '  echo "Tag exists=false"',
-            '  echo "exists=false" >> $GITHUB_OUTPUT',
-            "fi",
-            'echo "Output value:"',
+            '(git ls-remote -q --exit-code --tags origin $TAG && echo "exists=true" >> $GITHUB_OUTPUT) || echo "exists=false" >> $GITHUB_OUTPUT',
             "cat $GITHUB_OUTPUT",
           ].join("\n"),
         },
-
         {
-          name: "Create Tag",
-          if: "steps.check_tag_exists.outputs.exists == 'false'",
+          name: "Run Projen Release (ajithapackage1)",
+          if: "steps.check_tag_exists.outputs.exists != 'true'",
+          run: "npx projen release",
+          workingDirectory: "src/packages/ajithapackage1",
+        },
+        {
+          name: "Read Version",
+          id: "getver",
+          if: "steps.check_tag_exists.outputs.exists != 'true'",
           run: [
-            'VERSION="${{ steps.next_version.outputs.version }}"',
-            'git tag "v$VERSION"',
-            'git push origin "v$VERSION"',
+            "VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')",
+            'echo "version=$VERSION" >> $GITHUB_OUTPUT',
+            'echo "Release version: $VERSION"',
           ].join("\n"),
         },
         {
           name: "Check for new commits",
           id: "git_remote",
-          run: 'echo "latest_commit=${{ github.sha }}" >> $GITHUB_OUTPUT',
-        },
-        {
-          name: "Pack Artifact",
-          run: "yarn pack --filename smithy-ssdk.tgz",
-        },
-        {
-          name: "Upload Artifact",
-          uses: "actions/upload-artifact@v4",
-          with: {
-            name: "build-artifact",
-            path: "./src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
-            overwrite: true,
-          },
+          run: [
+            'echo "latest_commit=$(git ls-remote origin -h ${{ github.ref }} | cut -f1)" >> $GITHUB_OUTPUT',
+            "cat $GITHUB_OUTPUT",
+          ].join("\n"),
         },
       ],
     },
-  });
 
-  wf.addJobs({
-    release_npm: {
-      name: "Publish to NPM",
-      needs: ["release"],
-      runsOn: ["ubuntu-latest"],
+    release_ajithapackage: {
+      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
+      needs: ["bump_version"],
       permissions: {
-        contents: JobPermission.READ,
+        contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
-      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+      uses: "./.github/workflows/release_package.yml",
+      with: {
+        version: "${{ needs.bump_version.outputs.version }}",
+        package_name: "ajithapackage",
+        package_path: "src/packages/ajithapackage1",
+      },
+      secrets: "inherit",
+    },
+
+    release_ajithapackage2: {
+      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
+      needs: ["bump_version"],
+      permissions: {
+        contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
+      },
+      uses: "./.github/workflows/release_package.yml",
+      with: {
+        version: "${{ needs.bump_version.outputs.version }}",
+        package_name: "ajithapackage2",
+        package_path: "src/packages/ajithapackage2",
+      },
+      secrets: "inherit",
+    },
+
+    release_smithy_client: {
+      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
+      needs: ["bump_version"],
+      permissions: {
+        contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
+      },
+      uses: "./.github/workflows/release_package.yml",
+      with: {
+        version: "${{ needs.bump_version.outputs.version }}",
+        package_name: "smithy-client",
+        package_path:
+          "src/packages/my-api/build/smithy/source/typescript-client-codegen",
+      },
+      secrets: "inherit",
+    },
+
+    release_smithy_ssdk: {
+      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
+      needs: ["bump_version"],
+      permissions: {
+        contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
+      },
+      uses: "./.github/workflows/release_package.yml",
+      with: {
+        version: "${{ needs.bump_version.outputs.version }}",
+        package_name: "smithy-ssdk",
+        package_path:
+          "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
+      },
+      secrets: "inherit",
+    },
+
+    npm_release: {
+      needs: [
+        "bump_version",
+        "release_ajithapackage",
+        "release_ajithapackage2",
+        "release_smithy_client",
+        "release_smithy_ssdk",
+      ],
+      runsOn: ["ubuntu-latest"],
+      permissions: {
+        contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
+      },
+      env: {
+        CI: "true",
+      },
+      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
       steps: [
         {
+          name: "Setup Node.js",
           uses: "actions/setup-node@v4",
           with: {
             "node-version": "lts/*",
@@ -330,120 +400,195 @@ if (wf) {
           },
         },
         {
-          name: "Download Artifact",
+          name: "Download artifacts",
           uses: "actions/download-artifact@v4",
           with: {
-            name: "build-artifact",
-            path: "./dist",
+            "merge-multiple": true,
           },
         },
         {
-          name: "Extract smithy-ssdk.tgz",
+          name: "List downloaded artifacts",
+          run: "ls -la",
+        },
+        {
+          name: "Extract packages",
           run: [
-            "mkdir repo",
-            "tar -xzf ./dist/smithy-ssdk.tgz -C repo --strip-components=1",
-          ].join(" && "),
+            "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
+            'for pkg in "${packages[@]}"; do',
+            '  echo "Extracting $pkg..."',
+            '  mkdir -p "$pkg"',
+            '  tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }',
+            "done",
+          ].join("\n"),
         },
         {
-          name: "Update Version",
-          workingDirectory: "./repo",
+          name: "Patch version and Remove prepack in each package",
           run: [
-            'VERSION="${{ needs.release.outputs.next_version }}"',
-            'sed -i "s/\\"version\\": \\".*\\"/\\"version\\": \\"$VERSION\\"/" package.json',
-            'echo "Updated version to $VERSION"',
-            "cat package.json | grep version",
-          ].join(" && "),
+            'version="${{ needs.bump_version.outputs.version }}"',
+            "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
+            'for pkg in "${packages[@]}"; do',
+            '  echo "Patching version in $pkg/package.json"',
+            '  cd "$pkg"',
+            "  jq --arg ver \"$version\" '.version = $ver' package.json > tmp.json && mv tmp.json package.json",
+            "  jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
+            "  cat package.json | grep version",
+            "  cd ..",
+            "done",
+          ].join("\n"),
         },
         {
-          name: "Remove prepack script",
-          workingDirectory: "./repo",
-          run: "jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json",
-        },
-        {
-          name: "Publish",
-          workingDirectory: "./repo",
+          name: "Publish packages to npm",
+          id: "publish",
           env: {
-            NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN_SMITHY }}",
+            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
           },
-          run: "npm publish --access public",
+          run: [
+            "published=()",
+            'version="${{ needs.bump_version.outputs.version }}"',
+            "rollback() {",
+            '  echo "Error during publishing, rolling back..."',
+            '  for pkg in "${published[@]}"; do',
+            '    echo "Unpublishing $pkg@$version"',
+            '    npm unpublish "$pkg@$version" --force || echo "Failed to unpublish $pkg"',
+            "  done",
+            '  echo "publishing_failed=true" >> $GITHUB_OUTPUT',
+            "  exit 1",
+            "}",
+            "trap rollback ERR",
+            "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
+            'for pkg in "${packages[@]}"; do',
+            '  echo "Publishing $pkg@$version"',
+            '  cd "$pkg"',
+            "  if npm publish --access public; then",
+            '    published+=("$pkg")',
+            '    echo "Successfully published $pkg@$version"',
+            "    cd ..",
+            "  else",
+            '    echo "Failed to publish $pkg"',
+            "    cd ..",
+            "    rollback",
+            "  fi",
+            "done",
+            'echo "All packages published successfully"',
+            'echo "publishing_failed=false" >> $GITHUB_OUTPUT',
+          ].join("\n"),
+        },
+        {
+          name: "Finalize Release",
+          run: [
+            'echo "All child workflows have completed successfully."',
+            'echo "All packages are published to NPM"',
+          ].join("\n"),
         },
       ],
     },
-  });
-
-  wf.addJobs({
-    release_github: {
-      name: "Publish to GitHub Releases",
-      needs: ["release", "release_npm"],
+    github_release: {
+      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
+      needs: ["npm_release", "bump_version"],
       runsOn: ["ubuntu-latest"],
       permissions: {
         contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
       },
-      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
+      env: {
+        CI: "true",
+      },
       steps: [
         {
-          name: "Checkout", // Add this step
+          name: "Checkout",
           uses: "actions/checkout@v4",
-          with: { "fetch-depth": 0 },
         },
         {
-          name: "Download Artifact",
+          name: "Download all artifacts",
           uses: "actions/download-artifact@v4",
           with: {
-            name: "build-artifact",
-            path: "./dist",
+            "merge-multiple": true,
           },
         },
         {
-          name: "GitHub Release",
+          name: "Create GitHub Release",
           env: {
             GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
           },
           run: [
-            'VERSION="${{ needs.release.outputs.next_version }}"',
-            'echo "Creating release for version: v$VERSION"',
-            'gh release create "v$VERSION" --title "v$VERSION" --notes "Automated release for SSDK" ./dist/smithy-ssdk.tgz',
-          ].join(" && "),
+            'gh release create "v${{ needs.bump_version.outputs.version }}"',
+            '--title "v${{ needs.bump_version.outputs.version }}"',
+            '--notes "Automated release for all packages"',
+            "*.tgz",
+          ].join(" "),
+        },
+      ],
+    },
+    cleanup_failed_tag: {
+      if: "failure()",
+      needs: [
+        "github_release",
+        "npm_release",
+        "bump_version",
+        "release_ajithapackage",
+        "release_ajithapackage2",
+        "release_smithy_client",
+        "release_smithy_ssdk",
+      ],
+      permissions: {
+        contents: JobPermission.WRITE,
+        idToken: JobPermission.WRITE,
+      },
+      runsOn: ["ubuntu-latest"],
+      steps: [
+        {
+          name: "Checkout",
+          uses: "actions/checkout@v4",
+          with: {
+            "fetch-depth": 0,
+          },
+        },
+        {
+          name: "Delete Git Tag",
+          run: [
+            "LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo '')",
+            'if [ ! -z "$LATEST_TAG" ]; then',
+            '  echo "Deleting tag: $LATEST_TAG"',
+            '  git tag -d "$LATEST_TAG" || true',
+            '  git push origin ":refs/tags/$LATEST_TAG" || true',
+            "else",
+            '  echo "No tags found to cleanup"',
+            "fi",
+          ].join("\n"),
         },
       ],
     },
   });
 }
-const wf1 = project.github?.addWorkflow("release_smithy_client");
-if (wf1) {
-  wf1.on({
-    push: { branches: ["main"] },
-    workflowDispatch: {},
+if (central) {
+  central.file?.addOverride("concurrency", {
+    group: "release",
+    "cancel-in-progress": false,
   });
-  wf1.addJobs({
-    release: {
+}
+
+const reusableWorkflow = project.github?.addWorkflow("release_package");
+
+if (reusableWorkflow) {
+  reusableWorkflow.on({
+    workflowCall: {
+      inputs: {
+        version: { required: true, type: "string" },
+        packageName: { required: true, type: "string" },
+        packagePath: { required: true, type: "string" },
+      },
+    },
+  });
+
+  reusableWorkflow.addJobs({
+    build_artifacts: {
       runsOn: ["ubuntu-latest"],
       permissions: {
-        contents: JobPermission.WRITE,
+        contents: JobPermission.READ,
         idToken: JobPermission.WRITE,
-      },
-      outputs: {
-        latest_commit: {
-          stepId: "git_remote",
-          outputName: "latest_commit",
-        },
-        next_version: {
-          stepId: "next_version",
-          outputName: "version",
-        },
-        tag_exists: {
-          stepId: "check_tag_exists",
-          outputName: "exists",
-        },
       },
       env: {
         CI: "true",
-      },
-      defaults: {
-        run: {
-          workingDirectory:
-            "./src/packages/my-api/build/smithy/source/typescript-client-codegen",
-        },
       },
       steps: [
         {
@@ -454,166 +599,61 @@ if (wf1) {
         {
           name: "Setup Node.js",
           uses: "actions/setup-node@v4",
-          with: { "node-version": "lts/*" },
-        },
-        {
-          name: "Install Dependencies",
-          run: "yarn install --check-files --frozen-lockfile",
-          workingDirectory: "./",
-        },
-        {
-          name: "Determine Next Version",
-          id: "next_version",
-          run: [
-            "PACKAGE_NAME=$(node -p \"require('./package.json').name\")",
-            "CURRENT_VERSION=$(npm view $PACKAGE_NAME version 2>/dev/null || echo '0.0.0')",
-            "NEXT_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')",
-            'echo "Next version will be: $NEXT_VERSION"',
-            'echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT',
-          ].join(" && "),
-        },
-        {
-          name: "Check if Tag Exists",
-          id: "check_tag_exists",
-          run: [
-            'TAG="v${{ steps.next_version.outputs.version }}"',
-            'echo "Checking for tag: $TAG"',
-            'if git rev-parse "$TAG" >/dev/null 2>&1; then',
-            '  echo "Tag exists=true"',
-            '  echo "exists=true" >> $GITHUB_OUTPUT',
-            "else",
-            '  echo "Tag exists=false"',
-            '  echo "exists=false" >> $GITHUB_OUTPUT',
-            "fi",
-            'echo "Output value:"',
-            "cat $GITHUB_OUTPUT",
-          ].join("\n"),
-        },
-
-        {
-          name: "Create Tag",
-          if: "steps.check_tag_exists.outputs.exists == 'false'",
-          run: [
-            'VERSION="${{ steps.next_version.outputs.version }}"',
-            'git tag "v$VERSION"',
-            'git push origin "v$VERSION"',
-          ].join("\n"),
-        },
-        {
-          name: "Check for new commits",
-          id: "git_remote",
-          run: 'echo "latest_commit=${{ github.sha }}" >> $GITHUB_OUTPUT',
-        },
-        {
-          name: "Pack Artifact",
-          run: "yarn pack --filename smithy-client.tgz",
-        },
-        {
-          name: "Upload Artifact",
-          uses: "actions/upload-artifact@v4",
-          with: {
-            name: "build-artifact",
-            path: "./src/packages/my-api/build/smithy/source/typescript-client-codegen",
-            overwrite: true,
-          },
-        },
-      ],
-    },
-  });
-
-  wf1.addJobs({
-    release_npm: {
-      name: "Publish to NPM",
-      needs: ["release"],
-      runsOn: ["ubuntu-latest"],
-      permissions: {
-        contents: JobPermission.READ,
-        idToken: JobPermission.WRITE,
-      },
-      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
-      steps: [
-        {
-          uses: "actions/setup-node@v4",
           with: {
             "node-version": "lts/*",
             "registry-url": "https://registry.npmjs.org",
           },
         },
         {
-          name: "Download Artifact",
-          uses: "actions/download-artifact@v4",
-          with: {
-            name: "build-artifact",
-            path: "./dist",
-          },
-        },
-        {
-          name: "Extract smithy-client.tgz",
-          run: [
-            "mkdir repo",
-            "tar -xzf ./dist/smithy-client.tgz -C repo --strip-components=1",
-          ].join(" && "),
-        },
-        {
-          name: "Update Version",
-          workingDirectory: "./repo",
-          run: [
-            'VERSION="${{ needs.release.outputs.next_version }}"',
-            'sed -i "s/\\"version\\": \\".*\\"/\\"version\\": \\"$VERSION\\"/" package.json',
-            'echo "Updated version to $VERSION"',
-            "cat package.json | grep version",
-          ].join(" && "),
-        },
-        {
-          name: "Remove prepack script",
-          workingDirectory: "./repo",
-          run: "jq 'del(.scripts.prepack)' package.json > package.tmp.json && mv package.tmp.json package.json",
-        },
-        {
-          name: "Publish",
-          workingDirectory: "./repo",
+          name: "who am i",
           env: {
-            NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN_SMITHY }}",
+            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
           },
-          run: "npm publish --access public",
-        },
-      ],
-    },
-  });
-
-  wf1.addJobs({
-    release_github: {
-      name: "Publish to GitHub Releases",
-      needs: ["release", "release_npm"],
-      runsOn: ["ubuntu-latest"],
-      permissions: {
-        contents: JobPermission.WRITE,
-      },
-      if: "needs.release.outputs.tag_exists != 'true' && needs.release.outputs.latest_commit == github.sha",
-      steps: [
-        {
-          name: "Checkout", // Add this step
-          uses: "actions/checkout@v4",
-          with: { "fetch-depth": 0 },
+          run: "npm whoami",
         },
         {
-          name: "Download Artifact",
-          uses: "actions/download-artifact@v4",
-          with: {
-            name: "build-artifact",
-            path: "./dist",
-          },
+          name: "Install dependencies",
+          run: "yarn install --check-files --frozen-lockfile",
         },
         {
-          name: "GitHub Release",
-          env: {
-            GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-          },
+          name: "Build package",
+          run: "yarn build",
+          workingDirectory: "${{ inputs.package_path }}",
+        },
+        {
+          name: "Pack artifact",
+          run: "yarn pack --filename ${{ inputs.package_name }}.tgz",
+          workingDirectory: "${{ inputs.package_path }}",
+        },
+        {
+          name: "Backup artifact permissions",
+          workingDirectory: "${{ inputs.package_path }}",
           run: [
-            'VERSION="${{ needs.release.outputs.next_version }}"',
-            'echo "Creating release for version: v$VERSION"',
-            'gh release create "v$VERSION" --title "v$VERSION" --notes "Automated release for CLIENT" ./dist/smithy-client.tgz',
+            "mkdir -p dist",
+            "cp ${{ inputs.package_name }}.tgz dist/",
+            "cd dist && getfacl -R . > permissions-backup.acl",
+          ].join("&&"),
+        },
+        {
+          name: "Prepare for publishing",
+          run: [
+            "cd dist",
+            "tar -xzf ${{ inputs.package_name }}.tgz --strip-components=1",
+            "jq '.version = \"${{ inputs.version }}\"' package.json > tmp.json",
+            "mv tmp.json package.json",
+            "jq 'del(.scripts.prepack)' package.json > tmp.json",
+            "mv tmp.json package.json",
           ].join(" && "),
+          workingDirectory: "${{ inputs.package_path }}",
+        },
+        {
+          name: "Upload artifact",
+          uses: "actions/upload-artifact@v4.4.0",
+          with: {
+            name: "${{ inputs.package_name }}-artifact",
+            path: "${{ inputs.package_path }}/dist",
+            overwrite: true,
+          },
         },
       ],
     },
@@ -626,12 +666,33 @@ const package2 = new typescript.TypeScriptProject({
   outdir: "src/packages/ajithapackage2",
   parent: project,
   projenrcTs: false,
-  release: true,
-  releaseToNpm: true,
+  release: false,
+  releaseToNpm: false,
   repository: projectMetadata.repositoryUrl,
 });
 addTestTargets(package2);
 addPrettierConfig(package2);
 configureMarkDownLinting(package2);
 package2.package.file.addOverride("private", false);
+package2.package.addField("publishConfig", {
+  access: "public",
+});
+package2.addDeps("commander@^11.0.0");
+package2.addTask("release", {
+  steps: [
+    { exec: "npx projen bump" },
+    {
+      exec: 'git commit -am "chore: bump version" || echo "No changes to commit"',
+    },
+    { exec: "git tag v$(node -p \"require('./package.json').version\")" },
+    { exec: "mkdir -p dist" },
+    {
+      exec: 'echo "v$(node -p \\"require(\'./package.json\').version\\")" > dist/releasetag.txt',
+    },
+  ],
+});
+package2.package.addBin({
+  ajithapackage2: "lib/cli.js",
+});
+
 project.synth();
