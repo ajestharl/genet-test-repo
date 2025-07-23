@@ -27,7 +27,7 @@ jobs:
           git config --global user.name "GitHub Actions"
       - name: Get Next Version
         id: next_version
-        run: "cd src/packages/ajithapackage1 && CURRENT=$(npm view ajithapackage version 2>/dev/null || echo '0.0.0') && echo $CURRENT > .version.tmp && NEXT_VERSION=$(awk -F. '{$NF+=1; print $1\".\"$2\".\"$3}' .version.tmp) && echo \"next_version=$NEXT_VERSION\" >> $GITHUB_OUTPUT && echo \"Next version would be: $NEXT_VERSION\""
+        run: "cd src/packages/ajithapackage1 && CURRENT=$(npm view ajithapackage version 2>/dev/null || echo '0.0.0') && echo $CURRENT > .version.tmp && NEXT_VERSION=0.0.44 && echo \"next_version=$NEXT_VERSION\" >> $GITHUB_OUTPUT && echo \"Next version would be: $NEXT_VERSION\""
       - name: Check if version has already been tagged
         id: check_tag_exists
         run: |-
