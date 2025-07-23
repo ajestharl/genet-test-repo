@@ -266,7 +266,7 @@ if (central) {
             "CURRENT=$(npm view ajithapackage version 2>/dev/null || echo '0.0.0')",
             "echo $CURRENT > .version.tmp",
             // 'NEXT_VERSION=$(awk -F. \'{$NF+=1; print $1"."$2"."$3}\' .version.tmp)',
-            'NEXT_VERSION=0.0.44',
+            'NEXT_VERSION=0.0.45',
             'echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT',
             'echo "Next version would be: $NEXT_VERSION"',
           ].join(" && "),
