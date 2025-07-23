@@ -281,18 +281,19 @@ if (central) {
             "cat $GITHUB_OUTPUT",
           ].join("\n"),
         },
-        {
-          name: "Run Projen Release (ajithapackage1)",
-          if: "steps.check_tag_exists.outputs.exists != 'true'",
-          run: "npx projen release",
-          workingDirectory: "src/packages/ajithapackage1",
-        },
+        // {
+        //   name: "Run Projen Release (ajithapackage1)",
+        //   if: "steps.check_tag_exists.outputs.exists != 'true'",
+        //   run: "npx projen release",
+        //   workingDirectory: "src/packages/ajithapackage1",
+        // },
         {
           name: "Read Version",
           id: "getver",
           if: "steps.check_tag_exists.outputs.exists != 'true'",
           run: [
-            "VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')",
+            // "VERSION=$(cat src/packages/ajithapackage1/dist/releasetag.txt | sed 's/^v//')",
+            'VERSION="${{ steps.next_version.outputs.next_version }}"',
             'echo "version=$VERSION" >> $GITHUB_OUTPUT',
             'echo "Release version: $VERSION"',
           ].join("\n"),
