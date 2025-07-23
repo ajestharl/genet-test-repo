@@ -396,7 +396,6 @@ if (central) {
           uses: "actions/setup-node@v4",
           with: {
             "node-version": "lts/*",
-            "registry-url": "https://registry.npmjs.org",
           },
         },
         {
@@ -449,7 +448,7 @@ if (central) {
             '  for entry in "${published[@]}"; do',
             '    IFS="@" read -r pkg ver <<< "$entry"',
             '    echo "Unpublishing $pkg@$ver"',
-            '    if npm unpublish \"$pkg@$ver\" --force; then',
+            '    if npm unpublish \"$pkg@$ver\"; then',
             '     echo \"Successfully unpublished $pkg@$ver\"',
             '    else',
             '     echo \"Failed to unpublish $pkg@$ver\"',

@@ -118,7 +118,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          registry-url: https://registry.npmjs.org
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
@@ -156,7 +155,7 @@ jobs:
             for entry in "${published[@]}"; do
               IFS="@" read -r pkg ver <<< "$entry"
               echo "Unpublishing $pkg@$ver"
-              if npm unpublish "$pkg@$ver" --force; then
+              if npm unpublish "$pkg@$ver"; then
                echo "Successfully unpublished $pkg@$ver"
               else
                echo "Failed to unpublish $pkg@$ver"
