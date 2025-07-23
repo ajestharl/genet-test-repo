@@ -396,6 +396,7 @@ if (central) {
           uses: "actions/setup-node@v4",
           with: {
             "node-version": "lts/*",
+            "registry-url": "https://registry.npmjs.org",
           },
         },
         {
@@ -458,7 +459,7 @@ if (central) {
             "  exit 1",
             "}",
             "trap rollback ERR",
-            "packages=(ajithapackage ajithapackage2 smithy-clients smithy-ssdk)",
+            "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
             'for pkg in "${packages[@]}"; do',
             '  version="${{ needs.bump_version.outputs.version }}"',
             '  echo "Publishing $pkg@$version"',
