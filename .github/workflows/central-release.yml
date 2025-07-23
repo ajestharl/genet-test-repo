@@ -151,10 +151,10 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.TOKEN }}
         run: |-
           published=()
-          version="${{ needs.bump_version.outputs.version }}"
           rollback() {
             echo "Error during publishing, rolling back..."
             for pkg in "${published[@]}"; do
+              version=$(npm view "$pkg" version)
               echo "Unpublishing $pkg@$version"
               npm unpublish "$pkg@$version" --force || echo "Failed to unpublish $pkg"
             done
@@ -162,17 +162,24 @@ jobs:
             exit 1
           }
           trap rollback ERR
-          packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)
+          packages=(ajithapackage ajithapackage2 smithy-clients smithy-ssdk)
           for pkg in "${packages[@]}"; do
+            version="${{ needs.bump_version.outputs.version }}"
             echo "Publishing $pkg@$version"
-            cd "$pkg"
+            if ! cd "$pkg"; then
+              echo "Failed to change directory to $pkg"
+              rollback
+            fi
             if npm publish --access public; then
               published+=("$pkg")
               echo "Successfully published $pkg@$version"
-              cd ..
             else
               echo "Failed to publish $pkg"
               cd ..
+              rollback
+            fi
+            if ! cd ..; then
+              echo "Failed to return to parent directory"
               rollback
             fi
           done
