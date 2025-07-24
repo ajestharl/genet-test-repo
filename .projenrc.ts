@@ -330,15 +330,15 @@ if (central) {
     },
 
     package_ajithapackage2: {
-      if: "needs.determine_version.outputs.tag_exists != 'true' && needs.determine_version.outputs.latest_commit == github.sha",
-      needs: ["determine_version"],
+      if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
+      needs: ["setup_release"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
       uses: "./.github/workflows/release_package.yml",
       with: {
-        version: "${{ needs.determine_version.outputs.version }}",
+        version: "${{ needs.setup_release.outputs.version }}",
         package_name: "ajithapackage2",
         package_path: "src/packages/ajithapackage2",
       },
@@ -346,15 +346,15 @@ if (central) {
     },
 
     package_smithy_client: {
-      if: "needs.determine_version.outputs.tag_exists != 'true' && needs.determine_version.outputs.latest_commit == github.sha",
-      needs: ["determine_version"],
+      if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
+      needs: ["setup_release"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
       uses: "./.github/workflows/release_package.yml",
       with: {
-        version: "${{ needs.determine_version.outputs.version }}",
+        version: "${{ needs.setup_release.outputs.version }}",
         package_name: "my-service-client",
         package_path:
           "src/packages/my-api/build/smithy/source/typescript-client-codegen",
@@ -363,15 +363,15 @@ if (central) {
     },
 
     package_smithy_ssdk: {
-      if: "needs.determine_version.outputs.tag_exists != 'true' && needs.determine_version.outputs.latest_commit == github.sha",
-      needs: ["determine_version"],
+      if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
+      needs: ["setup_release"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
       uses: "./.github/workflows/release_package.yml",
       with: {
-        version: "${{ needs.determine_version.outputs.version }}",
+        version: "${{ needs.setup_release.outputs.version }}",
         package_name: "my-service-ssdk",
         package_path:
           "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
@@ -433,7 +433,7 @@ if (central) {
         {
           name: "Patch version and Remove prepack in each package",
           run: [
-            'version="${{ needs.determine_version.outputs.version }}"',
+            'version="${{ needs.setup_release.outputs.version }}"',
             'for pkg in $PACKAGES; do',
             '  echo "Patching version in $pkg/package.json"',
             '  cd "$pkg"',
@@ -451,7 +451,7 @@ if (central) {
             NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
           },
           run: [
-            "version='${{ needs.determine_version.outputs.version }}'",
+            "version='${{ needs.setup_release.outputs.version }}'",
             'for pkg in $PACKAGES; do',
             '  echo "Publishing $pkg@$version"',
             '  cd "$pkg"',
@@ -494,8 +494,8 @@ if (central) {
             GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
           },
           run: [
-            'gh release create "v${{ needs.determine_version.outputs.version }}"',
-            '--title "v${{ needs.determine_version.outputs.version }}"',
+            'gh release create "v${{ needs.setup_release.outputs.version }}"',
+            '--title "v${{ needs.setup_release.outputs.version }}"',
             '--notes "Automated release for all packages"',
             "--target $(git rev-parse HEAD)",
             "*.tgz",
