@@ -11,6 +11,8 @@ const projectMetadata = {
   name: "genet-test-repo",
 };
 
+const RELEASE_PACKAGES = ["ajithapackage", "ajithapackage2", "my-service-client", "my-service-ssdk"];
+
 export const configureMarkDownLinting = (tsProject: TypeScriptAppProject) => {
   tsProject.addDevDeps(
     "eslint-plugin-md",
@@ -222,14 +224,12 @@ const central = project.github?.addWorkflow("central-release");
 if (central) {
   central.on({
     push: { branches: ["rel"] },
-    workflowDispatch: {},
   });
   central.addJobs({
-    bump_version: {
+    setup_release: {
       runsOn: ["ubuntu-latest"],
       permissions: {
         contents: JobPermission.WRITE,
-        idToken: JobPermission.WRITE,
       },
       outputs: {
         version: {
@@ -314,48 +314,47 @@ if (central) {
       ],
     },
 
-    release_ajithapackage: {
-      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
-      needs: ["bump_version"],
+    package_ajithapackage: {
+      if: "needs.determine_version.outputs.tag_exists != 'true' && needs.determine_version.outputs.latest_commit == github.sha",
+      needs: ["setup_release"],
       permissions: {
-        contents: JobPermission.WRITE,
-        idToken: JobPermission.WRITE,
+        contents: JobPermission.READ,
       },
       uses: "./.github/workflows/release_package.yml",
       with: {
-        version: "${{ needs.bump_version.outputs.version }}",
+        version: "${{ needs.determine_version.outputs.version }}",
         package_name: "ajithapackage",
         package_path: "src/packages/ajithapackage1",
       },
       secrets: "inherit",
     },
 
-    release_ajithapackage2: {
-      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
-      needs: ["bump_version"],
+    package_ajithapackage2: {
+      if: "needs.determine_version.outputs.tag_exists != 'true' && needs.determine_version.outputs.latest_commit == github.sha",
+      needs: ["determine_version"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
       uses: "./.github/workflows/release_package.yml",
       with: {
-        version: "${{ needs.bump_version.outputs.version }}",
+        version: "${{ needs.determine_version.outputs.version }}",
         package_name: "ajithapackage2",
         package_path: "src/packages/ajithapackage2",
       },
       secrets: "inherit",
     },
 
-    release_smithy_client: {
-      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
-      needs: ["bump_version"],
+    package_smithy_client: {
+      if: "needs.determine_version.outputs.tag_exists != 'true' && needs.determine_version.outputs.latest_commit == github.sha",
+      needs: ["determine_version"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
       uses: "./.github/workflows/release_package.yml",
       with: {
-        version: "${{ needs.bump_version.outputs.version }}",
+        version: "${{ needs.determine_version.outputs.version }}",
         package_name: "my-service-client",
         package_path:
           "src/packages/my-api/build/smithy/source/typescript-client-codegen",
@@ -363,16 +362,16 @@ if (central) {
       secrets: "inherit",
     },
 
-    release_smithy_ssdk: {
-      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
-      needs: ["bump_version"],
+    package_smithy_ssdk: {
+      if: "needs.determine_version.outputs.tag_exists != 'true' && needs.determine_version.outputs.latest_commit == github.sha",
+      needs: ["determine_version"],
       permissions: {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
       uses: "./.github/workflows/release_package.yml",
       with: {
-        version: "${{ needs.bump_version.outputs.version }}",
+        version: "${{ needs.determine_version.outputs.version }}",
         package_name: "my-service-ssdk",
         package_path:
           "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
@@ -380,13 +379,13 @@ if (central) {
       secrets: "inherit",
     },
 
-    npm_release: {
+    npm_publish: {
       needs: [
-        "bump_version",
-        "release_ajithapackage",
-        "release_ajithapackage2",
-        "release_smithy_client",
-        "release_smithy_ssdk",
+        "setup_release",
+        "package_ajithapackage",
+        "package_ajithapackage2",
+        "package_smithy_client",
+        "package_smithy_ssdk",
       ],
       runsOn: ["ubuntu-latest"],
       permissions: {
@@ -396,8 +395,12 @@ if (central) {
       env: {
         CI: "true",
       },
-      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
+      if: "needs.determine_version.outputs.tag_exists != 'true' && needs.determine_version.outputs.latest_commit == github.sha",
       steps: [
+        {
+          name: "Set package list",
+          run: `echo "PACKAGES=${RELEASE_PACKAGES.join(' ')}" >> $GITHUB_ENV`
+        },
         {
           name: "Setup Node.js",
           uses: "actions/setup-node@v4",
@@ -420,8 +423,7 @@ if (central) {
         {
           name: "Extract packages",
           run: [
-            "packages=(ajithapackage ajithapackage2 my-service-client my-service-ssdk)",
-            'for pkg in "${packages[@]}"; do',
+            'for pkg in $PACKAGES; do',
             '  echo "Extracting $pkg..."',
             '  mkdir -p "$pkg"',
             '  tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }',
@@ -431,9 +433,8 @@ if (central) {
         {
           name: "Patch version and Remove prepack in each package",
           run: [
-            'version="${{ needs.bump_version.outputs.version }}"',
-            "packages=(ajithapackage ajithapackage2 my-service-client my-service-ssdk)",
-            'for pkg in "${packages[@]}"; do',
+            'version="${{ needs.determine_version.outputs.version }}"',
+            'for pkg in $PACKAGES; do',
             '  echo "Patching version in $pkg/package.json"',
             '  cd "$pkg"',
             "  jq --arg ver \"$version\" '.version = $ver' package.json > tmp.json && mv tmp.json package.json",
@@ -450,9 +451,8 @@ if (central) {
             NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
           },
           run: [
-            "version='${{ needs.bump_version.outputs.version }}'",
-            "packages=(ajithapackage ajithapackage2 my-service-client my-service-ssdk)",
-            'for pkg in "${packages[@]}"; do',
+            "version='${{ needs.determine_version.outputs.version }}'",
+            'for pkg in $PACKAGES; do',
             '  echo "Publishing $pkg@$version"',
             '  cd "$pkg"',
             "  npm publish --access public",
@@ -463,18 +463,11 @@ if (central) {
             'echo "publishing_failed=false" >> $GITHUB_OUTPUT',
           ].join("\n"),
         },
-        {
-          name: "Finalize Release",
-          run: [
-            'echo "All child workflows have completed successfully."',
-            'echo "All packages are published to NPM"',
-          ].join("\n"),
-        },
       ],
     },
-    github_release: {
-      if: "needs.bump_version.outputs.tag_exists != 'true' && needs.bump_version.outputs.latest_commit == github.sha",
-      needs: ["npm_release", "bump_version"],
+    create_release: {
+      if: "needs.determine_version.outputs.tag_exists != 'true' && needs.determine_version.outputs.latest_commit == github.sha",
+      needs: ["npm_publish", "setup_release"],
       runsOn: ["ubuntu-latest"],
       permissions: {
         contents: JobPermission.WRITE,
@@ -501,8 +494,8 @@ if (central) {
             GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
           },
           run: [
-            'gh release create "v${{ needs.bump_version.outputs.version }}"',
-            '--title "v${{ needs.bump_version.outputs.version }}"',
+            'gh release create "v${{ needs.determine_version.outputs.version }}"',
+            '--title "v${{ needs.determine_version.outputs.version }}"',
             '--notes "Automated release for all packages"',
             "--target $(git rev-parse HEAD)",
             "*.tgz",
