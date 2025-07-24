@@ -267,25 +267,19 @@ if (central) {
             'v2=$(get_version ajithapackage2)',
             'v3=$(get_version smithy-client)',
             'v4=$(get_version smithy-ssdk)',
-        
             'echo "Found versions:"',
             'echo "ajithapackage: $v1"',
             'echo "ajithapackage2: $v2"',
             'echo "smithy-client: $v3"',
             'echo "smithy-ssdk: $v4"',
-        
-            '# Sort all versions and take the latest',
-            'LATEST=$(printf "%s\n" "$v1" "$v2" "$v3" "$v4" | sort -V | tail -n1)',
-        
-            '# Bump patch version',
+            'LATEST=$(printf "%s\\n" "$v1" "$v2" "$v3" "$v4" | sort -V | tail -n1)',
             'IFS="." read -r major minor patch <<< "$LATEST"',
             'NEXT_VERSION="$major.$minor.$((patch + 1))"',
-        
             'echo "Latest version: $LATEST"',
             'echo "Next version: $NEXT_VERSION"',
             'echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT',
           ].join(" && "),
-        },        
+        },       
         {
           name: "Check if version has already been tagged",
           id: "check_tag_exists",
