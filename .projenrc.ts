@@ -234,11 +234,11 @@ if (central) {
       outputs: {
         version: {
           stepId: "next_version",
-          outputName: "next_version",
+          outputName: "version",
         },
         tag_exists: {
-          stepId: "check_tag_exists",
-          outputName: "exists",
+          stepId: "check_tag",
+          outputName: "tag_exists",
         },
         latest_commit: {
           stepId: "git_remote",
@@ -259,8 +259,8 @@ if (central) {
           ].join("\n"),
         },
         {
-          name: "Get Next Version",
-          id: "next_version",
+          name: "Get Latest NPM Versions",
+          id: "npm_versions",
           run: [
             'get_version() { npm view "$1" version 2>/dev/null || echo "0.0.0"; }',
             "v1=$(get_version ajithapackage)",
@@ -274,35 +274,38 @@ if (central) {
             'echo "my-service-ssdk: $v4"',
             'LATEST_NPM=$(printf "%s\\n" "$v1" "$v2" "$v3" "$v4" | sort -V | tail -n1)',
             'echo "Latest NPM version: $LATEST_NPM"',
-            '',
-            '# Find next available version (check both NPM and Git tags)',
+            'echo "latest_npm=$LATEST_NPM" >> $GITHUB_OUTPUT',
+          ].join(" && "),
+        },
+        {
+          name: "Find Next Available Version",
+          id: "next_version",
+          run: [
+            'LATEST_NPM="${{ steps.npm_versions.outputs.latest_npm }}"',
             'IFS="." read -r major minor patch <<< "$LATEST_NPM"',
             'CANDIDATE_VERSION="$major.$minor.$((patch + 1))"',
-            '',
-            '# Keep incrementing until we find a version without a Git tag',
+            'echo "Starting with candidate version: $CANDIDATE_VERSION"',
             'while git ls-remote --tags origin "refs/tags/v$CANDIDATE_VERSION" | grep -q "v$CANDIDATE_VERSION"; do',
             '  echo "Tag v$CANDIDATE_VERSION already exists, trying next version"',
             '  patch=$((patch + 1))',
             '  CANDIDATE_VERSION="$major.$minor.$patch"',
             'done',
-            '',
             'echo "Next available version: $CANDIDATE_VERSION"',
-            'echo "next_version=$CANDIDATE_VERSION" >> $GITHUB_OUTPUT',
+            'echo "version=$CANDIDATE_VERSION" >> $GITHUB_OUTPUT',
           ].join(" && "),
         },
         {
-          name: "Check if version has already been tagged",
-          id: "check_tag_exists",
+          name: "Check if tag exists for final version",
+          id: "check_tag",
           run: [
-            'TAG="v${{ steps.next_version.outputs.next_version }}"',
-            'echo "Checking for tag: $TAG"',
+            'TAG="v${{ steps.next_version.outputs.version }}"',
+            'echo "Checking if tag exists for: $TAG"',
             'if git ls-remote --tags origin "refs/tags/$TAG" | grep -q "$TAG"; then',
-            '  echo "exists=true" >> "$GITHUB_OUTPUT"',
-            "else",
-            '  echo "exists=false" >> "$GITHUB_OUTPUT"',
-            "fi",
-            "cat $GITHUB_OUTPUT",
-          ].join("\n"),
+            '  echo "tag_exists=true" >> $GITHUB_OUTPUT',
+            'else',
+            '  echo "tag_exists=false" >> $GITHUB_OUTPUT',
+            'fi',
+          ].join(' && '),
         },
         {
           name: "Check for new commits",
@@ -312,15 +315,7 @@ if (central) {
             "cat $GITHUB_OUTPUT",
           ].join("\n"),
         },
-        {
-          name: "Create Git Tag",
-          if: "steps.check_tag_exists.outputs.exists == 'false'",
-          run: [
-            'TAG="v${{ steps.next_version.outputs.next_version }}"',
-            'git tag "$TAG"',
-            'git push origin "$TAG"'
-          ].join('\n')
-        },
+
       ],
     },
 
@@ -473,6 +468,15 @@ if (central) {
             'echo "All packages published successfully"',
             'echo "publishing_failed=false" >> $GITHUB_OUTPUT',
           ].join("\n"),
+        },
+        {
+          name: "Create Git Tag",
+          run: [
+            'TAG="v${{ needs.setup_release.outputs.version }}"',
+            'git tag "$TAG"',
+            'git push origin "$TAG"',
+            'echo "Created and pushed tag: $TAG"'
+          ].join('\n')
         },
       ],
     },
