@@ -302,6 +302,15 @@ if (central) {
             "cat $GITHUB_OUTPUT",
           ].join("\n"),
         },
+        {
+          name: "Create Git Tag",
+          if: "steps.check_tag_exists.outputs.exists == 'false'",
+          run: [
+            'TAG="v${{ steps.next_version.outputs.next_version }}"',
+            'git tag "$TAG"',
+            'git push origin "$TAG"'
+          ].join('\n')
+        },
       ],
     },
 
