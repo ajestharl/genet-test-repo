@@ -287,6 +287,7 @@ if (central) {
             'TAG="v${{ steps.next_version.outputs.next_version }}"',
             'echo "Checking for tag: $TAG"',
             '(git ls-remote --tags origin "refs/tags/$TAG" && echo "exists=true" >> $GITHUB_OUTPUT) || echo "exists=false" >> $GITHUB_OUTPUT',
+            'echo "Tag exists? ${{ steps.check_tag_exists.outputs.exists }}"',
           ].join("\n"),
         },
         {
