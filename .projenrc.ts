@@ -315,7 +315,7 @@ if (central) {
     },
 
     package_ajithapackage: {
-      if: "needs.determine_version.outputs.tag_exists != 'true' && needs.determine_version.outputs.latest_commit == github.sha",
+      if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
       needs: ["setup_release"],
       permissions: {
         contents: JobPermission.READ,
@@ -323,7 +323,7 @@ if (central) {
       },
       uses: "./.github/workflows/release_package.yml",
       with: {
-        version: "${{ needs.determine_version.outputs.version }}",
+        version: "${{ needs.setup_release.outputs.version }}",
         package_name: "ajithapackage",
         package_path: "src/packages/ajithapackage1",
       },
@@ -396,7 +396,7 @@ if (central) {
       env: {
         CI: "true",
       },
-      if: "needs.determine_version.outputs.tag_exists != 'true' && needs.determine_version.outputs.latest_commit == github.sha",
+      if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
       steps: [
         {
           name: "Set package list",
@@ -467,7 +467,7 @@ if (central) {
       ],
     },
     create_release: {
-      if: "needs.determine_version.outputs.tag_exists != 'true' && needs.determine_version.outputs.latest_commit == github.sha",
+      if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
       needs: ["npm_publish", "setup_release"],
       runsOn: ["ubuntu-latest"],
       permissions: {
