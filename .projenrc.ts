@@ -280,19 +280,19 @@ if (central) {
         {
           name: "Find Next Available Version",
           id: "next_version",
-          run: [
-            'LATEST_NPM="${{ steps.npm_versions.outputs.latest_npm }}"',
-            'IFS="." read -r major minor patch <<< "$LATEST_NPM"',
-            'CANDIDATE_VERSION="$major.$minor.$((patch + 1))"',
-            'echo "Starting with candidate version: $CANDIDATE_VERSION"',
-            'while git ls-remote --tags origin "refs/tags/v$CANDIDATE_VERSION" | grep -q "v$CANDIDATE_VERSION"; do',
-            '  echo "Tag v$CANDIDATE_VERSION already exists, trying next version"',
-            '  patch=$((patch + 1))',
-            '  CANDIDATE_VERSION="$major.$minor.$patch"',
-            'done',
-            'echo "Next available version: $CANDIDATE_VERSION"',
-            'echo "version=$CANDIDATE_VERSION" >> $GITHUB_OUTPUT',
-          ].join(" && "),
+          run: `
+            LATEST_NPM="\${{ steps.npm_versions.outputs.latest_npm }}"
+            IFS="." read -r major minor patch <<< "$LATEST_NPM"
+            CANDIDATE_VERSION="$major.$minor.$((patch + 1))"
+            echo "Starting with candidate version: $CANDIDATE_VERSION"
+            while git ls-remote --tags origin "refs/tags/v$CANDIDATE_VERSION" | grep -q "v$CANDIDATE_VERSION"; do
+              echo "Tag v$CANDIDATE_VERSION already exists, trying next version"
+              patch=$((patch + 1))
+              CANDIDATE_VERSION="$major.$minor.$patch"
+            done
+            echo "Next available version: $CANDIDATE_VERSION"
+            echo "version=$CANDIDATE_VERSION" >> $GITHUB_OUTPUT
+          `,
         },
         {
           name: "Check if tag exists for final version",
