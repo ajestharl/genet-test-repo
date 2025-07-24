@@ -319,6 +319,7 @@ if (central) {
       needs: ["setup_release"],
       permissions: {
         contents: JobPermission.READ,
+        idToken: JobPermission.WRITE,
       },
       uses: "./.github/workflows/release_package.yml",
       with: {
