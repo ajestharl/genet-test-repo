@@ -265,13 +265,13 @@ if (central) {
             'get_version() { npm view "$1" version 2>/dev/null || echo "0.0.0"; }',
             'v1=$(get_version ajithapackage)',
             'v2=$(get_version ajithapackage2)',
-            'v3=$(get_version smithy-client)',
-            'v4=$(get_version smithy-ssdk)',
+            'v3=$(get_version my-service-client)',
+            'v4=$(get_version my-service-ssdk)',
             'echo "Found versions:"',
             'echo "ajithapackage: $v1"',
             'echo "ajithapackage2: $v2"',
-            'echo "smithy-client: $v3"',
-            'echo "smithy-ssdk: $v4"',
+            'echo "my-service-client: $v3"',
+            'echo "my-service-ssdk: $v4"',
             'LATEST=$(printf "%s\\n" "$v1" "$v2" "$v3" "$v4" | sort -V | tail -n1)',
             'IFS="." read -r major minor patch <<< "$LATEST"',
             'NEXT_VERSION="$major.$minor.$((patch + 1))"',
@@ -342,7 +342,7 @@ if (central) {
       uses: "./.github/workflows/release_package.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
-        package_name: "smithy-client",
+        package_name: "my-service-client",
         package_path:
           "src/packages/my-api/build/smithy/source/typescript-client-codegen",
       },
@@ -359,7 +359,7 @@ if (central) {
       uses: "./.github/workflows/release_package.yml",
       with: {
         version: "${{ needs.bump_version.outputs.version }}",
-        package_name: "smithy-ssdk",
+        package_name: "my-service-ssdk",
         package_path:
           "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
       },
@@ -406,7 +406,7 @@ if (central) {
         {
           name: "Extract packages",
           run: [
-            "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
+            "packages=(ajithapackage ajithapackage2 my-service-client my-service-ssdk)",
             'for pkg in "${packages[@]}"; do',
             '  echo "Extracting $pkg..."',
             '  mkdir -p "$pkg"',
@@ -418,7 +418,7 @@ if (central) {
           name: "Patch version and Remove prepack in each package",
           run: [
             'version="${{ needs.bump_version.outputs.version }}"',
-            "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
+            "packages=(ajithapackage ajithapackage2 my-service-client my-service-ssdk)",
             'for pkg in "${packages[@]}"; do',
             '  echo "Patching version in $pkg/package.json"',
             '  cd "$pkg"',
@@ -437,7 +437,7 @@ if (central) {
           },
           run: [
             "version='${{ needs.bump_version.outputs.version }}'",
-            "packages=(ajithapackage ajithapackage2 smithy-client smithy-ssdk)",
+            "packages=(ajithapackage ajithapackage2 my-service-client my-service-ssdk)",
             'for pkg in "${packages[@]}"; do',
             '  echo "Publishing $pkg@$version"',
             '  cd "$pkg"',
