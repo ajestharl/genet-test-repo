@@ -297,15 +297,15 @@ if (central) {
         {
           name: "Check if tag exists for final version",
           id: "check_tag",
-          run: [
-            'TAG="v${{ steps.next_version.outputs.version }}"',
-            'echo "Checking if tag exists for: $TAG"',
-            'if git ls-remote --tags origin "refs/tags/$TAG" | grep -q "$TAG"; then',
-            '  echo "tag_exists=true" >> $GITHUB_OUTPUT',
-            'else',
-            '  echo "tag_exists=false" >> $GITHUB_OUTPUT',
-            'fi',
-          ].join(' && '),
+          run: `
+            TAG="\${{ steps.next_version.outputs.version }}"
+            echo "Checking if tag exists for: $TAG"
+            if git ls-remote --tags origin "refs/tags/$TAG" | grep -q "$TAG"; then
+              echo "tag_exists=true" >> $GITHUB_OUTPUT
+            else
+              echo "tag_exists=false" >> $GITHUB_OUTPUT
+            fi
+          `,
         },
         {
           name: "Check for new commits",
