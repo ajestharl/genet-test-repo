@@ -426,9 +426,9 @@ if (centralizedRelease) {
           name: "Extract packages",
           run: [
             "for pkg in $PACKAGES; do",
-            '  echo "Extracting $pkg..."',
-            '  mkdir -p "$pkg"',
-            '  tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }',
+            '  echo "Using artifact $pkg..."',
+            '  # Artifact already contains extracted package in dist format',
+            '  # No extraction needed, just use the downloaded artifact directly',
             "done",
           ].join("\n"),
         },
@@ -485,7 +485,7 @@ if (centralizedRelease) {
       needs: ["npm_publish", "setup_release"],
       runsOn: ["ubuntu-latest"],
       permissions: {
-        contents: JobPermission.READ,
+        contents: JobPermission.WRITE,
       },
       env: {
         CI: "true",
@@ -512,7 +512,7 @@ if (centralizedRelease) {
             '--title "v${{ needs.setup_release.outputs.version }}"',
             '--notes "Automated release for all packages"',
             "--target $(git rev-parse HEAD)",
-            "*.tgz",
+            "*/*.tgz",
           ].join(" "),
         },
       ],

@@ -169,9 +169,9 @@ jobs:
       - name: Extract packages
         run: |-
           for pkg in $PACKAGES; do
-            echo "Extracting $pkg..."
-            mkdir -p "$pkg"
-            tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }
+            echo "Using artifact $pkg..."
+            # Artifact already contains extracted package in dist format
+            # No extraction needed, just use the downloaded artifact directly
           done
       - name: Patch version and Remove prepack in each package
         run: |-
@@ -217,7 +217,7 @@ jobs:
       - setup_release
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     env:
       CI: "true"
     if: needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha
@@ -231,7 +231,7 @@ jobs:
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "v${{ needs.setup_release.outputs.version }}" --title "v${{ needs.setup_release.outputs.version }}" --notes "Automated release for all packages" --target $(git rev-parse HEAD) *.tgz
+        run: gh release create "v${{ needs.setup_release.outputs.version }}" --title "v${{ needs.setup_release.outputs.version }}" --notes "Automated release for all packages" --target $(git rev-parse HEAD) */*.tgz
 concurrency:
   group: release
   cancel-in-progress: false
