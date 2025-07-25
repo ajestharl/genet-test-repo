@@ -11,7 +11,12 @@ const projectMetadata = {
   name: "genet-test-repo",
 };
 
-const RELEASE_PACKAGES = ["ajithapackage", "ajithapackage2", "my-service-client", "my-service-ssdk"];
+const RELEASE_PACKAGES = [
+  "ajithapackage",
+  "ajithapackage2",
+  "my-service-client",
+  "my-service-ssdk",
+];
 
 export const configureMarkDownLinting = (tsProject: TypeScriptAppProject) => {
   tsProject.addDevDeps(
@@ -220,12 +225,12 @@ createPackage({
   outdir: "src/packages/ajithapackage1",
 });
 
-const central = project.github?.addWorkflow("central-release");
-if (central) {
-  central.on({
+const centralizedRelease = project.github?.addWorkflow("centralized-release");
+if (centralizedRelease) {
+  centralizedRelease.on({
     push: { branches: ["rel"] },
   });
-  central.addJobs({
+  centralizedRelease.addJobs({
     setup_release: {
       runsOn: ["ubuntu-latest"],
       permissions: {
@@ -237,7 +242,7 @@ if (central) {
           outputName: "version",
         },
         tag_exists: {
-          stepId: "check_tag",
+          stepId: "next_version",
           outputName: "tag_exists",
         },
         latest_commit: {
@@ -261,21 +266,20 @@ if (central) {
         {
           name: "Get Latest NPM Versions",
           id: "npm_versions",
-          run: [
-            'get_version() { npm view "$1" version 2>/dev/null || echo "0.0.0"; }',
-            "v1=$(get_version ajithapackage)",
-            "v2=$(get_version ajithapackage2)",
-            "v3=$(get_version my-service-client)",
-            "v4=$(get_version my-service-ssdk)",
-            'echo "Found NPM versions:"',
-            'echo "ajithapackage: $v1"',
-            'echo "ajithapackage2: $v2"',
-            'echo "my-service-client: $v3"',
-            'echo "my-service-ssdk: $v4"',
-            'LATEST_NPM=$(printf "%s\\n" "$v1" "$v2" "$v3" "$v4" | sort -V | tail -n1)',
-            'echo "Latest NPM version: $LATEST_NPM"',
-            'echo "latest_npm=$LATEST_NPM" >> $GITHUB_OUTPUT',
-          ].join(" && "),
+          run: `
+            get_version() { npm view "$1" version 2>/dev/null || echo "0.0.0"; }
+            PACKAGES="${RELEASE_PACKAGES.join(" ")}"
+            VERSIONS=()
+            echo "Found NPM versions:"
+            for pkg in $PACKAGES; do
+              version=$(get_version "$pkg")
+              echo "$pkg: $version"
+              VERSIONS+=("$version")
+            done
+            LATEST_NPM=$(printf "%s\\n" "\${VERSIONS[@]}" | sort -V | tail -n1)
+            echo "Latest NPM version: $LATEST_NPM"
+            echo "latest_npm=$LATEST_NPM" >> $GITHUB_OUTPUT
+          `,
         },
         {
           name: "Find Next Available Version",
@@ -292,19 +296,7 @@ if (central) {
             done
             echo "Next available version: $CANDIDATE_VERSION"
             echo "version=$CANDIDATE_VERSION" >> $GITHUB_OUTPUT
-          `,
-        },
-        {
-          name: "Check if tag exists for final version",
-          id: "check_tag",
-          run: `
-            TAG="\${{ steps.next_version.outputs.version }}"
-            echo "Checking if tag exists for: $TAG"
-            if git ls-remote --tags origin "refs/tags/$TAG" | grep -q "$TAG"; then
-              echo "tag_exists=true" >> $GITHUB_OUTPUT
-            else
-              echo "tag_exists=false" >> $GITHUB_OUTPUT
-            fi
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
           `,
         },
         {
@@ -312,10 +304,8 @@ if (central) {
           id: "git_remote",
           run: [
             'echo "latest_commit=$(git ls-remote origin -h ${{ github.ref }} | cut -f1)" >> $GITHUB_OUTPUT',
-            "cat $GITHUB_OUTPUT",
           ].join("\n"),
         },
-
       ],
     },
 
@@ -326,7 +316,7 @@ if (central) {
         contents: JobPermission.READ,
         idToken: JobPermission.WRITE,
       },
-      uses: "./.github/workflows/release_package.yml",
+      uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
         package_name: "ajithapackage",
@@ -342,7 +332,7 @@ if (central) {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
-      uses: "./.github/workflows/release_package.yml",
+      uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
         package_name: "ajithapackage2",
@@ -358,7 +348,7 @@ if (central) {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
-      uses: "./.github/workflows/release_package.yml",
+      uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
         package_name: "my-service-client",
@@ -375,7 +365,7 @@ if (central) {
         contents: JobPermission.WRITE,
         idToken: JobPermission.WRITE,
       },
-      uses: "./.github/workflows/release_package.yml",
+      uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
         package_name: "my-service-ssdk",
@@ -417,7 +407,7 @@ if (central) {
         },
         {
           name: "Set package list",
-          run: `echo "PACKAGES=${RELEASE_PACKAGES.join(' ')}" >> $GITHUB_ENV`
+          run: `echo "PACKAGES=${RELEASE_PACKAGES.join(" ")}" >> $GITHUB_ENV`,
         },
         {
           name: "Setup Node.js",
@@ -434,14 +424,11 @@ if (central) {
             "merge-multiple": true,
           },
         },
-        {
-          name: "List downloaded artifacts",
-          run: "ls -la",
-        },
+
         {
           name: "Extract packages",
           run: [
-            'for pkg in $PACKAGES; do',
+            "for pkg in $PACKAGES; do",
             '  echo "Extracting $pkg..."',
             '  mkdir -p "$pkg"',
             '  tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1 || { echo "Error extracting $pkg"; exit 1; }',
@@ -452,12 +439,12 @@ if (central) {
           name: "Patch version and Remove prepack in each package",
           run: [
             'version="${{ needs.setup_release.outputs.version }}"',
-            'for pkg in $PACKAGES; do',
+            "for pkg in $PACKAGES; do",
             '  echo "Patching version in $pkg/package.json"',
             '  cd "$pkg"',
             "  jq --arg ver \"$version\" '.version = $ver' package.json > tmp.json && mv tmp.json package.json",
             "  jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
-            "  cat package.json | grep version",
+
             "  cd ..",
             "done",
           ].join("\n"),
@@ -470,7 +457,7 @@ if (central) {
           },
           run: [
             "version='${{ needs.setup_release.outputs.version }}'",
-            'for pkg in $PACKAGES; do',
+            "for pkg in $PACKAGES; do",
             '  echo "Publishing $pkg@$version"',
             '  cd "$pkg"',
             "  npm publish --access public",
@@ -489,7 +476,7 @@ if (central) {
             git tag "$TAG"
             git push origin "$TAG"
             echo "Created and pushed tag: $TAG"
-          `
+          `,
         },
       ],
     },
@@ -533,17 +520,19 @@ if (central) {
     },
   });
 }
-if (central) {
-  central.file?.addOverride("concurrency", {
+if (centralizedRelease) {
+  centralizedRelease.file?.addOverride("concurrency", {
     group: "release",
     "cancel-in-progress": false,
   });
 }
 
-const reusableWorkflow = project.github?.addWorkflow("release_package");
+const buildArtifactWorkflow = project.github?.addWorkflow(
+  "build-package-artifact",
+);
 
-if (reusableWorkflow) {
-  reusableWorkflow.on({
+if (buildArtifactWorkflow) {
+  buildArtifactWorkflow.on({
     workflowCall: {
       inputs: {
         version: { required: true, type: "string" },
@@ -553,7 +542,7 @@ if (reusableWorkflow) {
     },
   });
 
-  reusableWorkflow.addJobs({
+  buildArtifactWorkflow.addJobs({
     build_artifacts: {
       runsOn: ["ubuntu-latest"],
       permissions: {

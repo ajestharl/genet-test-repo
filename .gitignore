@@ -48,6 +48,6 @@ junit.xml
 tsconfig.json
 !/API.md
 !/lerna.json
-!/.github/workflows/central-release.yml
-!/.github/workflows/release_package.yml
+!/.github/workflows/centralized-release.yml
+!/.github/workflows/build-package-artifact.yml
 !/.projenrc.ts
