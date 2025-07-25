@@ -233,7 +233,7 @@ jobs:
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "v${{ needs.setup_release.outputs.version }}" --title "v${{ needs.setup_release.outputs.version }}" --notes "Automated release for all packages" --target $(git rev-parse HEAD) */*.tgz
+        run: gh release create "v${{ needs.setup_release.outputs.version }}" --title "v${{ needs.setup_release.outputs.version }}" --notes "Automated release for all packages" --target $(git rev-parse HEAD) *.tgz
 concurrency:
   group: release
   cancel-in-progress: false
