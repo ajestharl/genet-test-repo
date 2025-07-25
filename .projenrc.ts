@@ -11,6 +11,8 @@ const projectMetadata = {
   name: "genet-test-repo",
 };
 
+// Centralized package list - single source of truth for all release operations
+// Add/remove packages here to modify what gets released together
 const RELEASE_PACKAGES = [
   "ajithapackage",
   "ajithapackage2",
@@ -198,22 +200,7 @@ export const createPackage = (config: PackageConfig) => {
   addPrettierConfig(tsProject);
   configureMarkDownLinting(tsProject);
   tsProject.package.file.addOverride("private", false);
-  tsProject.addTask("release", {
-    steps: [
-      {
-        exec: `CURRENT=$(npm view ${config.name} version 2>/dev/null || echo '0.0.0') && echo $CURRENT > .version.tmp`,
-      },
-      {
-        exec: `VERSION=$(awk -F. '{$NF+=1; print $1"."$2"."$3}' .version.tmp) && echo $VERSION > .version.bumped`,
-      },
-      {
-        exec: `TAG=v$(cat .version.bumped) && git tag $TAG && git push origin $TAG`,
-      },
-      {
-        exec: "mkdir -p dist && echo v$(cat .version.bumped) > dist/releasetag.txt",
-      },
-    ],
-  });
+
   tsProject.package.addField("publishConfig", {
     access: "public",
   });
@@ -225,12 +212,15 @@ createPackage({
   outdir: "src/packages/ajithapackage1",
 });
 
+// Centralized Release Workflow - coordinates atomic releases of all packages
+// Triggered on push to 'rel' branch, ensures all packages get same version
 const centralizedRelease = project.github?.addWorkflow("centralized-release");
 if (centralizedRelease) {
   centralizedRelease.on({
     push: { branches: ["rel"] },
   });
   centralizedRelease.addJobs({
+    // Step 1: Calculate next version and validate release conditions
     setup_release: {
       runsOn: ["ubuntu-latest"],
       permissions: {
@@ -264,6 +254,7 @@ if (centralizedRelease) {
           ].join("\n"),
         },
         {
+          // Query NPM registry for current versions of all packages
           name: "Get Latest NPM Versions",
           id: "npm_versions",
           run: `
@@ -282,6 +273,8 @@ if (centralizedRelease) {
           `,
         },
         {
+          // Find next version that doesn't conflict with existing Git tags
+          // Handles failed release recovery by skipping existing tags
           name: "Find Next Available Version",
           id: "next_version",
           run: `
@@ -309,6 +302,8 @@ if (centralizedRelease) {
       ],
     },
 
+    // Step 2: Build all packages in parallel with determined version
+    // Each job creates a build artifact for later publishing
     package_ajithapackage: {
       if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
       needs: ["setup_release"],
@@ -375,6 +370,8 @@ if (centralizedRelease) {
       secrets: "inherit",
     },
 
+    // Step 3: Publish all packages atomically after successful builds
+    // Creates Git tag only after successful NPM publishing
     npm_publish: {
       needs: [
         "setup_release",
@@ -469,6 +466,8 @@ if (centralizedRelease) {
           ].join("\n"),
         },
         {
+          // Create Git tag only after successful NPM publishing
+          // This ensures tags only exist for successfully released versions
           name: "Create Git Tag",
           workingDirectory: "${{ github.workspace }}",
           run: `
@@ -480,6 +479,7 @@ if (centralizedRelease) {
         },
       ],
     },
+    // Step 4: Create GitHub release with all package artifacts
     create_release: {
       if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
       needs: ["npm_publish", "setup_release"],
@@ -520,12 +520,16 @@ if (centralizedRelease) {
   });
 }
 if (centralizedRelease) {
+  // Prevent concurrent releases to avoid version conflicts
+  // cancel-in-progress: false ensures running releases complete
   centralizedRelease.file?.addOverride("concurrency", {
     group: "release",
     "cancel-in-progress": false,
   });
 }
 
+// Reusable workflow for building individual package artifacts
+// Called by each package job in the centralized release
 const buildArtifactWorkflow = project.github?.addWorkflow(
   "build-package-artifact",
 );
@@ -565,13 +569,7 @@ if (buildArtifactWorkflow) {
             "registry-url": "https://registry.npmjs.org",
           },
         },
-        {
-          name: "who am i",
-          env: {
-            NODE_AUTH_TOKEN: "${{ secrets.TOKEN }}",
-          },
-          run: "npm whoami",
-        },
+
         {
           name: "Install dependencies",
           run: "yarn install --check-files --frozen-lockfile",
@@ -611,7 +609,7 @@ if (buildArtifactWorkflow) {
           name: "Upload artifact",
           uses: "actions/upload-artifact@v4.4.0",
           with: {
-            name: "${{ inputs.package_name }}-artifact",
+            name: "${{ inputs.package_name }}",
             path: "${{ inputs.package_path }}/dist",
             overwrite: true,
           },

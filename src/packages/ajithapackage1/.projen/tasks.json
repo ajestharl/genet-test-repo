@@ -158,23 +158,6 @@
       "name": "pre-compile",
       "description": "Prepare the project for compilation"
     },
-    "release": {
-      "name": "release",
-      "steps": [
-        {
-          "exec": "CURRENT=$(npm view ajithapackage version 2>/dev/null || echo '0.0.0') && echo $CURRENT > .version.tmp"
-        },
-        {
-          "exec": "VERSION=$(awk -F. '{$NF+=1; print $1\".\"$2\".\"$3}' .version.tmp) && echo $VERSION > .version.bumped"
-        },
-        {
-          "exec": "TAG=v$(cat .version.bumped) && git tag $TAG && git push origin $TAG"
-        },
-        {
-          "exec": "mkdir -p dist && echo v$(cat .version.bumped) > dist/releasetag.txt"
-        }
-      ]
-    },
     "test": {
       "name": "test",
       "description": "Run tests",

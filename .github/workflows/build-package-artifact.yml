@@ -31,10 +31,6 @@ jobs:
         with:
           node-version: lts/*
           registry-url: https://registry.npmjs.org
-      - name: who am i
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.TOKEN }}
-        run: npm whoami
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
       - name: Build package
@@ -52,6 +48,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4.4.0
         with:
-          name: ${{ inputs.package_name }}-artifact
+          name: ${{ inputs.package_name }}
           path: ${{ inputs.package_path }}/dist
           overwrite: true
