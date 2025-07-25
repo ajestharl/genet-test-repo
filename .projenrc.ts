@@ -429,8 +429,10 @@ if (centralizedRelease) {
             '  echo "Extracting $pkg..."',
             '  # Extract just the package name (remove scope)',
             '  dir_name=$(echo "$pkg" | sed "s|.*/||")',
+            '  # Sanitize package name for filename lookup',
+            '  safe_name=$(echo "$pkg" | sed "s|@||g" | sed "s|/|-|g")',
             '  mkdir -p "$dir_name"',
-            '  tar -xzf "$pkg.tgz" -C "$dir_name" --strip-components=1',
+            '  tar -xzf "${safe_name}.tgz" -C "$dir_name" --strip-components=1',
             "done",
           ].join("\n"),
         },
@@ -585,7 +587,11 @@ if (buildArtifactWorkflow) {
         },
         {
           name: "Pack artifact",
-          run: "yarn pack --filename ${{ inputs.package_name }}.tgz",
+          run: [
+            "# Sanitize package name for filename",
+            "SAFE_NAME=$(echo '${{ inputs.package_name }}' | sed 's|@||g' | sed 's|/|-|g')",
+            "yarn pack --filename \"${SAFE_NAME}.tgz\"",
+          ].join("\n"),
           workingDirectory: "${{ inputs.package_path }}",
         },
         {
@@ -593,7 +599,8 @@ if (buildArtifactWorkflow) {
           workingDirectory: "${{ inputs.package_path }}",
           run: [
             "mkdir -p dist",
-            "cp ${{ inputs.package_name }}.tgz dist/",
+            "SAFE_NAME=$(echo '${{ inputs.package_name }}' | sed 's|@||g' | sed 's|/|-|g')",
+            "cp \"${SAFE_NAME}.tgz\" dist/",
             "cd dist && getfacl -R . > permissions-backup.acl",
           ].join(" && "),
         },
@@ -601,7 +608,8 @@ if (buildArtifactWorkflow) {
           name: "Prepare for publishing",
           run: [
             "cd dist",
-            "tar -xzf ${{ inputs.package_name }}.tgz --strip-components=1",
+            "SAFE_NAME=$(echo '${{ inputs.package_name }}' | sed 's|@||g' | sed 's|/|-|g')",
+            "tar -xzf \"${SAFE_NAME}.tgz\" --strip-components=1",
           ].join(" && "),
           workingDirectory: "${{ inputs.package_path }}",
         },

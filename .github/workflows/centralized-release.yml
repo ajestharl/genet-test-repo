@@ -172,8 +172,10 @@ jobs:
             echo "Extracting $pkg..."
             # Extract just the package name (remove scope)
             dir_name=$(echo "$pkg" | sed "s|.*/||")
+            # Sanitize package name for filename lookup
+            safe_name=$(echo "$pkg" | sed "s|@||g" | sed "s|/|-|g")
             mkdir -p "$dir_name"
-            tar -xzf "$pkg.tgz" -C "$dir_name" --strip-components=1
+            tar -xzf "${safe_name}.tgz" -C "$dir_name" --strip-components=1
           done
       - name: Patch version and Remove prepack in each package
         run: |-
