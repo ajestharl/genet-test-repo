@@ -423,14 +423,12 @@ if (centralizedRelease) {
         },
 
         {
-          name: "List downloaded artifacts",
+          name: "Extract packages",
           run: [
-            "echo 'Downloaded artifacts:'",
-            "ls -la",
-            "echo 'Contents of each directory:'",
-            "for dir in */; do",
-            '  echo "=== $dir ==="',
-            '  ls -la "$dir" || echo "Directory $dir not accessible"',
+            "for pkg in $PACKAGES; do",
+            '  echo "Extracting $pkg..."',
+            '  mkdir -p "$pkg"',
+            '  tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1',
             "done",
           ].join("\n"),
         },
