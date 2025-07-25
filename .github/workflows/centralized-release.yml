@@ -211,7 +211,7 @@ jobs:
 
           \          "
         working-directory: ${{ github.workspace }}
-  create_release:
+  github_release:
     needs:
       - npm_publish
       - setup_release

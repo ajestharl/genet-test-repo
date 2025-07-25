@@ -480,7 +480,7 @@ if (centralizedRelease) {
         },
       ],
     },
-    create_release: {
+    github_release: {
       if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
       needs: ["npm_publish", "setup_release"],
       runsOn: ["ubuntu-latest"],
