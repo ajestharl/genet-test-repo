@@ -404,6 +404,18 @@ if (central) {
       if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
       steps: [
         {
+          name: "Checkout",
+          uses: "actions/checkout@v4",
+          with: { "fetch-depth": 0 },
+        },
+        {
+          name: "Set Git Identity",
+          run: [
+            'git config --global user.email "github-actions@github.com"',
+            'git config --global user.name "GitHub Actions"',
+          ].join("\n"),
+        },
+        {
           name: "Set package list",
           run: `echo "PACKAGES=${RELEASE_PACKAGES.join(' ')}" >> $GITHUB_ENV`
         },
@@ -471,12 +483,13 @@ if (central) {
         },
         {
           name: "Create Git Tag",
-          run: [
-            'TAG="v${{ needs.setup_release.outputs.version }}"',
-            'git tag "$TAG"',
-            'git push origin "$TAG"',
-            'echo "Created and pushed tag: $TAG"'
-          ].join('\n')
+          workingDirectory: "${{ github.workspace }}",
+          run: `
+            TAG="v\${{ needs.setup_release.outputs.version }}"
+            git tag "$TAG"
+            git push origin "$TAG"
+            echo "Created and pushed tag: $TAG"
+          `
         },
       ],
     },
