@@ -9,7 +9,7 @@ jobs:
   setup_release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     outputs:
       version: ${{ steps.next_version.outputs.version }}
       tag_exists: ${{ steps.next_version.outputs.tag_exists }}
@@ -100,7 +100,7 @@ jobs:
     needs: setup_release
     if: needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha
     permissions:
-      contents: write
+      contents: read
       id-token: write
     uses: ./.github/workflows/build-package-artifact.yml
     with:
@@ -112,7 +112,7 @@ jobs:
     needs: setup_release
     if: needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha
     permissions:
-      contents: write
+      contents: read
       id-token: write
     uses: ./.github/workflows/build-package-artifact.yml
     with:
@@ -124,7 +124,7 @@ jobs:
     needs: setup_release
     if: needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha
     permissions:
-      contents: write
+      contents: read
       id-token: write
     uses: ./.github/workflows/build-package-artifact.yml
     with:
@@ -211,14 +211,13 @@ jobs:
 
           \          "
         working-directory: ${{ github.workspace }}
-  github_release:
+  create_release:
     needs:
       - npm_publish
       - setup_release
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      id-token: write
+      contents: read
     env:
       CI: "true"
     if: needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha

@@ -234,7 +234,7 @@ if (centralizedRelease) {
     setup_release: {
       runsOn: ["ubuntu-latest"],
       permissions: {
-        contents: JobPermission.WRITE,
+        contents: JobPermission.READ,
       },
       outputs: {
         version: {
@@ -329,7 +329,7 @@ if (centralizedRelease) {
       if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
       needs: ["setup_release"],
       permissions: {
-        contents: JobPermission.WRITE,
+        contents: JobPermission.READ,
         idToken: JobPermission.WRITE,
       },
       uses: "./.github/workflows/build-package-artifact.yml",
@@ -345,7 +345,7 @@ if (centralizedRelease) {
       if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
       needs: ["setup_release"],
       permissions: {
-        contents: JobPermission.WRITE,
+        contents: JobPermission.READ,
         idToken: JobPermission.WRITE,
       },
       uses: "./.github/workflows/build-package-artifact.yml",
@@ -362,7 +362,7 @@ if (centralizedRelease) {
       if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
       needs: ["setup_release"],
       permissions: {
-        contents: JobPermission.WRITE,
+        contents: JobPermission.READ,
         idToken: JobPermission.WRITE,
       },
       uses: "./.github/workflows/build-package-artifact.yml",
@@ -480,13 +480,12 @@ if (centralizedRelease) {
         },
       ],
     },
-    github_release: {
+    create_release: {
       if: "needs.setup_release.outputs.tag_exists != 'true' && needs.setup_release.outputs.latest_commit == github.sha",
       needs: ["npm_publish", "setup_release"],
       runsOn: ["ubuntu-latest"],
       permissions: {
-        contents: JobPermission.WRITE,
-        idToken: JobPermission.WRITE,
+        contents: JobPermission.READ,
       },
       env: {
         CI: "true",
