@@ -423,12 +423,14 @@ if (centralizedRelease) {
         },
 
         {
-          name: "Extract packages",
+          name: "List downloaded artifacts",
           run: [
-            "for pkg in $PACKAGES; do",
-            '  echo "Using artifact $pkg..."',
-            '  # Artifact already contains extracted package in dist format',
-            '  # No extraction needed, just use the downloaded artifact directly',
+            "echo 'Downloaded artifacts:'",
+            "ls -la",
+            "echo 'Contents of each directory:'",
+            "for dir in */; do",
+            '  echo "=== $dir ==="',
+            '  ls -la "$dir" || echo "Directory $dir not accessible"',
             "done",
           ].join("\n"),
         },
