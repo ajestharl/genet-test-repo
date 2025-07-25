@@ -93,8 +93,8 @@ jobs:
     uses: ./.github/workflows/build-package-artifact.yml
     with:
       version: ${{ needs.setup_release.outputs.version }}
-      package_name: ajithapackage
-      package_path: src/packages/ajithapackage1
+      packageName: ajithapackage
+      packagePath: src/packages/ajithapackage1
     secrets: inherit
   package_ajithapackage2:
     needs: setup_release
@@ -105,8 +105,8 @@ jobs:
     uses: ./.github/workflows/build-package-artifact.yml
     with:
       version: ${{ needs.setup_release.outputs.version }}
-      package_name: ajithapackage2
-      package_path: src/packages/ajithapackage2
+      packageName: ajithapackage2
+      packagePath: src/packages/ajithapackage2
     secrets: inherit
   package_smithy_client:
     needs: setup_release
@@ -117,8 +117,8 @@ jobs:
     uses: ./.github/workflows/build-package-artifact.yml
     with:
       version: ${{ needs.setup_release.outputs.version }}
-      package_name: my-service-client
-      package_path: src/packages/my-api/build/smithy/source/typescript-client-codegen
+      packageName: my-service-client
+      packagePath: src/packages/my-api/build/smithy/source/typescript-client-codegen
     secrets: inherit
   package_smithy_ssdk:
     needs: setup_release
@@ -129,8 +129,8 @@ jobs:
     uses: ./.github/workflows/build-package-artifact.yml
     with:
       version: ${{ needs.setup_release.outputs.version }}
-      package_name: my-service-ssdk
-      package_path: src/packages/my-api/build/smithy/source/typescript-ssdk-codegen
+      packageName: my-service-ssdk
+      packagePath: src/packages/my-api/build/smithy/source/typescript-ssdk-codegen
     secrets: inherit
   npm_publish:
     needs:
@@ -166,19 +166,24 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           merge-multiple: true
-      - name: Extract packages
+      - name: Process packages
         run: |-
           for pkg in $PACKAGES; do
-            echo "Extracting $pkg..."
-            mkdir -p "$pkg"
-            tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1
+            echo "Processing $pkg..."
+            # Extract just the package name (remove scope)
+            dir_name=$(echo "$pkg" | sed "s|.*/||")
+            # Artifacts are uploaded as folders, just rename them
+            if [ -d "$pkg" ]; then
+              mv "$pkg" "$dir_name"
+            fi
           done
       - name: Patch version and Remove prepack in each package
         run: |-
           version="${{ needs.setup_release.outputs.version }}"
           for pkg in $PACKAGES; do
-            echo "Patching version in $pkg/package.json"
-            cd "$pkg"
+            dir_name=$(echo "$pkg" | sed "s|.*/||")
+            echo "Patching version in $dir_name/package.json"
+            cd "$dir_name"
             jq --arg ver "$version" '.version = $ver' package.json > tmp.json && mv tmp.json package.json
             jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json
             cd ..
@@ -190,8 +195,9 @@ jobs:
         run: |-
           version='${{ needs.setup_release.outputs.version }}'
           for pkg in $PACKAGES; do
+            dir_name=$(echo "$pkg" | sed "s|.*/||")
             echo "Publishing $pkg@$version"
-            cd "$pkg"
+            cd "$dir_name"
             npm publish --access public
             echo "Successfully published $pkg@$version"
             cd ..

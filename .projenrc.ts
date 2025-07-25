@@ -314,8 +314,8 @@ if (centralizedRelease) {
       uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
-        package_name: "ajithapackage",
-        package_path: "src/packages/ajithapackage1",
+        packageName: "ajithapackage",
+        packagePath: "src/packages/ajithapackage1",
       },
       secrets: "inherit",
     },
@@ -330,8 +330,8 @@ if (centralizedRelease) {
       uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
-        package_name: "ajithapackage2",
-        package_path: "src/packages/ajithapackage2",
+        packageName: "ajithapackage2",
+        packagePath: "src/packages/ajithapackage2",
       },
       secrets: "inherit",
     },
@@ -346,8 +346,8 @@ if (centralizedRelease) {
       uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
-        package_name: "my-service-client",
-        package_path:
+        packageName: "my-service-client",
+        packagePath:
           "src/packages/my-api/build/smithy/source/typescript-client-codegen",
       },
       secrets: "inherit",
@@ -363,8 +363,8 @@ if (centralizedRelease) {
       uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
-        package_name: "my-service-ssdk",
-        package_path:
+        packageName: "my-service-ssdk",
+        packagePath:
           "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
       },
       secrets: "inherit",
@@ -423,12 +423,16 @@ if (centralizedRelease) {
         },
 
         {
-          name: "Extract packages",
+          name: "Process packages",
           run: [
             "for pkg in $PACKAGES; do",
-            '  echo "Extracting $pkg..."',
-            '  mkdir -p "$pkg"',
-            '  tar -xzf "$pkg.tgz" -C "$pkg" --strip-components=1',
+            '  echo "Processing $pkg..."',
+            '  # Extract just the package name (remove scope)',
+            '  dir_name=$(echo "$pkg" | sed "s|.*/||")',
+            '  # Artifacts are uploaded as folders, just rename them',
+            '  if [ -d "$pkg" ]; then',
+            '    mv "$pkg" "$dir_name"',
+            '  fi',
             "done",
           ].join("\n"),
         },
@@ -437,8 +441,9 @@ if (centralizedRelease) {
           run: [
             'version="${{ needs.setup_release.outputs.version }}"',
             "for pkg in $PACKAGES; do",
-            '  echo "Patching version in $pkg/package.json"',
-            '  cd "$pkg"',
+            '  dir_name=$(echo "$pkg" | sed "s|.*/||")',
+            '  echo "Patching version in $dir_name/package.json"',
+            '  cd "$dir_name"',
             "  jq --arg ver \"$version\" '.version = $ver' package.json > tmp.json && mv tmp.json package.json",
             "  jq 'del(.scripts.prepack)' package.json > tmp.json && mv tmp.json package.json",
 
@@ -455,8 +460,9 @@ if (centralizedRelease) {
           run: [
             "version='${{ needs.setup_release.outputs.version }}'",
             "for pkg in $PACKAGES; do",
+            '  dir_name=$(echo "$pkg" | sed "s|.*/||")',
             '  echo "Publishing $pkg@$version"',
-            '  cd "$pkg"',
+            '  cd "$dir_name"',
             "  npm publish --access public",
             '  echo "Successfully published $pkg@$version"',
             "  cd ..",
@@ -577,28 +583,36 @@ if (buildArtifactWorkflow) {
         {
           name: "Build package",
           run: "yarn build",
-          workingDirectory: "${{ inputs.package_path }}",
+          workingDirectory: "${{ inputs.packagePath }}",
         },
         {
           name: "Pack artifact",
-          run: "yarn pack --filename ${{ inputs.package_name }}.tgz",
-          workingDirectory: "${{ inputs.package_path }}",
+          run: "yarn pack --filename ${{ inputs.packageName }}.tgz",
+          workingDirectory: "${{ inputs.packagePath }}",
+        },
+        {
+          name: "Backup artifact permissions",
+          workingDirectory: "${{ inputs.packagePath }}",
+          run: [
+            "mkdir -p dist",
+            "cp ${{ inputs.packageName }}.tgz dist/",
+            "cd dist && getfacl -R . > permissions-backup.acl",
+          ].join(" && "),
         },
         {
           name: "Prepare for publishing",
           run: [
-            "mkdir -p dist",
-            "tar -xzf ${{ inputs.package_name }}.tgz --strip-components=1 -C dist",
-            "cp ${{ inputs.package_name }}.tgz dist/",
+            "cd dist",
+            "tar -xzf ${{ inputs.packageName }}.tgz --strip-components=1",
           ].join(" && "),
-          workingDirectory: "${{ inputs.package_path }}",
+          workingDirectory: "${{ inputs.packagePath }}",
         },
         {
           name: "Upload artifact",
           uses: "actions/upload-artifact@v4.4.0",
           with: {
-            name: "${{ inputs.package_name }}",
-            path: "${{ inputs.package_path }}/dist",
+            name: "${{ inputs.packageName }}",
+            path: "${{ inputs.packagePath }}/dist",
             overwrite: true,
           },
         },
