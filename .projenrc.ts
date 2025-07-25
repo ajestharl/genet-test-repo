@@ -423,17 +423,26 @@ if (centralizedRelease) {
         },
 
         {
-          name: "Process packages",
+          name: "Debug and process packages",
           run: [
+            "echo 'Available files and directories:'",
+            "ls -la",
             "for pkg in $PACKAGES; do",
             '  echo "Processing $pkg..."',
             '  # Extract just the package name (remove scope)',
             '  dir_name=$(echo "$pkg" | sed "s|.*/||")',
-            '  # Artifacts are uploaded as folders, just rename them',
+            '  echo "Looking for directory: $pkg, will rename to: $dir_name"',
+            '  # Check what actually exists',
             '  if [ -d "$pkg" ]; then',
+            '    echo "Found directory $pkg, renaming to $dir_name"',
             '    mv "$pkg" "$dir_name"',
+            '  else',
+            '    echo "Directory $pkg not found, checking for alternatives..."',
+            '    ls -la | grep "$dir_name" || echo "No matching directories found"',
             '  fi',
             "done",
+            "echo 'Final directory structure:'",
+            "ls -la",
           ].join("\n"),
         },
         {
