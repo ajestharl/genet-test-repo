@@ -35,19 +35,19 @@ jobs:
         run: yarn install --check-files --frozen-lockfile
       - name: Build package
         run: yarn build
-        working-directory: ${{ inputs.packagePath }}
+        working-directory: ${{ inputs.package_path }}
       - name: Pack artifact
-        run: yarn pack --filename ${{ inputs.packageName }}.tgz
-        working-directory: ${{ inputs.packagePath }}
+        run: yarn pack --filename ${{ inputs.package_name }}.tgz
+        working-directory: ${{ inputs.package_path }}
       - name: Backup artifact permissions
-        run: mkdir -p dist && cp ${{ inputs.packageName }}.tgz dist/ && cd dist && getfacl -R . > permissions-backup.acl
-        working-directory: ${{ inputs.packagePath }}
+        run: mkdir -p dist && cp ${{ inputs.package_name }}.tgz dist/ && cd dist && getfacl -R . > permissions-backup.acl
+        working-directory: ${{ inputs.package_path }}
       - name: Prepare for publishing
-        run: cd dist && tar -xzf ${{ inputs.packageName }}.tgz --strip-components=1
-        working-directory: ${{ inputs.packagePath }}
+        run: cd dist && tar -xzf ${{ inputs.package_name }}.tgz --strip-components=1
+        working-directory: ${{ inputs.package_path }}
       - name: Upload artifact
         uses: actions/upload-artifact@v4.4.0
         with:
-          name: ${{ inputs.packageName }}
-          path: ${{ inputs.packagePath }}/dist
+          name: ${{ inputs.package_name }}
+          path: ${{ inputs.package_path }}/dist
           overwrite: true

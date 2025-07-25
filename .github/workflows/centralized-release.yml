@@ -93,8 +93,8 @@ jobs:
     uses: ./.github/workflows/build-package-artifact.yml
     with:
       version: ${{ needs.setup_release.outputs.version }}
-      packageName: ajithapackage
-      packagePath: src/packages/ajithapackage1
+      package_name: ajithapackage
+      package_path: src/packages/ajithapackage1
     secrets: inherit
   package_ajithapackage2:
     needs: setup_release
@@ -105,8 +105,8 @@ jobs:
     uses: ./.github/workflows/build-package-artifact.yml
     with:
       version: ${{ needs.setup_release.outputs.version }}
-      packageName: ajithapackage2
-      packagePath: src/packages/ajithapackage2
+      package_name: ajithapackage2
+      package_path: src/packages/ajithapackage2
     secrets: inherit
   package_smithy_client:
     needs: setup_release
@@ -117,8 +117,8 @@ jobs:
     uses: ./.github/workflows/build-package-artifact.yml
     with:
       version: ${{ needs.setup_release.outputs.version }}
-      packageName: my-service-client
-      packagePath: src/packages/my-api/build/smithy/source/typescript-client-codegen
+      package_name: my-service-client
+      package_path: src/packages/my-api/build/smithy/source/typescript-client-codegen
     secrets: inherit
   package_smithy_ssdk:
     needs: setup_release
@@ -129,8 +129,8 @@ jobs:
     uses: ./.github/workflows/build-package-artifact.yml
     with:
       version: ${{ needs.setup_release.outputs.version }}
-      packageName: my-service-ssdk
-      packagePath: src/packages/my-api/build/smithy/source/typescript-ssdk-codegen
+      package_name: my-service-ssdk
+      package_path: src/packages/my-api/build/smithy/source/typescript-ssdk-codegen
     secrets: inherit
   npm_publish:
     needs:

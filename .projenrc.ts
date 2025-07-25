@@ -314,8 +314,8 @@ if (centralizedRelease) {
       uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
-        packageName: "ajithapackage",
-        packagePath: "src/packages/ajithapackage1",
+        package_name: "ajithapackage",
+        package_path: "src/packages/ajithapackage1",
       },
       secrets: "inherit",
     },
@@ -330,8 +330,8 @@ if (centralizedRelease) {
       uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
-        packageName: "ajithapackage2",
-        packagePath: "src/packages/ajithapackage2",
+        package_name: "ajithapackage2",
+        package_path: "src/packages/ajithapackage2",
       },
       secrets: "inherit",
     },
@@ -346,8 +346,8 @@ if (centralizedRelease) {
       uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
-        packageName: "my-service-client",
-        packagePath:
+        package_name: "my-service-client",
+        package_path:
           "src/packages/my-api/build/smithy/source/typescript-client-codegen",
       },
       secrets: "inherit",
@@ -363,8 +363,8 @@ if (centralizedRelease) {
       uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
-        packageName: "my-service-ssdk",
-        packagePath:
+        package_name: "my-service-ssdk",
+        package_path:
           "src/packages/my-api/build/smithy/source/typescript-ssdk-codegen",
       },
       secrets: "inherit",
@@ -583,19 +583,19 @@ if (buildArtifactWorkflow) {
         {
           name: "Build package",
           run: "yarn build",
-          workingDirectory: "${{ inputs.packagePath }}",
+          workingDirectory: "${{ inputs.package_path }}",
         },
         {
           name: "Pack artifact",
-          run: "yarn pack --filename ${{ inputs.packageName }}.tgz",
-          workingDirectory: "${{ inputs.packagePath }}",
+          run: "yarn pack --filename ${{ inputs.package_name }}.tgz",
+          workingDirectory: "${{ inputs.package_path }}",
         },
         {
           name: "Backup artifact permissions",
-          workingDirectory: "${{ inputs.packagePath }}",
+          workingDirectory: "${{ inputs.package_path }}",
           run: [
             "mkdir -p dist",
-            "cp ${{ inputs.packageName }}.tgz dist/",
+            "cp ${{ inputs.package_name }}.tgz dist/",
             "cd dist && getfacl -R . > permissions-backup.acl",
           ].join(" && "),
         },
@@ -603,16 +603,16 @@ if (buildArtifactWorkflow) {
           name: "Prepare for publishing",
           run: [
             "cd dist",
-            "tar -xzf ${{ inputs.packageName }}.tgz --strip-components=1",
+            "tar -xzf ${{ inputs.package_name }}.tgz --strip-components=1",
           ].join(" && "),
-          workingDirectory: "${{ inputs.packagePath }}",
+          workingDirectory: "${{ inputs.package_path }}",
         },
         {
           name: "Upload artifact",
           uses: "actions/upload-artifact@v4.4.0",
           with: {
-            name: "${{ inputs.packageName }}",
-            path: "${{ inputs.packagePath }}/dist",
+            name: "${{ inputs.package_name }}",
+            path: "${{ inputs.package_path }}/dist",
             overwrite: true,
           },
         },
