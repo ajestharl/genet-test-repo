@@ -314,8 +314,8 @@ if (centralizedRelease) {
       uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
-        packageName: "ajithapackage",
-        packagePath: "src/packages/ajithapackage1",
+        package_name: "ajithapackage",
+        package_path: "src/packages/ajithapackage1",
       },
       secrets: "inherit",
     },
@@ -546,8 +546,8 @@ if (buildArtifactWorkflow) {
     workflowCall: {
       inputs: {
         version: { required: true, type: "string" },
-        packageName: { required: true, type: "string" },
-        packagePath: { required: true, type: "string" },
+        package_name: { required: true, type: "string" },
+        package_path: { required: true, type: "string" },
       },
     },
   });

@@ -93,8 +93,8 @@ jobs:
     uses: ./.github/workflows/build-package-artifact.yml
     with:
       version: ${{ needs.setup_release.outputs.version }}
-      packageName: ajithapackage
-      packagePath: src/packages/ajithapackage1
+      package_name: ajithapackage
+      package_path: src/packages/ajithapackage1
     secrets: inherit
   package_ajithapackage2:
     needs: setup_release
