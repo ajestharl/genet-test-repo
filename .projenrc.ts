@@ -257,40 +257,40 @@ if (centralizedRelease) {
           // Query NPM registry for current versions of all packages
           name: "Get Latest NPM Versions",
           id: "npm_versions",
-          run: `
-            get_version() { npm view "$1" version 2>/dev/null || echo "0.0.0"; }
-            PACKAGES="${RELEASE_PACKAGES.join(" ")}"
-            VERSIONS=()
-            echo "Found NPM versions:"
-            for pkg in $PACKAGES; do
-              version=$(get_version "$pkg")
-              echo "$pkg: $version"
-              VERSIONS+=("$version")
-            done
-            LATEST_NPM=$(printf "%s\\n" "\${VERSIONS[@]}" | sort -V | tail -n1)
-            echo "Latest NPM version: $LATEST_NPM"
-            echo "latest_npm=$LATEST_NPM" >> $GITHUB_OUTPUT
-          `,
+          run: [
+            'get_version() { npm view "$1" version 2>/dev/null || echo "0.0.0"; }',
+            `PACKAGES="${RELEASE_PACKAGES.join(" ")}"`,
+            'VERSIONS=()',
+            'echo "Found NPM versions:"',
+            'for pkg in $PACKAGES; do',
+            '  version=$(get_version "$pkg")',
+            '  echo "$pkg: $version"',
+            '  VERSIONS+=("$version")',
+            'done',
+            'LATEST_NPM=$(printf "%s\\n" "${VERSIONS[@]}" | sort -V | tail -n1)',
+            'echo "Latest NPM version: $LATEST_NPM"',
+            'echo "latest_npm=$LATEST_NPM" >> $GITHUB_OUTPUT',
+          ].join("\n"),
         },
         {
           // Find next version that doesn't conflict with existing Git tags
           // Handles failed release recovery by skipping existing tags
           name: "Find Next Available Version",
           id: "next_version",
-          run: `
-            LATEST_NPM="\${{ steps.npm_versions.outputs.latest_npm }}"
-            IFS="." read -r major minor patch <<< "$LATEST_NPM"
-            CANDIDATE_VERSION="$major.$minor.$((patch + 1))"
-            echo "Starting with candidate version: $CANDIDATE_VERSION"
-            while git ls-remote --tags origin "refs/tags/v$CANDIDATE_VERSION" | grep -q "v$CANDIDATE_VERSION"; do
-              echo "Tag v$CANDIDATE_VERSION already exists, trying next version"
-              patch=$((patch + 1))
-              CANDIDATE_VERSION="$major.$minor.$patch"
-            done
-            echo "Next available version: $CANDIDATE_VERSION"
-            echo "version=$CANDIDATE_VERSION" >> $GITHUB_OUTPUT
-            echo "tag_exists=false" >> $GITHUB_OUTPUT
-          `,
+          run: [
+            'LATEST_NPM="${{ steps.npm_versions.outputs.latest_npm }}"',
+            'IFS="." read -r major minor patch <<< "$LATEST_NPM"',
+            'CANDIDATE_VERSION="$major.$minor.$((patch + 1))"',
+            'echo "Starting with candidate version: $CANDIDATE_VERSION"',
+            'while git ls-remote --tags origin "refs/tags/v$CANDIDATE_VERSION" | grep -q "v$CANDIDATE_VERSION"; do',
+            '  echo "Tag v$CANDIDATE_VERSION already exists, trying next version"',
+            '  patch=$((patch + 1))',
+            '  CANDIDATE_VERSION="$major.$minor.$patch"',
+            'done',
+            'echo "Next available version: $CANDIDATE_VERSION"',
+            'echo "version=$CANDIDATE_VERSION" >> $GITHUB_OUTPUT',
+            'echo "tag_exists=false" >> $GITHUB_OUTPUT',
+          ].join("\n"),
         },
         {
           name: "Check for new commits",
@@ -476,12 +476,12 @@ if (centralizedRelease) {
           // This ensures tags only exist for successfully released versions
           name: "Create Git Tag",
           workingDirectory: "${{ github.workspace }}",
-          run: `
-            TAG="v\${{ needs.setup_release.outputs.version }}"
-            git tag "$TAG"
-            git push origin "$TAG"
-            echo "Created and pushed tag: $TAG"
-          `,
+          run: [
+            'TAG="v${{ needs.setup_release.outputs.version }}"',
+            'git tag "$TAG"',
+            'git push origin "$TAG"',
+            'echo "Created and pushed tag: $TAG"',
+          ].join("\n"),
         },
       ],
     },
