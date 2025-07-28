@@ -14,7 +14,7 @@ const projectMetadata = {
 // Centralized package list - single source of truth for all release operations
 // Add/remove packages here to modify what gets released together
 const RELEASE_PACKAGES = [
-  "@example/ajithapackage",
+  "ajithapackage",
   "ajithapackage2",
   "my-service-client",
   "my-service-ssdk",
