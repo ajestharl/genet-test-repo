@@ -314,8 +314,8 @@ if (centralizedRelease) {
       uses: "./.github/workflows/build-package-artifact.yml",
       with: {
         version: "${{ needs.setup_release.outputs.version }}",
-        package_name: "ajithapackage",
-        package_path: "src/packages/ajithapackage1",
+        packageName: "ajithapackage",
+        packagePath: "src/packages/ajithapackage1",
       },
       secrets: "inherit",
     },
