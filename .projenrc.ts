@@ -592,10 +592,19 @@ if (buildArtifactWorkflow) {
           workingDirectory: "${{ inputs.package_path }}",
         },
         {
-          name: "Prepare for publishing",
+          name: "Backup artifact permissions",
+          workingDirectory: "${{ inputs.package_path }}",
           run: [
             "mkdir -p dist",
-            "tar -xzf \"${{ inputs.package_name }}.tgz\" -C dist --strip-components=1",
+            'cp "${{ inputs.package_name }}.tgz" dist/',
+            "cd dist && getfacl -R . > permissions-backup.acl",
+          ].join(" && "),
+        },
+        {
+          name: "Prepare for publishing",
+          run: [
+            "cd dist",
+            'tar -xzf "${{ inputs.package_name }}.tgz" --strip-components=1',
           ].join(" && "),
           workingDirectory: "${{ inputs.package_path }}",
         },
