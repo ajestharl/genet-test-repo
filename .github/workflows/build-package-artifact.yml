@@ -37,16 +37,13 @@ jobs:
         run: yarn build
         working-directory: ${{ inputs.package_path }}
       - name: Pack artifact
-        run: |-
-          # Sanitize package name for filename
-          SAFE_NAME=$(echo '${{ inputs.package_name }}' | sed 's|@||g' | sed 's|/|-|g')
-          yarn pack --filename "${SAFE_NAME}.tgz"
+        run: yarn pack --filename "${{ inputs.package_name }}.tgz"
         working-directory: ${{ inputs.package_path }}
       - name: Backup artifact permissions
-        run: mkdir -p dist && SAFE_NAME=$(echo '${{ inputs.package_name }}' | sed 's|@||g' | sed 's|/|-|g') && cp "${SAFE_NAME}.tgz" dist/ && cd dist && getfacl -R . > permissions-backup.acl
+        run: mkdir -p dist && cp "${{ inputs.package_name }}.tgz" dist/ && cd dist && getfacl -R . > permissions-backup.acl
         working-directory: ${{ inputs.package_path }}
       - name: Prepare for publishing
-        run: cd dist && SAFE_NAME=$(echo '${{ inputs.package_name }}' | sed 's|@||g' | sed 's|/|-|g') && tar -xzf "${SAFE_NAME}.tgz" --strip-components=1
+        run: cd dist && tar -xzf "${{ inputs.package_name }}.tgz" --strip-components=1
         working-directory: ${{ inputs.package_path }}
       - name: Upload artifact
         uses: actions/upload-artifact@v4.4.0

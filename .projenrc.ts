@@ -588,11 +588,7 @@ if (buildArtifactWorkflow) {
         },
         {
           name: "Pack artifact",
-          run: [
-            "# Sanitize package name for filename",
-            "SAFE_NAME=$(echo '${{ inputs.package_name }}' | sed 's|@||g' | sed 's|/|-|g')",
-            "yarn pack --filename \"${SAFE_NAME}.tgz\"",
-          ].join("\n"),
+          run: "yarn pack --filename \"${{ inputs.package_name }}.tgz\"",
           workingDirectory: "${{ inputs.package_path }}",
         },
         {
@@ -600,8 +596,7 @@ if (buildArtifactWorkflow) {
           workingDirectory: "${{ inputs.package_path }}",
           run: [
             "mkdir -p dist",
-            "SAFE_NAME=$(echo '${{ inputs.package_name }}' | sed 's|@||g' | sed 's|/|-|g')",
-            "cp \"${SAFE_NAME}.tgz\" dist/",
+            "cp \"${{ inputs.package_name }}.tgz\" dist/",
             "cd dist && getfacl -R . > permissions-backup.acl",
           ].join(" && "),
         },
@@ -609,8 +604,7 @@ if (buildArtifactWorkflow) {
           name: "Prepare for publishing",
           run: [
             "cd dist",
-            "SAFE_NAME=$(echo '${{ inputs.package_name }}' | sed 's|@||g' | sed 's|/|-|g')",
-            "tar -xzf \"${SAFE_NAME}.tgz\" --strip-components=1",
+            "tar -xzf \"${{ inputs.package_name }}.tgz\" --strip-components=1",
           ].join(" && "),
           workingDirectory: "${{ inputs.package_path }}",
         },
