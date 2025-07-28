@@ -624,7 +624,7 @@ if (buildArtifactWorkflow) {
 
 const package2 = new typescript.TypeScriptProject({
   ...projectMetadata,
-  name: "@example/ajithapackage2",
+  name: "ajithapackage2",
   outdir: "src/packages/ajithapackage2",
   parent: project,
   projenrcTs: false,
