@@ -14,7 +14,7 @@ const projectMetadata = {
 // Centralized package list - single source of truth for all release operations
 // Add/remove packages here to modify what gets released together
 const RELEASE_PACKAGES = [
-  "ajithapackage",
+  "@example/ajithapackage",
   "ajithapackage2",
   "my-service-client",
   "my-service-ssdk",
@@ -208,7 +208,7 @@ export const createPackage = (config: PackageConfig) => {
 };
 
 createPackage({
-  name: "ajithapackage",
+  name: "@example/ajithapackage",
   outdir: "src/packages/ajithapackage1",
 });
 
