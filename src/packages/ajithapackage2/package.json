@@ -1,5 +1,5 @@
 {
-  "name": "ajithapackage2",
+  "name": "@example/ajithapackage2",
   "repository": {
     "type": "git",
     "url": "https://github.com/ajestharl/genet-test-repo.git"

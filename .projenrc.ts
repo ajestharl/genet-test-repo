@@ -208,7 +208,7 @@ export const createPackage = (config: PackageConfig) => {
 };
 
 createPackage({
-  name: "@example/ajithapackage",
+  name: "ajithapackage",
   outdir: "src/packages/ajithapackage1",
 });
 
@@ -624,7 +624,7 @@ if (buildArtifactWorkflow) {
 
 const package2 = new typescript.TypeScriptProject({
   ...projectMetadata,
-  name: "ajithapackage2",
+  name: "@example/ajithapackage2",
   outdir: "src/packages/ajithapackage2",
   parent: project,
   projenrcTs: false,
