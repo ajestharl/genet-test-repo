@@ -594,8 +594,8 @@ if (buildArtifactWorkflow) {
         {
           name: "Prepare for publishing",
           run: [
-            "cd dist",
-            "tar -xzf \"${{ inputs.package_name }}.tgz\" --strip-components=1",
+            "mkdir -p dist",
+            "tar -xzf \"${{ inputs.package_name }}.tgz\" -C dist --strip-components=1",
           ].join(" && "),
           workingDirectory: "${{ inputs.package_path }}",
         },

@@ -40,7 +40,7 @@ jobs:
         run: yarn pack --filename "${{ inputs.package_name }}.tgz"
         working-directory: ${{ inputs.package_path }}
       - name: Prepare for publishing
-        run: cd dist && tar -xzf "${{ inputs.package_name }}.tgz" --strip-components=1
+        run: mkdir -p dist && tar -xzf "${{ inputs.package_name }}.tgz" -C dist --strip-components=1
         working-directory: ${{ inputs.package_path }}
       - name: Upload artifact
         uses: actions/upload-artifact@v4.4.0
