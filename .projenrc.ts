@@ -540,6 +540,7 @@ const buildArtifactWorkflow = project.github?.addWorkflow(
   "build-package-artifact",
 );
 
+
 if (buildArtifactWorkflow) {
   buildArtifactWorkflow.on({
     workflowCall: {
