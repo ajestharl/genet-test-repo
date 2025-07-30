@@ -1,5 +1,38 @@
-export class Hello {
-  public sayHello() {
-    return 'hello, world!';
+#!/usr/bin/env node
+
+/**
+ * Returns a list of books
+ * @returns Array of book titles
+ */
+export const listBooksImpl = async (): Promise<string[]> => {
+  return ['Book One', 'Book Two', 'Book Three'];
+};
+
+export type DisplayBooks = ({
+  listBooks,
+}: {
+  listBooks?: () => Promise<string[]>;
+}) => Promise<void>;
+
+/**
+ * Displays a list of books in a numbered format.
+ *
+ * @param listBooks Function that fetches the list of books
+ */
+export const displayBooks: DisplayBooks = async ({
+  listBooks = listBooksImpl,
+}) => {
+  try {
+    const books = await listBooks();
+    if (books.length === 0) {
+      throw new Error('No books found in the library');
+    }
+    console.log('\nAvailable books:');
+    books.forEach((name, index) => {
+      console.log(`${index + 1}. ${name}`);
+    });
+    console.log(`\nTotal books found: ${books.length}\n`);
+  } catch (error) {
+    throw error;
   }
-}
+};
