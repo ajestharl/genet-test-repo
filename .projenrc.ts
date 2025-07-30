@@ -603,6 +603,11 @@ if (buildArtifactWorkflow) {
           workingDirectory: "${{ inputs.package_path }}",
         },
         {
+          name: "Install package dependencies for bundling",
+          run: "npm install",
+          workingDirectory: "${{ inputs.package_path }}",
+        },
+        {
           name: "Pack artifact",
           run: 'npm pack --pack-destination . && mv *.tgz "${{ inputs.package_name }}.tgz"',
           workingDirectory: "${{ inputs.package_path }}",

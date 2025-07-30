@@ -36,6 +36,9 @@ jobs:
       - name: Build package
         run: yarn build
         working-directory: ${{ inputs.package_path }}
+      - name: Install package dependencies for bundling
+        run: npm install
+        working-directory: ${{ inputs.package_path }}
       - name: Pack artifact
         run: npm pack --pack-destination . && mv *.tgz "${{ inputs.package_name }}.tgz"
         working-directory: ${{ inputs.package_path }}
