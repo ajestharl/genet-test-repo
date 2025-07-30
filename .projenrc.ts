@@ -605,10 +605,10 @@ if (buildArtifactWorkflow) {
         {
           name: "Ensure bundled dependencies are packed",
           run: [
-            'rm -rf node_modules package-lock.json',
-            'npm install --legacy-peer-deps --no-workspaces'
+            "rm -rf node_modules package-lock.json",
+            "npm install --legacy-peer-deps --no-workspaces",
           ].join(" && "),
-          workingDirectory: "${{ inputs.package_path }}"
+          workingDirectory: "${{ inputs.package_path }}",
         },
         {
           name: "Pack artifact",
