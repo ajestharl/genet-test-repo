@@ -7,25 +7,13 @@ import type {
   Context,
 } from 'aws-lambda';
 import * as AWSXRay from 'aws-xray-sdk';
+import { ExampleClient, GetItemCommand } from 'my-service-client';
 
 const dynamoClient = AWSXRay.captureAWSv3Client(new DynamoDBClient({}));
 const metrics = new Metrics({ namespace: 'AjithaPackage' });
+const exampleClient = new ExampleClient({});
 
-export class Hello {
-  public sayHello() {
-    return 'hello, world!';
-  }
-}
-
-// Lazy load client to avoid Jest conflicts
-let exampleClient: any;
-const getExampleClient = async () => {
-  if (!exampleClient) {
-    const { ExampleClient } = await import('my-service-client');
-    exampleClient = new ExampleClient({});
-  }
-  return exampleClient;
-};
+export { Hello } from './hello';
 
 export const lambdaHandler = async (
   event: APIGatewayProxyEvent,
@@ -73,9 +61,7 @@ export const webhookHandler = async (
   let ssdkResult = null;
   if (payload.itemId) {
     try {
-      const client = await getExampleClient();
-      const { GetItemCommand } = await import('my-service-client');
-      ssdkResult = await client.send(
+      ssdkResult = await exampleClient.send(
         new GetItemCommand({ id: payload.itemId }),
       );
     } catch (error) {

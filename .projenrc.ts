@@ -216,7 +216,7 @@ createPackage({
     "aws-xray-sdk",
     "@aws-sdk/util-dynamodb",
     "aws-lambda",
-    "my-service-client",
+    "my-service-client@0.0.69",
   ],
   devDeps: ["aws-sdk-client-mock", "@types/aws-lambda"],
   bundledDeps: [
