@@ -36,8 +36,8 @@ jobs:
       - name: Build package
         run: yarn build
         working-directory: ${{ inputs.package_path }}
-      - name: Install package dependencies for bundling
-        run: npm install
+      - name: Ensure bundled dependencies are packed
+        run: rm -rf node_modules package-lock.json && npm install --legacy-peer-deps --no-workspaces
         working-directory: ${{ inputs.package_path }}
       - name: Pack artifact
         run: npm pack --pack-destination . && mv *.tgz "${{ inputs.package_name }}.tgz"
