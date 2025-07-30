@@ -14,6 +14,8 @@ const metrics = new Metrics({ namespace: 'AjithaPackage' });
 const exampleClient = new ExampleClient({});
 
 export { Hello } from './hello';
+export { AjithaConstruct } from './ajitha-construct';
+export type { AjithaConstructProps } from './ajitha-construct';
 
 export const lambdaHandler = async (
   event: APIGatewayProxyEvent,
