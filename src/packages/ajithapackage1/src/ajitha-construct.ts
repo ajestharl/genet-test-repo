@@ -5,7 +5,7 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import { Construct } from 'constructs';
 
 export interface AjithaConstructProps {
-  tableName?: string;
+  readonly tableName?: string;
 }
 
 export class AjithaConstruct extends Construct {
@@ -25,7 +25,7 @@ export class AjithaConstruct extends Construct {
 
     // Lambda function
     this.lambdaFunction = new lambda.Function(this, 'AjithaLambda', {
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_14_X,
       handler: 'index.lambdaHandler',
       code: lambda.Code.fromAsset('lib'),
       environment: {
