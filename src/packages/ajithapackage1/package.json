@@ -31,11 +31,13 @@
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^2",
+    "@types/aws-lambda": "^8.10.152",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.13.5",
     "@typescript-eslint/eslint-plugin": "^8",
     "@typescript-eslint/parser": "^8",
     "aws-cdk-lib": "2.1.0",
+    "aws-sdk-client-mock": "^4.1.0",
     "constructs": "10.0.5",
     "eslint": "^9",
     "eslint-import-resolver-typescript": "^4.4.2",
@@ -56,6 +58,22 @@
     "aws-cdk-lib": "^2.1.0",
     "constructs": "^10.0.5"
   },
+  "dependencies": {
+    "@aws-lambda-powertools/metrics": "^2.24.1",
+    "@aws-sdk/client-dynamodb": "^3.856.0",
+    "@aws-sdk/util-dynamodb": "^3.856.0",
+    "aws-lambda": "^1.0.7",
+    "aws-xray-sdk": "^3.10.3",
+    "my-service-client": "0.0.69"
+  },
+  "bundledDependencies": [
+    "@aws-lambda-powertools/metrics",
+    "@aws-sdk/client-dynamodb",
+    "@aws-sdk/util-dynamodb",
+    "aws-lambda",
+    "aws-xray-sdk",
+    "my-service-client"
+  ],
   "keywords": [
     "cdk"
   ],

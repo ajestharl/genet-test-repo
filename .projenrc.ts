@@ -210,6 +210,23 @@ export const createPackage = (config: PackageConfig) => {
 createPackage({
   name: "ajithapackage",
   outdir: "src/packages/ajithapackage1",
+  deps: [
+    "@aws-lambda-powertools/metrics",
+    "@aws-sdk/client-dynamodb",
+    "aws-xray-sdk",
+    "@aws-sdk/util-dynamodb",
+    "aws-lambda",
+    "my-service-client@0.0.69",
+  ],
+  devDeps: ["aws-sdk-client-mock", "@types/aws-lambda"],
+  bundledDeps: [
+    "@aws-lambda-powertools/metrics",
+    "@aws-sdk/client-dynamodb",
+    "@aws-sdk/util-dynamodb",
+    "aws-xray-sdk",
+    "aws-lambda",
+    "my-service-client",
+  ],
 });
 
 // Centralized Release Workflow - coordinates atomic releases of all packages
@@ -260,13 +277,13 @@ if (centralizedRelease) {
           run: [
             'get_version() { npm view "$1" version 2>/dev/null || echo "0.0.0"; }',
             `PACKAGES="${RELEASE_PACKAGES.join(" ")}"`,
-            'VERSIONS=()',
+            "VERSIONS=()",
             'echo "Found NPM versions:"',
-            'for pkg in $PACKAGES; do',
+            "for pkg in $PACKAGES; do",
             '  version=$(get_version "$pkg")',
             '  echo "$pkg: $version"',
             '  VERSIONS+=("$version")',
-            'done',
+            "done",
             'LATEST_NPM=$(printf "%s\\n" "${VERSIONS[@]}" | sort -V | tail -n1)',
             'echo "Latest NPM version: $LATEST_NPM"',
             'echo "latest_npm=$LATEST_NPM" >> $GITHUB_OUTPUT',
@@ -284,9 +301,9 @@ if (centralizedRelease) {
             'echo "Starting with candidate version: $CANDIDATE_VERSION"',
             'while git ls-remote --tags origin "refs/tags/v$CANDIDATE_VERSION" | grep -q "v$CANDIDATE_VERSION"; do',
             '  echo "Tag v$CANDIDATE_VERSION already exists, trying next version"',
-            '  patch=$((patch + 1))',
+            "  patch=$((patch + 1))",
             '  CANDIDATE_VERSION="$major.$minor.$patch"',
-            'done',
+            "done",
             'echo "Next available version: $CANDIDATE_VERSION"',
             'echo "version=$CANDIDATE_VERSION" >> $GITHUB_OUTPUT',
             'echo "tag_exists=false" >> $GITHUB_OUTPUT',
@@ -427,9 +444,9 @@ if (centralizedRelease) {
           run: [
             "for pkg in $PACKAGES; do",
             '  echo "Extracting $pkg..."',
-            '  # Extract just the package name (remove scope)',
+            "  # Extract just the package name (remove scope)",
             '  dir_name=$(echo "$pkg" | sed "s|.*/||")',
-            '  # Use the same package name that was passed to build workflow',
+            "  # Use the same package name that was passed to build workflow",
             '  safe_name="$dir_name"',
             '  mkdir -p "$dir_name"',
             '  tar -xzf "${safe_name}.tgz" -C "$dir_name" --strip-components=1',
@@ -540,7 +557,6 @@ const buildArtifactWorkflow = project.github?.addWorkflow(
   "build-package-artifact",
 );
 
-
 if (buildArtifactWorkflow) {
   buildArtifactWorkflow.on({
     workflowCall: {
@@ -587,8 +603,16 @@ if (buildArtifactWorkflow) {
           workingDirectory: "${{ inputs.package_path }}",
         },
         {
+          name: "Ensure bundled dependencies are packed",
+          run: [
+            "rm -rf node_modules package-lock.json",
+            "npm install --legacy-peer-deps --no-workspaces",
+          ].join(" && "),
+          workingDirectory: "${{ inputs.package_path }}",
+        },
+        {
           name: "Pack artifact",
-          run: "yarn pack --filename \"${{ inputs.package_name }}.tgz\"",
+          run: 'npm pack --pack-destination . && mv *.tgz "${{ inputs.package_name }}.tgz"',
           workingDirectory: "${{ inputs.package_path }}",
         },
         {
